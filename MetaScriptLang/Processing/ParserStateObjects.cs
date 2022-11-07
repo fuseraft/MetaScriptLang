@@ -5,135 +5,119 @@
 
     public partial class Parser
     {
-        void DeleteO(string target)
-        {
-            this.objects.Remove(target);
-        }
-
-        Variable GetOV(string objectName, string variableName)
+        Variable GetObjectVariable(string objectName, string variableName)
         {
             return this.objects[objectName].getVariable(variableName);
         }
 
-        void SetOMAddLineToCurrentMethod(string objectName, string line)
+        void AddLineToObjectMethod(string objectName, string line)
         {
             this.objects[objectName].addToCurrentMethod(line);
         }
 
-        void SetOName(string objectName, string newName)
+        void SetObjectName(string objectName, string newName)
         {
             this.objects[objectName].setName(newName);
-            // TODO fix the object lookup.
-            //this.objects.Add(newName, this.objects[objectName]);
-            //this.objects.RemoveAt(objectName);
+            this.objects.Add(newName, this.objects[objectName]);
+            this.objects.Remove(objectName);
         }
 
-        void SetOPublic(string objectName)
+        void SetObjectAsPublic(string objectName)
         {
             this.objects[objectName].setPublic();
         }
 
-        void SetOPrivate(string objectName)
+        void SetObjectAsPrivate(string objectName)
         {
             this.objects[objectName].setPrivate();
         }
 
-        void ClearO(string objectName)
-        {
-            this.objects[objectName].clear();
-        }
-
-        bool OExists(string objectName)
-        {
-            return this.objects.ContainsKey(objectName);
-        }
-
-        bool OMExists(string objectName, string methodName)
+        bool ObjectMethodExists(string objectName, string methodName)
         {
             return this.objects[objectName].methodExists(methodName);
         }
 
-        bool OVExists(string objectName, string variableName)
+        bool ObjectVariableExists(string objectName, string variableName)
         {
             return this.objects[objectName].variableExists(variableName);
         }
 
-        void CreateOM(string objectName, Method m)
+        void CreateObjectMethod(string objectName, Method m)
         {
             this.objects[objectName].addMethod(m);
         }
 
-        void CreateOV(string objectName, Variable v)
+        void CreateObjectVariable(string objectName, Variable v)
         {
             this.objects[objectName].addVariable(v);
         }
 
-        void DeleteOV(string objectName, string variableName)
+        void DeleteObjectVariable(string objectName, string variableName)
         {
             this.objects[objectName].removeVariable(variableName);
         }
 
-        int GetOMCount(string objectName)
+        int GetObjectMethodCount(string objectName)
         {
             return this.objects[objectName].methodSize();
         }
 
-        string GetOMNameByIndex(string objectName, int index)
+        string GetObjectMethodNameByIndex(string objectName, int index)
         {
             return this.objects[objectName].getMethod(objects[objectName].getMethodName(index)).GetName();
         }
 
-        Method GetOM(string objectName, string methodName)
+        Method GetObjectMethod(string objectName, string methodName)
         {
             return this.objects[objectName].getMethod(methodName);
         }
 
-        System.Collections.Generic.List<Method> GetOMList(string objectName)
+        System.Collections.Generic.List<Method> GetObjectMethodList(string objectName)
         {
             return this.objects[objectName].getMethods();
         }
 
-        System.Collections.Generic.List<Variable> GetOVList(string objectName)
+        System.Collections.Generic.List<Variable> GetObjectVariableList(string objectName)
         {
             return this.objects[objectName].getVariables();
         }
 
-        string GetOMLine(string objectName, string methodName, int lineNumber)
+        string GetObjectMethodLine(string objectName, string methodName, int lineNumber)
         {
             return objects[objectName].getMethod(methodName).GetLine(lineNumber);
         }
 
-        int GetOMSize(string objectName, string methodName)
+        int GetObjectMethodSize(string objectName, string methodName)
         {
             return objects[objectName].getMethod(methodName).GetMethodSize();
         }
 
-        int GetOVCount(string objectName)
+        int GetObjectVariableSize(string objectName)
         {
             return objects[objectName].variableSize();
         }
 
-        string GetOVName(string objectName, string variableName)
+        string GetObjectVariableName(string objectName, string variableName)
         {
             return this.objects[objectName].getVariable(variableName).name();
         }
 
-        string GetOVNameByIndex(string objectName, int index)
+        string GetObjectVariableNameByIndex(string objectName, int index)
         {
             return objects[objectName].getVariable(objects[objectName].getVariableName(index)).name();
         }
 
-        string GetOVString(string objectName, string variableName)
+        string GetObjectVariableString(string objectName, string variableName)
         {
             return this.objects[objectName].getVariable(variableName).getString();
         }
 
-        double GetOVNumber(string objectName, string variableName)
+        double GetObjectVariableNumber(string objectName, string variableName)
         {
             return this.objects[objectName].getVariable(variableName).getNumber();
         }
 
-        void SetOMCurrentMethod(string objectName, string methodName)
+        void SetObjectCurrentMethod(string objectName, string methodName)
         {
             objects[objectName].setCurrentMethod(methodName);
         }
@@ -142,13 +126,13 @@
         {
             if (oper == "=")
             {
-                System.Collections.Generic.List<Method> objectMethods = GetOMList(oldName);
+                System.Collections.Generic.List<Method> objectMethods = GetObjectMethodList(oldName);
                 MetaScriptLang.Data.Object newObject = new(newName);
 
                 for (int i = 0; i < objectMethods.Count; i++)
                     newObject.addMethod(objectMethods[i]);
 
-                System.Collections.Generic.List<Variable> objectVariables = GetOVList(oldName);
+                System.Collections.Generic.List<Variable> objectVariables = GetObjectVariableList(oldName);
 
                 for (int i = 0; i < objectVariables.Count; i++)
                     newObject.addVariable(objectVariables[i]);
@@ -166,7 +150,7 @@
                 objectMethods.Clear();
             }
             else
-                error(ErrorLogger.INVALID_OPERATOR, oper, false);
+                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, oper, false);
         }
     }
 }

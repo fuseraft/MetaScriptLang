@@ -6,294 +6,33 @@
     public partial class Parser
     {
         #region Dynamic Typing
-        bool isNumber(Variable var)
+        bool IsNumberVariable(Variable var)
         {
             return var.getNumber() != __NullNum;
         }
 
-        bool isNumber(string varName)
+        bool IsNumberVariable(string varName)
         {
-            return GetVNumber(varName) != __NullNum;
+            return GetVariableNumber(varName) != __NullNum;
         }
 
-        bool isString(Variable var)
+        bool IsStringVariable(Variable var)
         {
             return var.getString() != __Null;
         }
 
-        bool isString(string varName)
+        bool IsStringVariable(string varName)
         {
-            return GetVString(varName) != __Null;
-        }
-        #endregion
-
-        #region Get String Value
-        string getStringValue(string arg1, string op, string arg2)
-        {
-            string firstValue = (""), lastValue = (""), returnValue = ("");
-
-            if (VExists(arg1))
-            {
-                if (isString(arg1))
-                    firstValue = GetVString(arg1);
-            }
-
-            if (VExists(arg2))
-            {
-                if (isString(arg2))
-                    lastValue = GetVString(arg2);
-                else if (isNumber(arg2))
-                    lastValue = dtos(GetVNumber(arg2));
-            }
-            else if (MExists(arg2))
-            {
-                parse(arg2);
-
-                //lastValue = lastValue;
-            }
-            else if (!zeroDots(arg2))
-            {
-                string _beforeDot = (beforeDot(arg2)), _afterDot = (afterDot(arg2));
-
-                if (_beforeDot == "env")
-                {
-                    InternalGetEnv("", _afterDot, 2);
-                }
-                else if (_beforeDot == "args")
-                {
-                    if (_afterDot == "size")
-                        lastValue = itos(args.Count);
-                    else
-                        lastValue = "";
-                }
-                else if (OExists(_beforeDot))
-                {
-                    executeTemplate(GetOM(_beforeDot, _afterDot), getParameters(_afterDot));
-
-                    lastValue = lastValue;
-                }
-                else
-                    lastValue = arg2;
-            }
-            else if (containsBrackets(arg2))
-            {
-                string _beforeBrackets = (beforeBrackets(arg2)), _afterBrackets = (afterBrackets(arg2));
-
-                if (_beforeBrackets == "args")
-                {
-                    System.Collections.Generic.List<string> parameters = getBracketRange(_afterBrackets);
-
-                    if (StringHelper.IsNumeric(parameters[0]))
-                    {
-                        if ((int)args.Count - 1 >= stoi(parameters[0]) && stoi(parameters[0]) >= 0)
-                        {
-                            if (parameters[0] == "0")
-                                lastValue = __CurrentScript;
-                            else
-                                lastValue = args[stoi(parameters[0])];
-                        }
-                        else
-                            lastValue = "";
-                    }
-                    else
-                        lastValue = "";
-                }
-                else if (LExists(_beforeBrackets))
-                {
-                    _afterBrackets = subtractString(_afterBrackets, "]");
-
-                    if (GetLSize(_beforeBrackets) >= stoi(_afterBrackets))
-                    {
-                        if (stoi(_afterBrackets) >= 0)
-                            lastValue = GetLLine(_beforeBrackets, stoi(_afterBrackets));
-                        else
-                            lastValue = "";
-                    }
-                    else
-                        lastValue = "";
-                }
-            }
-            else if (containsParameters(arg2))
-            {
-                if (beforeParameters(arg2).Length != 0)
-                {
-                    executeTemplate(GetM(arg2), getParameters(arg2));
-
-                    //lastValue = lastValue;
-                }
-                else
-                {
-                    if (isStringStack(arg2))
-                        lastValue = getStringStack(arg2);
-                    else if (stackReady(arg2))
-                        lastValue = dtos(getStack(arg2));
-                }
-            }
-            else
-                lastValue = arg2;
-
-            if (op == "+=")
-                returnValue = (firstValue + lastValue);
-            else if (op == "-=")
-                returnValue = subtractString(firstValue, lastValue);
-            else if (op == "*=")
-            {
-                if (StringHelper.IsNumeric(lastValue))
-                {
-                    string bigString = ("");
-
-                    for (int i = 0; i < (int)stod(lastValue); i++)
-                        bigString += (firstValue);
-
-                    returnValue = bigString;
-                }
-            }
-            else if (op == "/=")
-                returnValue = subtractString(firstValue, lastValue);
-            else if (op == "**=")
-                returnValue = dtos(System.Math.Pow(stod(firstValue), stod(lastValue)));
-            else if (op == "=")
-                returnValue = lastValue;
-
-            setLastValue(returnValue);
-            return returnValue;
-        }
-        #endregion
-
-        #region Get Number Value
-        double getNumberValue(string arg1, string op, string arg2)
-        {
-            double firstValue = 0, lastValue = 0, returnValue = 0;
-
-            if (VExists(arg1))
-            {
-                if (isNumber(arg1))
-                    firstValue = GetVNumber(arg1);
-            }
-
-            if (VExists(arg2))
-            {
-                if (isNumber(arg2))
-                    lastValue = GetVNumber(arg2);
-                else
-                    lastValue = 0;
-            }
-            else if (MExists(arg2))
-            {
-                parse(arg2);
-
-                if (StringHelper.IsNumeric(__LastValue))
-                    lastValue = stod(__LastValue);
-                else
-                    lastValue = 0;
-            }
-            else if (!zeroDots(arg2))
-            {
-                string _beforeDot = (beforeDot(arg2)), _afterDot = (afterDot(arg2));
-                if (_beforeDot == "env")
-                {
-                    InternalGetEnv("", _afterDot, 2);
-                }
-                else if (_beforeDot == "args")
-                {
-                    if (_afterDot == "size")
-                        lastValue = stod(itos(args.Count));
-                    else
-                        lastValue = 0;
-                }
-                else if (OExists(_beforeDot))
-                {
-                    executeTemplate(GetOM(_beforeDot, _afterDot), getParameters(_afterDot));
-
-                    if (StringHelper.IsNumeric(__LastValue))
-                        lastValue = stod(__LastValue);
-                    else
-                        lastValue = 0;
-                }
-                else
-                {
-                    if (StringHelper.IsNumeric(__LastValue))
-                        lastValue = stod(arg2);
-                    else
-                        lastValue = 0;
-                }
-            }
-            else if (containsBrackets(arg2))
-            {
-                string _beforeBrackets = (beforeBrackets(arg2)), _afterBrackets = (afterBrackets(arg2));
-
-                if (LExists(_beforeBrackets))
-                {
-                    _afterBrackets = subtractString(_afterBrackets, "]");
-
-                    if (GetLSize(_beforeBrackets) >= stoi(_afterBrackets))
-                    {
-                        if (stoi(_afterBrackets) >= 0)
-                        {
-                            if (StringHelper.IsNumeric(GetLLine(_beforeBrackets, stoi(_afterBrackets))))
-                                lastValue = stod(GetLLine(_beforeBrackets, stoi(_afterBrackets)));
-                            else
-                                lastValue = 0;
-                        }
-                        else
-                            lastValue = 0;
-                    }
-                    else
-                        lastValue = 0;
-                }
-            }
-            else if (containsParameters(arg2))
-            {
-                if (beforeParameters(arg2).Length != 0)
-                {
-                    executeTemplate(GetM(arg2), getParameters(arg2));
-
-                    if (StringHelper.IsNumeric(__LastValue))
-
-                        lastValue = stod(__LastValue);
-                    else
-                        lastValue = 0;
-                }
-                else
-                {
-                    if (stackReady(arg2))
-                        lastValue = getStack(arg2);
-                    else
-                        lastValue = 0;
-                }
-            }
-            else
-            {
-                if (StringHelper.IsNumeric(arg2))
-                    lastValue = stod(arg2);
-                else
-                    lastValue = 0;
-            }
-
-            if (op == "+=")
-                returnValue = (firstValue + lastValue);
-            else if (op == "-=")
-                returnValue = (firstValue - lastValue);
-            else if (op == "*=")
-                returnValue = (firstValue * lastValue);
-            else if (op == "/=")
-                returnValue = (firstValue / lastValue);
-            else if (op == "**=")
-                returnValue = System.Math.Pow(firstValue, lastValue);
-            else if (op == "=")
-                returnValue = lastValue;
-
-            setLastValue(dtos(returnValue));
-            return (returnValue);
+            return GetVariableString(varName) != __Null;
         }
         #endregion
 
         #region String Stack
         bool secondIsNumber(string s)
         {
-            if (VExists(s))
+            if (VariableExists(s))
             {
-                if (isNumber(s))
+                if (IsNumberVariable(s))
                     return (true);
             }
             else if (stackReady(s))
@@ -312,7 +51,7 @@
 
         bool stackReady(string arg2)
         {
-            if (contains(arg2, "+") || contains(arg2, "-") || contains(arg2, "*") || contains(arg2, "/") || contains(arg2, "%") || contains(arg2, "^"))
+            if (StringHelper.ContainsString(arg2, "+") || StringHelper.ContainsString(arg2, "-") || StringHelper.ContainsString(arg2, "*") || StringHelper.ContainsString(arg2, "/") || StringHelper.ContainsString(arg2, "%") || StringHelper.ContainsString(arg2, "^"))
                 return (true);
 
             return (false);
@@ -322,8 +61,8 @@
         {
             System.Text.StringBuilder temporaryBuild = new();
             string tempArgTwo = arg2;
-            tempArgTwo = subtractChar(tempArgTwo, "(");
-            tempArgTwo = subtractChar(tempArgTwo, ")");
+            tempArgTwo = StringHelper.SubtractChars(tempArgTwo, "(");
+            tempArgTwo = StringHelper.SubtractChars(tempArgTwo, ")");
 
             for (int i = 0; i < (int)tempArgTwo.Length; i++)
             {
@@ -331,14 +70,14 @@
                 {
                     if (temporaryBuild.Length != 0)
                     {
-                        if (VExists(temporaryBuild.ToString()))
+                        if (VariableExists(temporaryBuild.ToString()))
                         {
-                            if (isNumber(temporaryBuild.ToString()))
+                            if (IsNumberVariable(temporaryBuild.ToString()))
                                 temporaryBuild.Clear();
-                            else if (isString(temporaryBuild.ToString()))
+                            else if (IsStringVariable(temporaryBuild.ToString()))
                                 return (true);
                         }
-                        else if (MExists(temporaryBuild.ToString()))
+                        else if (MethodExists(temporaryBuild.ToString()))
                         {
                             parse(temporaryBuild.ToString());
 
@@ -353,14 +92,14 @@
                 }
                 else if (tempArgTwo[i] == '+')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                             temporaryBuild.Clear();
-                        else if (isString(temporaryBuild.ToString()))
+                        else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -376,14 +115,14 @@
                 }
                 else if (tempArgTwo[i] == '-')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                             temporaryBuild.Clear();
-                        else if (isString(temporaryBuild.ToString()))
+                        else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -399,14 +138,14 @@
                 }
                 else if (tempArgTwo[i] == '*')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                             temporaryBuild.Clear();
-                        else if (isString(temporaryBuild.ToString()))
+                        else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -422,14 +161,14 @@
                 }
                 else if (tempArgTwo[i] == '/')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                             temporaryBuild.Clear();
-                        else if (isString(temporaryBuild.ToString()))
+                        else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -445,14 +184,14 @@
                 }
                 else if (tempArgTwo[i] == '%')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                             temporaryBuild.Clear();
-                        else if (isString(temporaryBuild.ToString()))
+                        else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -468,14 +207,14 @@
                 }
                 else if (tempArgTwo[i] == '^')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                             temporaryBuild.Clear();
-                        else if (isString(temporaryBuild.ToString()))
+                        else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -500,8 +239,8 @@
         {
             System.Text.StringBuilder temporaryBuild = new();
             string tempArgTwo = arg2;
-            tempArgTwo = subtractChar(tempArgTwo, "(");
-            tempArgTwo = subtractChar(tempArgTwo, ")");
+            tempArgTwo = StringHelper.SubtractChars(tempArgTwo, "(");
+            tempArgTwo = StringHelper.SubtractChars(tempArgTwo, ")");
 
             string stackValue = ("");
 
@@ -531,22 +270,22 @@
                     {
                         if (temporaryBuild.Length != 0)
                         {
-                            if (VExists(temporaryBuild.ToString()))
+                            if (VariableExists(temporaryBuild.ToString()))
                             {
-                                if (isNumber(temporaryBuild.ToString()))
+                                if (IsNumberVariable(temporaryBuild.ToString()))
                                 {
                                     vars.Add(temporaryBuild.ToString());
-                                    contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                                    contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                                     temporaryBuild.Clear();
                                 }
-                                else if (isString(temporaryBuild.ToString()))
+                                else if (IsStringVariable(temporaryBuild.ToString()))
                                 {
                                     vars.Add(temporaryBuild.ToString());
-                                    contents.Add(GetVString(temporaryBuild.ToString()));
+                                    contents.Add(GetVariableString(temporaryBuild.ToString()));
                                     temporaryBuild.Clear();
                                 }
                             }
-                            else if (MExists(temporaryBuild.ToString()))
+                            else if (MethodExists(temporaryBuild.ToString()))
                             {
                                 parse(temporaryBuild.ToString());
 
@@ -563,24 +302,24 @@
                 }
                 else if (tempArgTwo[i] == '+')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                            contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("+");
                         }
-                        else if (isString(temporaryBuild.ToString()))
+                        else if (IsStringVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(GetVString(temporaryBuild.ToString()));
+                            contents.Add(GetVariableString(temporaryBuild.ToString()));
                             temporaryBuild.Clear();
                             contents.Add("+");
                         }
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -598,24 +337,24 @@
                 }
                 else if (tempArgTwo[i] == '-')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                            contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("-");
                         }
-                        else if (isString(temporaryBuild.ToString()))
+                        else if (IsStringVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(GetVString(temporaryBuild.ToString()));
+                            contents.Add(GetVariableString(temporaryBuild.ToString()));
                             temporaryBuild.Clear();
                             contents.Add("-");
                         }
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -633,24 +372,24 @@
                 }
                 else if (tempArgTwo[i] == '*')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                            contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("*");
                         }
-                        else if (isString(temporaryBuild.ToString()))
+                        else if (IsStringVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(GetVString(temporaryBuild.ToString()));
+                            contents.Add(GetVariableString(temporaryBuild.ToString()));
                             temporaryBuild.Clear();
                             contents.Add("*");
                         }
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -670,18 +409,18 @@
                     temporaryBuild.Append(tempArgTwo[i]);
             }
 
-            if (VExists(temporaryBuild.ToString()))
+            if (VariableExists(temporaryBuild.ToString()))
             {
-                if (isNumber(temporaryBuild.ToString()))
+                if (IsNumberVariable(temporaryBuild.ToString()))
                 {
                     vars.Add(temporaryBuild.ToString());
-                    contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                    contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                     temporaryBuild.Clear();
                 }
-                else if (isString(temporaryBuild.ToString()))
+                else if (IsStringVariable(temporaryBuild.ToString()))
                 {
                     vars.Add(temporaryBuild.ToString());
-                    contents.Add(GetVString(temporaryBuild.ToString()));
+                    contents.Add(GetVariableString(temporaryBuild.ToString()));
                     temporaryBuild.Clear();
                 }
             }
@@ -707,7 +446,7 @@
                     }
                     else if (subtractNext)
                     {
-                        stackValue = subtractString(stackValue, contents[i]);
+                        stackValue = StringHelper.SubtractString(stackValue, contents[i]);
                         subtractNext = false;
                     }
                     else if (multiplyNext)
@@ -716,7 +455,7 @@
                         {
                             string appendage = stackValue;
 
-                            for (int z = 1; z < stoi(contents[i]); z++)
+                            for (int z = 1; z < StringHelper.StoI(contents[i]); z++)
                                 stackValue += appendage;
                         }
 
@@ -740,7 +479,7 @@
             if (__Returning)
             {
                 for (int i = 0; i < (int)vars.Count; i++)
-                    DeleteV(vars[i]);
+                    DeleteVariable(vars[i]);
 
                 __Returning = false;
             }
@@ -754,8 +493,8 @@
         {
             System.Text.StringBuilder temporaryBuild = new();
             string tempArgTwo = arg2; 
-            tempArgTwo = subtractChar(tempArgTwo, "(");
-            tempArgTwo = subtractChar(tempArgTwo, ")");
+            tempArgTwo = StringHelper.SubtractChars(tempArgTwo, "(");
+            tempArgTwo = StringHelper.SubtractChars(tempArgTwo, ")");
 
             double stackValue = (double)0.0;
 
@@ -768,16 +507,16 @@
                 {
                     if (temporaryBuild.Length != 0)
                     {
-                        if (VExists(temporaryBuild.ToString()))
+                        if (VariableExists(temporaryBuild.ToString()))
                         {
-                            if (isNumber(temporaryBuild.ToString()))
+                            if (IsNumberVariable(temporaryBuild.ToString()))
                             {
                                 vars.Add(temporaryBuild.ToString());
-                                contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                                contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                                 temporaryBuild.Clear();
                             }
                         }
-                        else if (MExists(temporaryBuild.ToString()))
+                        else if (MethodExists(temporaryBuild.ToString()))
                         {
                             parse(temporaryBuild.ToString());
 
@@ -796,17 +535,17 @@
                 }
                 else if (tempArgTwo[i] == '+')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                            contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("+");
                         }
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -827,17 +566,17 @@
                 }
                 else if (tempArgTwo[i] == '-')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                            contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("-");
                         }
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -857,16 +596,16 @@
                 }
                 else if (tempArgTwo[i] == '*')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                         {
-                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                            contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("*");
                         }
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -887,17 +626,17 @@
                 }
                 else if (tempArgTwo[i] == '/')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                            contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("/");
                         }
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -918,17 +657,17 @@
                 }
                 else if (tempArgTwo[i] == '%')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                            contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("%");
                         }
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -948,17 +687,17 @@
                 }
                 else if (tempArgTwo[i] == '^')
                 {
-                    if (VExists(temporaryBuild.ToString()))
+                    if (VariableExists(temporaryBuild.ToString()))
                     {
-                        if (isNumber(temporaryBuild.ToString()))
+                        if (IsNumberVariable(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                            contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("^");
                         }
                     }
-                    else if (MExists(temporaryBuild.ToString()))
+                    else if (MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -980,12 +719,12 @@
                     temporaryBuild.Append(tempArgTwo[i]);
             }
 
-            if (VExists(temporaryBuild.ToString()))
+            if (VariableExists(temporaryBuild.ToString()))
             {
-                if (isNumber(temporaryBuild.ToString()))
+                if (IsNumberVariable(temporaryBuild.ToString()))
                 {
                     vars.Add(temporaryBuild.ToString());
-                    contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
+                    contents.Add(StringHelper.DtoS(GetVariableNumber(temporaryBuild.ToString())));
                     temporaryBuild.Clear();
                 }
             }
@@ -1009,32 +748,32 @@
                 {
                     if (addNext)
                     {
-                        stackValue += stod(contents[i]);
+                        stackValue += StringHelper.StoD(contents[i]);
                         addNext = false;
                     }
                     else if (subtractNext)
                     {
-                        stackValue -= stod(contents[i]);
+                        stackValue -= StringHelper.StoD(contents[i]);
                         subtractNext = false;
                     }
                     else if (multiplyNext)
                     {
-                        stackValue *= stod(contents[i]);
+                        stackValue *= StringHelper.StoD(contents[i]);
                         multiplyNext = false;
                     }
                     else if (divideNext)
                     {
-                        stackValue /= stod(contents[i]);
+                        stackValue /= StringHelper.StoD(contents[i]);
                         divideNext = false;
                     }
                     else if (moduloNext)
                     {
-                        stackValue = ((int)stackValue % (int)stod(contents[i]));
+                        stackValue = ((int)stackValue % (int)StringHelper.StoD(contents[i]));
                         moduloNext = false;
                     }
                     else if (powerNext)
                     {
-                        stackValue = System.Math.Pow(stackValue, (int)stod(contents[i]));
+                        stackValue = System.Math.Pow(stackValue, (int)StringHelper.StoD(contents[i]));
                         powerNext = false;
                     }
 
@@ -1056,7 +795,7 @@
                     if (StringHelper.IsNumeric(contents[i]))
                     {
                         startOperating = true;
-                        stackValue = stod(contents[i]);
+                        stackValue = StringHelper.StoD(contents[i]);
                     }
                 }
             }
@@ -1064,7 +803,7 @@
             if (__Returning)
             {
                 for (int i = 0; i < (int)vars.Count; i++)
-                    DeleteV(vars[i]);
+                    DeleteVariable(vars[i]);
 
                 __Returning = false;
             }

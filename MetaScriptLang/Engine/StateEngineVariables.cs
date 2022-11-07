@@ -1,23 +1,45 @@
-﻿namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Engine
 {
     using MetaScriptLang.Data;
     using MetaScriptLang.Helpers;
 
-    public partial class Parser
+    public partial class StateEngine
     {
+        public List<string> GetVariableKeys()
+        {
+            return this.lists.Keys.ToList();
+        }
+
+        #region Typechecking
+        public bool IsNumberVariable(Variable var)
+        {
+            return var.getNumber() != __NullNum;
+        }
+
+        public bool IsNumberVariable(string varName)
+        {
+            return GetVariableNumber(varName) != __NullNum;
+        }
+
+        public bool IsStringVariable(Variable var)
+        {
+            return var.getString() != __Null;
+        }
+
+        public bool IsStringVariable(string varName)
+        {
+            return GetVariableString(varName) != __Null;
+        }
+        #endregion
+
         #region GC
-        bool GCCanCollectVariable(string target)
+        public bool GCCanCollectVariable(string target)
         {
             return this.variables[target].garbage();
         }
         #endregion
 
         #region Engine
-        public List<string> GetVariableKeys()
-        {
-            return this.lists.Keys.ToList();
-        }
-
         public Variable GetVariable(string target)
         {
             if (VariableExists(target))
@@ -31,12 +53,12 @@
         #endregion
 
         #region Creation
-        void DeleteVariable(string target)
+        public void DeleteVariable(string target)
         {
             this.variables.Remove(target);
         }
 
-        void CreateVariableString(string name, string value)
+        public void CreateVariableString(string name, string value)
         {
             Variable newVariable = new(name, value);
 
@@ -49,11 +71,11 @@
             SetLastValue(value);
         }
 
-        void CreateVariableNumber(string name, double value)
+        public void CreateVariableNumber(string name, double value)
         {
             Variable newVariable = new(name, value);
 
-            if (__ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock)
+            if (__ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock) 
                 newVariable.collect();
             else
                 newVariable.dontCollect();
@@ -64,7 +86,7 @@
         #endregion
 
         #region Existence
-        bool VariableExists(string s)
+        public bool VariableExists(string s)
         {
             if (StringHelper.ZeroDots(s))
             {
@@ -77,7 +99,7 @@
             {
                 string before = StringHelper.BeforeDot(s), after = StringHelper.AfterDot(s);
 
-                if (engine.ObjectExists(before))
+                if (this.ObjectExists(before))
                 {
                     if (ObjectMethodExists(before, after))
                         return true;
@@ -93,37 +115,37 @@
         #endregion
 
         #region Getters
-        string GetVariableString(string target)
+        public string GetVariableString(string target)
         {
             return this.variables[target].getString();
         }
 
-        double GetVariableNumber(string target)
+        public double GetVariableNumber(string target)
         {
             return this.variables[target].getNumber();
         }
 
-        string GetVariableName(string target)
+        public string GetVariableName(string target)
         {
             return this.variables[target].name();
         }
 
-        bool VariableWaiting(string target)
+        public bool VariableWaiting(string target)
         {
             return this.variables[target].waiting();
         }
         #endregion
 
         #region Setters
-        void SetVariableString(string target, string value)
+        public void SetVariableString(string target, string value)
         {
             this.variables[target].setVariable(value);
             SetLastValue(value);
         }
 
-        void SetVariableNumber(string target, double value)
+        public void SetVariableNumber(string target, double value)
         {
-            if (IsStringVariable(target))
+            if (IsNumberVariable(target))
                 this.variables[target].setVariable(StringHelper.DtoS(value));
             else if (IsNumberVariable(target))
                 this.variables[target].setVariable(value);
@@ -138,27 +160,27 @@
             SetLastValue(StringHelper.DtoS(value));
         }
 
-        void SetVariableName(string target, string newName)
+        public void SetVariableName(string target, string newName)
         {
             this.variables[target].setName(newName);
         }
 
-        void LockVariable(string target)
+        public void LockVariable(string target)
         {
             this.variables[target].setIndestructible();
         }
 
-        void UnlockVariable(string target)
+        public void UnlockVariable(string target)
         {
             this.variables[target].setDestructible();
         }
 
-        void SetVariableNull(string target)
+        public void SetVariableNull(string target)
         {
             this.variables[target].setNull();
         }
 
-        void StopWaitVariable(string target)
+        public void StopWaitVariable(string target)
         {
             this.variables[target].stopWait();
         }

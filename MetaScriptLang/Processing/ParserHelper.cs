@@ -9,7 +9,7 @@
             else
                 cout = cleanString(st);
 
-            setLastValue(st);
+            SetLastValue(st);
         }
 
         void writeline(string st)
@@ -37,6 +37,5 @@
                  + "\t" + app + " -p, --parse\t\t// parse a command" + System.Environment.NewLine
                  + "\t" + app + " -h, --help\t\t// display this message" + System.Environment.NewLine + System.Environment.NewLine;
         }
-
     }
 }

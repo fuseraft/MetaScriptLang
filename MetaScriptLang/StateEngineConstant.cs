@@ -1,28 +1,28 @@
-﻿namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Engine
 {
-    public partial class Parser
+    public partial class StateEngine
     {
-        bool IsCNumber(string constantName)
+        public bool IsNumberConstant(string constantName)
         {
             return this.constants[constantName].ConstNumber();
         }
 
-        bool IsCString(string constantName)
+        public bool IsStringConstant(string constantName)
         {
             return this.constants[constantName].ConstString();
         }
 
-        double GetCNumber(string constantName)
+        public double GetConstantNumber(string constantName)
         {
             return this.constants[constantName].getNumber();
         }
 
-        string GetCString(string constantName)
+        public string GetConstantString(string constantName)
         {
             return this.constants[constantName].getString();
         }
 
-        bool CExists(string constantName)
+        public bool ConstantExists(string constantName)
         {
             return this.constants.ContainsKey(constantName);
         }

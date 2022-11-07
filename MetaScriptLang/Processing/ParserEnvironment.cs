@@ -1,7 +1,8 @@
-﻿using MetaScriptLang.Data;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
+
     public partial class Parser
     {
 
@@ -111,31 +112,31 @@ namespace MetaScriptLang.Processing
                 case 0:
                     if (sValue != defaultValue)
                     {
-                        CreateVString(arg0, sValue);
+                        CreateVariableString(arg0, sValue);
                     }
                     else
                     {
-                        CreateVNumber(arg0, dValue);
+                        CreateVariableNumber(arg0, dValue);
                     }
                     break;
                 case 1:
                     if (sValue != defaultValue)
                     {
-                        SetVString(arg0, sValue);
+                        SetVariableString(arg0, sValue);
                     }
                     else
                     {
-                        SetVNumber(arg0, dValue);
+                        SetVariableNumber(arg0, dValue);
                     }
                     break;
                 case 2:
                     if (sValue != defaultValue)
                     {
-                        setLastValue(sValue);
+                        SetLastValue(sValue);
                     }
                     else
                     {
-                        setLastValue(dtos(dValue));
+                        SetLastValue(StringHelper.DtoS(dValue));
                     }
                     break;
                 case 3:
@@ -145,7 +146,7 @@ namespace MetaScriptLang.Processing
                     }
                     else
                     {
-                        writeline(dtos(dValue));
+                        writeline(StringHelper.DtoS(dValue));
                     }
                     break;
             }

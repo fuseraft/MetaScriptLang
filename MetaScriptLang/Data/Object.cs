@@ -1,9 +1,8 @@
-﻿using MetaScriptLang.Logging;
-using System.Numerics;
-using System.Runtime.Intrinsics;
-
-namespace MetaScriptLang.Data
+﻿namespace MetaScriptLang.Data
 {
+    using MetaScriptLang.Helpers;
+    using MetaScriptLang.Logging;
+
     public class Object
     {
         private System.Collections.Generic.List<Method> methods = new();

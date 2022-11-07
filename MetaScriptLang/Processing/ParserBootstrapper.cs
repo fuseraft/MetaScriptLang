@@ -1,5 +1,7 @@
 ﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Helpers;
+
     public partial class Parser
     {
         public int main(int c, params string[] v)
@@ -21,25 +23,25 @@
             {
                 string opt = v[1];
 
-                if (isScript(opt))
+                if (StringHelper.IsScript(opt))
                 {
                     __CurrentScript = opt;
                     args.Add(opt);
                     __ArgumentCount = args.Count;
                     loadScript(opt);
                 }
-                else if (isArg(opt, "h") || isArg(opt, "help"))
+                else if (StringHelper.IsArgument(opt, "h") || StringHelper.IsArgument(opt, "help"))
                     help(noctis);
-                else if (isArg(opt, "u") || isArg(opt, "uninstall"))
+                else if (StringHelper.IsArgument(opt, "u") || StringHelper.IsArgument(opt, "uninstall"))
                     uninstall();
-                else if (isArg(opt, "sl") || isArg(opt, "skipload"))
+                else if (StringHelper.IsArgument(opt, "sl") || StringHelper.IsArgument(opt, "skipload"))
                 {
                     __CurrentScript = noctis;
                     args.Add(opt);
                     __ArgumentCount = args.Count;
                     loop(true);
                 }
-                else if (isArg(opt, "n") || isArg(opt, "negligence"))
+                else if (StringHelper.IsArgument(opt, "n") || StringHelper.IsArgument(opt, "negligence"))
                 {
                     __Negligence = true;
                     __CurrentScript = noctis;
@@ -47,7 +49,7 @@
                     __ArgumentCount = args.Count;
                     loop(true);
                 }
-                else if (isArg(opt, "v") || isArg(opt, "version"))
+                else if (StringHelper.IsArgument(opt, "v") || StringHelper.IsArgument(opt, "version"))
                     displayVersion();
                 else
                 {
@@ -61,11 +63,11 @@
             {
                 string opt = v[1], script = v[2];
 
-                if (isArg(opt, "sl") || isArg(opt, "skipload"))
+                if (StringHelper.IsArgument(opt, "sl") || StringHelper.IsArgument(opt, "skipload"))
                 {
                     __CurrentScript = noctis;
 
-                    if (isScript(script))
+                    if (StringHelper.IsScript(script))
                     {
                         __CurrentScript = script;
                         args.Add(opt);
@@ -81,13 +83,13 @@
                         loop(true);
                     }
                 }
-                else if (isArg(opt, "n") || isArg(opt, "negligence"))
+                else if (StringHelper.IsArgument(opt, "n") || StringHelper.IsArgument(opt, "negligence"))
                 {
                     __Negligence = true;
                     args.Add(opt);
                     args.Add(script);
                     __ArgumentCount = args.Count;
-                    if (isScript(script))
+                    if (StringHelper.IsScript(script))
                     {
                         __CurrentScript = script;
                         loadScript(script);
@@ -98,7 +100,7 @@
                         loop(true);
                     }
                 }
-                else if (isArg(opt, "p") || isArg(opt, "parse"))
+                else if (StringHelper.IsArgument(opt, "p") || StringHelper.IsArgument(opt, "parse"))
                 {
                     string stringBuilder = ("");
 
@@ -114,7 +116,7 @@
                 }
                 else
                 {
-                    if (isScript(opt))
+                    if (StringHelper.IsScript(opt))
                     {
                         __CurrentScript = opt;
                         args.Add(opt);
@@ -136,7 +138,7 @@
             {
                 string opt = v[1];
 
-                if (isScript(opt))
+                if (StringHelper.IsScript(opt))
                 {
                     for (int i = 2; i < c; i++)
                     {
@@ -167,7 +169,7 @@
                 loop(true);
             }
 
-            clearAll();
+            gc.ClearAll();
 
             return (0);
         }

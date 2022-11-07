@@ -1,70 +1,69 @@
-﻿using MetaScriptLang.Data;
-using MetaScriptLang.Logging;
-using System.Diagnostics.Metrics;
-using System.Linq;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
+    using MetaScriptLang.Logging;
+
     public partial class Parser
     {
         void InternalInspect(string arg0, string arg1, string before, string after)
         {
             if (before.Length != 0 && after.Length != 0)
             {
-                if (OExists(before))
+                if (engine.ObjectExists(before))
                 {
-                    if (OMExists(before, after))
+                    if (ObjectMethodExists(before, after))
                     {
-                        for (int i = 0; i < GetOMSize(before, after); i++)
-                            write(GetOMLine(before, after, i));
+                        for (int i = 0; i < GetObjectMethodSize(before, after); i++)
+                            write(GetObjectMethodLine(before, after, i));
                     }
-                    else if (OVExists(before, after))
+                    else if (ObjectVariableExists(before, after))
                     {
-                        if (GetOVString(before, after) != __Null)
-                            write(GetOVString(before, after));
-                        else if (GetOVNumber(before, after) != __NullNum)
-                            write(dtos(GetOVNumber(before, after)));
+                        if (GetObjectVariableString(before, after) != __Null)
+                            write(GetObjectVariableString(before, after));
+                        else if (GetObjectVariableNumber(before, after) != __NullNum)
+                            write(StringHelper.DtoS(GetObjectVariableNumber(before, after)));
                         else
                             write(__Null);
                     }
                     else
-                        error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
                 }
                 else
-                    error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
+                    ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
             }
             else
             {
-                if (OExists(arg1))
+                if (engine.ObjectExists(arg1))
                 {
-                    for (int i = 0; i < GetOMCount(arg1); i++)
-                        write(GetOMNameByIndex(arg1, i));
-                    for (int i = 0; i < GetOVCount(arg1); i++)
-                        write(GetOVNameByIndex(arg1, i));
+                    for (int i = 0; i < GetObjectMethodCount(arg1); i++)
+                        write(GetObjectMethodNameByIndex(arg1, i));
+                    for (int i = 0; i < GetObjectVariableSize(arg1); i++)
+                        write(GetObjectVariableNameByIndex(arg1, i));
                 }
-                else if (CExists(arg1))
+                else if (engine.ConstantExists(arg1))
                 {
-                    if (IsCNumber(arg1))
-                        write(dtos(GetCNumber(arg1)));
-                    else if (IsCString(arg1))
-                        write(GetCString(arg1));
+                    if (engine.IsNumberConstant(arg1))
+                        write(StringHelper.DtoS(engine.GetConstantNumber(arg1)));
+                    else if (engine.IsStringConstant(arg1))
+                        write(engine.GetConstantString(arg1));
                 }
-                else if (MExists(arg1))
+                else if (MethodExists(arg1))
                 {
-                    for (int i = 0; i < GetMSize(arg1); i++)
-                        write(GetMLine(arg1, i));
+                    for (int i = 0; i < GetMethodSize(arg1); i++)
+                        write(GetMethodLine(arg1, i));
                 }
-                else if (VExists(arg1))
+                else if (VariableExists(arg1))
                 {
-                    if (isString(arg1))
-                        write(GetVString(arg1));
-                    else if (isNumber(arg1))
-                        write(dtos(GetVNumber(arg1)));
+                    if (IsStringVariable(arg1))
+                        write(GetVariableString(arg1));
+                    else if (IsNumberVariable(arg1))
+                        write(StringHelper.DtoS(GetVariableNumber(arg1)));
                 }
-                else if (LExists(arg1))
+                else if (engine.ListExists(arg1))
                 {
-                    for (int i = 0; i < GetLSize(arg1); i++)
-                        write(GetLLine(arg1, i));
+                    for (int i = 0; i < engine.GetListSize(arg1); i++)
+                        write(engine.GetListLine(arg1, i));
                 }
                 else if (arg1 == "variables")
                 {
@@ -73,7 +72,7 @@ namespace MetaScriptLang.Processing
                         if (variables[key].getString() != __Null)
                             write($"{variables[key].name()}:\t{variables[key].getString()}");
                         else if (variables[key].getNumber() != __NullNum)
-                            write($"{variables[key].name()}:\t{dtos(variables[key].getNumber())}");
+                            write($"{variables[key].name()}:\t{StringHelper.DtoS(variables[key].getNumber())}");
                         else
                             write($"{variables[key].name()}:\tis_null");
                     }
@@ -82,7 +81,7 @@ namespace MetaScriptLang.Processing
                 {
                     foreach (var key in this.lists.Keys)
                     {
-                        write(GetLName(key));
+                        write(engine.GetListName(key));
                     }
                 }
                 else if (arg1 == "methods")
@@ -111,17 +110,17 @@ namespace MetaScriptLang.Processing
                 else if (arg1 == "last")
                     write(__LastValue);
                 else
-                    error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
             }
         }
 
         void InternalGlobalize(string arg0, string arg1)
         {
-            if (contains(arg1, ".") && MExists(arg1) && !MExists(afterDot(arg1)))
+            if (StringHelper.ContainsString(arg1, ".") && MethodExists(arg1) && !MethodExists(StringHelper.AfterDot(arg1)))
             {
-                Method method = new(afterDot(arg1));
+                Method method = new(StringHelper.AfterDot(arg1));
 
-                System.Collections.Generic.List<string> lines = GetOM(beforeDot(arg1), afterDot(arg1)).GetLines();
+                System.Collections.Generic.List<string> lines = GetObjectMethod(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)).GetLines();
 
                 for (int i = 0; i < (int)lines.Count; i++)
                     method.AddLine(lines[i]);
@@ -129,38 +128,38 @@ namespace MetaScriptLang.Processing
                 methods.Add(method.GetName(), method);
             }
             else
-                error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1, false);
+                ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1, false);
         }
 
         void InternalCallMethod(string arg0, string arg1, string before, string after)
         {
             if (__DefiningObject)
             {
-                if (OMExists(__CurrentObject, arg1))
-                    executeMethod(GetOM(__CurrentObject, arg1));
+                if (ObjectMethodExists(__CurrentObject, arg1))
+                    executeMethod(GetObjectMethod(__CurrentObject, arg1));
                 else
-                    error(ErrorLogger.METHOD_UNDEFINED, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, arg1, false);
             }
             else
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (OExists(before))
+                    if (engine.ObjectExists(before))
                     {
-                        if (OMExists(before, after))
-                            executeMethod(GetOM(before, after));
+                        if (ObjectMethodExists(before, after))
+                            executeMethod(GetObjectMethod(before, after));
                         else
-                            error(ErrorLogger.METHOD_UNDEFINED, arg1, false);
+                            ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, arg1, false);
                     }
                     else
-                        error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, true);
+                        ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, true);
                 }
                 else
                 {
-                    if (MExists(arg1))
-                        executeMethod(GetM(arg1));
+                    if (MethodExists(arg1))
+                        executeMethod(GetMethod(arg1));
                     else
-                        error(ErrorLogger.METHOD_UNDEFINED, arg1, true);
+                        ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, arg1, true);
                 }
             }
         }
@@ -175,15 +174,15 @@ namespace MetaScriptLang.Processing
 
             if (__DefiningObject)
             {
-                if (OMExists(__CurrentObject, arg1))
-                    error(ErrorLogger.METHOD_DEFINED, arg1, false);
+                if (ObjectMethodExists(__CurrentObject, arg1))
+                    ErrorLogger.Error(ErrorLogger.METHOD_DEFINED, arg1, false);
                 else
                 {
-                    if (containsParameters(arg1))
+                    if (StringHelper.ContainsParameters(arg1))
                     {
-                        System.Collections.Generic.List<string> parameters = getParameters(arg1);
+                        System.Collections.Generic.List<string> parameters = StringHelper.GetParameters(arg1);
 
-                        Method method = new(beforeParameters(arg1));
+                        Method method = new(StringHelper.BeforeParameters(arg1));
 
                         if (__DefiningPublicCode)
                             method.SetPublic();
@@ -194,58 +193,58 @@ namespace MetaScriptLang.Processing
 
                         for (int i = 0; i < parameters.Count; i++)
                         {
-                            if (VExists(parameters[i]))
+                            if (VariableExists(parameters[i]))
                             {
-                                if (!zeroDots(parameters[i]))
+                                if (!StringHelper.ZeroDots(parameters[i]))
                                 {
-                                    string before = (beforeDot(parameters[i])), after = (afterDot(parameters[i]));
+                                    string before = (StringHelper.BeforeDot(parameters[i])), after = (StringHelper.AfterDot(parameters[i]));
 
-                                    if (OExists(before))
+                                    if (engine.ObjectExists(before))
                                     {
-                                        if (OVExists(before, after))
+                                        if (ObjectVariableExists(before, after))
                                         {
-                                            if (GetOVString(before, after) != __Null)
-                                                method.AddVariable(GetOVString(before, after), after);
-                                            else if (GetOVNumber(before, after) != __NullNum)
-                                                method.AddVariable(GetOVNumber(before, after), after);
+                                            if (GetObjectVariableString(before, after) != __Null)
+                                                method.AddVariable(GetObjectVariableString(before, after), after);
+                                            else if (GetObjectVariableNumber(before, after) != __NullNum)
+                                                method.AddVariable(GetObjectVariableNumber(before, after), after);
                                             else
-                                                error(ErrorLogger.IS_NULL, parameters[i], false);
+                                                ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                                         }
                                         else
-                                            error(ErrorLogger.OBJ_VAR_UNDEFINED, after, false);
+                                            ErrorLogger.Error(ErrorLogger.OBJ_VAR_UNDEFINED, after, false);
                                     }
                                     else
-                                        error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
+                                        ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
                                 }
                                 else
                                 {
-                                    if (isString(parameters[i]))
-                                        method.AddVariable(GetVString(parameters[i]), GetVName(parameters[i]));
-                                    else if (isNumber(parameters[i]))
-                                        method.AddVariable(GetVNumber(parameters[i]), GetVName(parameters[i]));
+                                    if (IsStringVariable(parameters[i]))
+                                        method.AddVariable(GetVariableString(parameters[i]), GetVariableName(parameters[i]));
+                                    else if (IsNumberVariable(parameters[i]))
+                                        method.AddVariable(GetVariableNumber(parameters[i]), GetVariableName(parameters[i]));
                                     else
-                                        error(ErrorLogger.IS_NULL, parameters[i], false);
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                                 }
                             }
                             else
                             {
-                                if (isAlpha(parameters[i]))
+                                if (StringHelper.IsAlphabetical(parameters[i]))
                                 {
-                                    Variable newVariable = new("@[pm#" + itos(__ParamVarCount) + "]", parameters[i]);
+                                    Variable newVariable = new("@[pm#" + StringHelper.ItoS(__ParamVarCount) + "]", parameters[i]);
                                     method.AddVariable(newVariable);
                                     __ParamVarCount++;
                                 }
                                 else
                                 {
-                                    Variable newVariable = new("@[pm#" + itos(__ParamVarCount) + "]", stod(parameters[i]));
+                                    Variable newVariable = new("@[pm#" + StringHelper.ItoS(__ParamVarCount) + "]", StringHelper.StoD(parameters[i]));
                                     method.AddVariable(newVariable);
                                     __ParamVarCount++;
                                 }
                             }
                         }
 
-                        CreateOM(__CurrentObject, method);
-                        SetOMCurrentMethod(__CurrentObject, beforeParameters(arg1));
+                        CreateObjectMethod(__CurrentObject, method);
+                        SetObjectCurrentMethod(__CurrentObject, StringHelper.BeforeParameters(arg1));
                         __DefiningMethod = true;
                         __DefiningParameterizedMethod = true;
                         __DefiningObjectMethod = true;
@@ -260,8 +259,8 @@ namespace MetaScriptLang.Processing
                             method.SetPrivate();
 
                         method.SetObject(__CurrentObject);
-                        CreateOM(__CurrentObject, method);
-                        SetOMCurrentMethod(__CurrentObject, arg1);
+                        CreateObjectMethod(__CurrentObject, method);
+                        SetObjectCurrentMethod(__CurrentObject, arg1);
                         __DefiningMethod = true;
                         __DefiningObjectMethod = true;
                     }
@@ -269,15 +268,15 @@ namespace MetaScriptLang.Processing
             }
             else
             {
-                if (MExists(arg1))
-                    error(ErrorLogger.METHOD_DEFINED, arg1, false);
+                if (MethodExists(arg1))
+                    ErrorLogger.Error(ErrorLogger.METHOD_DEFINED, arg1, false);
                 else
                 {
-                    if (!zeroDots(arg1))
+                    if (!StringHelper.ZeroDots(arg1))
                     {
-                        string before = (beforeDot(arg1)), after = (afterDot(arg1));
+                        string before = (StringHelper.BeforeDot(arg1)), after = (StringHelper.AfterDot(arg1));
 
-                        if (OExists(before))
+                        if (engine.ObjectExists(before))
                         {
                             Method method = new(after);
 
@@ -287,61 +286,61 @@ namespace MetaScriptLang.Processing
                                 method.SetPrivate();
 
                             method.SetObject(before);
-                            CreateOM(before, method);
-                            SetOMCurrentMethod(before, after);
+                            CreateObjectMethod(before, method);
+                            SetObjectCurrentMethod(before, after);
                             __DefiningMethod = true;
                             __DefiningObjectMethod = true;
                         }
                         else
-                            error(ErrorLogger.OBJ_UNDEFINED, "", false);
+                            ErrorLogger.Error(ErrorLogger.OBJ_UNDEFINED, "", false);
                     }
-                    else if (containsParameters(arg1))
+                    else if (StringHelper.ContainsParameters(arg1))
                     {
-                        System.Collections.Generic.List<string> parameters = getParameters(arg1);
+                        System.Collections.Generic.List<string> parameters = StringHelper.GetParameters(arg1);
 
-                        Method method = new(beforeParameters(arg1));
+                        Method method = new(StringHelper.BeforeParameters(arg1));
 
                         if (indestructable)
                             method.Lock();
 
                         for (int i = 0; i < parameters.Count; i++)
                         {
-                            if (VExists(parameters[i]))
+                            if (VariableExists(parameters[i]))
                             {
-                                if (!zeroDots(parameters[i]))
+                                if (!StringHelper.ZeroDots(parameters[i]))
                                 {
-                                    string before = beforeDot(parameters[i]), after = afterDot(parameters[i]);
+                                    string before = StringHelper.BeforeDot(parameters[i]), after = StringHelper.AfterDot(parameters[i]);
 
-                                    if (OExists(before))
+                                    if (engine.ObjectExists(before))
                                     {
-                                        if (OVExists(before, after))
+                                        if (ObjectVariableExists(before, after))
                                         {
-                                            if (GetOVString(before, after) != __Null)
-                                                method.AddVariable(GetOVString(before, after), after);
-                                            else if (GetOVNumber(before, after) != __NullNum)
-                                                method.AddVariable(GetOVNumber(before, after), after);
+                                            if (GetObjectVariableString(before, after) != __Null)
+                                                method.AddVariable(GetObjectVariableString(before, after), after);
+                                            else if (GetObjectVariableNumber(before, after) != __NullNum)
+                                                method.AddVariable(GetObjectVariableNumber(before, after), after);
                                             else
-                                                error(ErrorLogger.IS_NULL, parameters[i], false);
+                                                ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                                         }
                                         else
-                                            error(ErrorLogger.OBJ_VAR_UNDEFINED, after, false);
+                                            ErrorLogger.Error(ErrorLogger.OBJ_VAR_UNDEFINED, after, false);
                                     }
                                     else
-                                        error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
+                                        ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
                                 }
                                 else
                                 {
-                                    if (isString(parameters[i]))
-                                        method.AddVariable(GetVString(parameters[i]), GetVName(parameters[i]));
-                                    else if (isNumber(parameters[i]))
-                                        method.AddVariable(GetVNumber(parameters[i]), GetVName(parameters[i]));
+                                    if (IsStringVariable(parameters[i]))
+                                        method.AddVariable(GetVariableString(parameters[i]), GetVariableName(parameters[i]));
+                                    else if (IsNumberVariable(parameters[i]))
+                                        method.AddVariable(GetVariableNumber(parameters[i]), GetVariableName(parameters[i]));
                                     else
-                                        error(ErrorLogger.IS_NULL, parameters[i], false);
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                                 }
                             }
                             else
                             {
-                                if (isAlpha(parameters[i]))
+                                if (StringHelper.IsAlphabetical(parameters[i]))
                                 {
                                     Variable newVariable = new("@" + parameters[i], "");
                                     newVariable.setNull();
@@ -379,8 +378,8 @@ namespace MetaScriptLang.Processing
         void InternalCreateModule(string s)
         {
             string moduleName = s;
-            moduleName = subtractString(moduleName, "[");
-            moduleName = subtractString(moduleName, "]");
+            moduleName = StringHelper.SubtractString(moduleName, "[");
+            moduleName = StringHelper.SubtractString(moduleName, "]");
 
             Module newModule = new(moduleName);
             modules.Add(moduleName, newModule);
@@ -390,7 +389,7 @@ namespace MetaScriptLang.Processing
 
         void InternalCreateObject(string arg0)
         {
-            if (OExists(arg0))
+            if (engine.ObjectExists(arg0))
             {
                 __DefiningObject = true;
                 __CurrentObject = arg0;
@@ -478,23 +477,23 @@ namespace MetaScriptLang.Processing
         {
             __Returning = true;
 
-            if (containsParameters(arg1))
+            if (StringHelper.ContainsParameters(arg1))
             {
-                before = (beforeParameters(arg1));
+                before = (StringHelper.BeforeParameters(arg1));
 
-                if (MExists(before))
+                if (MethodExists(before))
                 {
-                    executeTemplate(GetM(before), getParameters(arg1));
+                    executeTemplate(GetMethod(before), StringHelper.GetParameters(arg1));
 
                     parse("return " + __LastValue);
                 }
-                else if (!zeroDots(arg1))
+                else if (!StringHelper.ZeroDots(arg1))
                 {
-                    if (OExists(before))
+                    if (engine.ObjectExists(before))
                     {
-                        if (OMExists(before, beforeParameters(after)))
+                        if (ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
                         {
-                            executeTemplate(GetOM(before, beforeParameters(after)), getParameters(arg1));
+                            executeTemplate(GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(arg1));
                             parse("return " + __LastValue);
                         }
                         else
@@ -508,47 +507,47 @@ namespace MetaScriptLang.Processing
                     if (isStringStack(arg1))
                         __LastValue = getStringStack(arg1);
                     else if (stackReady(arg1))
-                        __LastValue = dtos(getStack(arg1));
+                        __LastValue = StringHelper.DtoS(getStack(arg1));
                     else
                     {
-                        arg1 = subtractString(subtractString(arg1, "("), ")");
+                        arg1 = StringHelper.SubtractString(StringHelper.SubtractString(arg1, "("), ")");
                         return true;
                     }
                 }
             }
-            else if (VExists(arg1))
+            else if (VariableExists(arg1))
             {
-                if (OExists(beforeDot(arg1)))
+                if (engine.ObjectExists(StringHelper.BeforeDot(arg1)))
                 {
-                    if (GetOVString(beforeDot(arg1), afterDot(arg1)) != __Null)
-                        __LastValue = GetOVString(beforeDot(arg1), afterDot(arg1));
-                    else if (GetOVNumber(beforeDot(arg1), afterDot(arg1)) != __NullNum)
-                        __LastValue = dtos(GetOVNumber(beforeDot(arg1), afterDot(arg1)));
+                    if (GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __Null)
+                        __LastValue = GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1));
+                    else if (GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __NullNum)
+                        __LastValue = StringHelper.DtoS(GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)));
                     else
                         __LastValue = "null";
                 }
                 else
                 {
-                    if (isString(arg1))
-                        __LastValue = GetVString(arg1);
-                    else if (isNumber(arg1))
-                        __LastValue = dtos(GetVNumber(arg1));
+                    if (IsStringVariable(arg1))
+                        __LastValue = GetVariableString(arg1);
+                    else if (IsNumberVariable(arg1))
+                        __LastValue = StringHelper.DtoS(GetVariableNumber(arg1));
                     else
                         __LastValue = "null";
 
-                    if (GCCanCollectV(arg1))
-                        DeleteV(arg1);
+                    if (GCCanCollectVariable(arg1))
+                        DeleteVariable(arg1);
                 }
             }
-            else if (LExists(arg1))
+            else if (engine.ListExists(arg1))
             {
                 string bigString = "(";
 
-                for (int i = 0; i < GetLSize(arg1); i++)
+                for (int i = 0; i < engine.GetListSize(arg1); i++)
                 {
-                    bigString += GetLLine(arg1, i);
+                    bigString += engine.GetListLine(arg1, i);
 
-                    if (i != GetLSize(arg1) - 1)
+                    if (i != engine.GetListSize(arg1) - 1)
                         bigString += ',';
                 }
 
@@ -556,8 +555,8 @@ namespace MetaScriptLang.Processing
 
                 __LastValue = bigString;
 
-                if (GCCanCollectL(arg1))
-                    DeleteL(arg1);
+                if (engine.GCCanCollectList(arg1))
+                    engine.DeleteList(arg1);
             }
             else
                 __LastValue = arg1;
@@ -567,17 +566,17 @@ namespace MetaScriptLang.Processing
 
         void InternalRemember(string arg0, string arg1)
         {
-            if (VExists(arg1))
+            if (VariableExists(arg1))
             {
-                if (isString(arg1))
-                    saveVariable(arg1 + "&" + GetVString(arg1));
-                else if (isNumber(arg1))
-                    saveVariable(arg1 + "&" + dtos(GetVNumber(arg1)));
+                if (IsStringVariable(arg1))
+                    saveVariable(arg1 + "&" + GetVariableString(arg1));
+                else if (IsNumberVariable(arg1))
+                    saveVariable(arg1 + "&" + StringHelper.DtoS(GetVariableNumber(arg1)));
                 else
-                    error(ErrorLogger.IS_NULL, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
             }
             else
-                error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
+                ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
         }
 
         void InternalOutput(string arg0, string arg1)
@@ -586,30 +585,30 @@ namespace MetaScriptLang.Processing
             bool is_say = (arg0 == "say");
             bool is_print = (arg0 == "print" || arg0 == "println");
             // if parameter is variable, get it's value
-            if (VExists(arg1))
+            if (VariableExists(arg1))
             {
                 // set the value
-                if (!zeroDots(arg1))
+                if (!StringHelper.ZeroDots(arg1))
                 {
-                    if (GetOVString(beforeDot(arg1), afterDot(arg1)) != __Null)
-                        text = (GetOVString(beforeDot(arg1), afterDot(arg1)));
-                    else if (GetOVNumber(beforeDot(arg1), afterDot(arg1)) != __NullNum)
-                        text = (dtos(GetOVNumber(beforeDot(arg1), afterDot(arg1))));
+                    if (GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __Null)
+                        text = (GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)));
+                    else if (GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __NullNum)
+                        text = (StringHelper.DtoS(GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1))));
                     else
                     {
-                        error(ErrorLogger.IS_NULL, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
                         return;
                     }
                 }
                 else
                 {
-                    if (isString(arg1))
-                        text = (GetVString(arg1));
-                    else if (isNumber(arg1))
-                        text = (dtos(GetVNumber(arg1)));
+                    if (IsStringVariable(arg1))
+                        text = (GetVariableString(arg1));
+                    else if (IsNumberVariable(arg1))
+                        text = (StringHelper.DtoS(GetVariableNumber(arg1)));
                     else
                     {
-                        error(ErrorLogger.IS_NULL, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
                         return;
                     }
                 }

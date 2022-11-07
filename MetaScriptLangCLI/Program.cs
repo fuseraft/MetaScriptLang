@@ -6,7 +6,7 @@
     {
         public static void Main(string[] args)
         {
-            var engine = new Engine();
+            var engine = new LanguageEngine();
             engine.Run(args.Length, args);
         }
     }

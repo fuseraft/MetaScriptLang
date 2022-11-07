@@ -5,7 +5,7 @@
         private List<Variable> methodVariables = new ();
         private List<string> lines = new ();
 
-        private string logicOperatorValue= string.Empty,
+        private string logicOperatorValue = string.Empty,
             methodName = string.Empty,
             objectName = string.Empty,
             symbolString = string.Empty,

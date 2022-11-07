@@ -19,72 +19,72 @@
                     if (st[i] == '}')
                     {
                         builder.Clear();
-                        builder.Append(subtractChar(builder.ToString(), "{"));
+                        builder.Append(StringHelper.SubtractChars(builder.ToString(), "{"));
 
-                        if (VExists(builder.ToString()) && zeroDots(builder.ToString()))
+                        if (VariableExists(builder.ToString()) && StringHelper.ZeroDots(builder.ToString()))
                         {
-                            if (isString(builder.ToString()))
-                                cleaned.Append(GetVString(builder.ToString()));
-                            else if (isNumber(builder.ToString()))
-                                cleaned.Append(dtos(GetVNumber(builder.ToString())));
+                            if (IsStringVariable(builder.ToString()))
+                                cleaned.Append(GetVariableString(builder.ToString()));
+                            else if (IsNumberVariable(builder.ToString()))
+                                cleaned.Append(StringHelper.DtoS(GetVariableNumber(builder.ToString())));
                             else
                                 cleaned.Append("null");
                         }
-                        else if (MExists(builder.ToString()))
+                        else if (MethodExists(builder.ToString()))
                         {
                             parse(builder.ToString());
 
                             cleaned.Append(__LastValue);
                         }
-                        else if (containsParameters(builder.ToString()))
+                        else if (StringHelper.ContainsParameters(builder.ToString()))
                         {
                             if (stackReady(builder.ToString()))
                             {
                                 if (isStringStack(builder.ToString()))
                                     cleaned.Append(getStringStack(builder.ToString()));
                                 else
-                                    cleaned.Append(dtos(getStack(builder.ToString())));
+                                    cleaned.Append(StringHelper.DtoS(getStack(builder.ToString())));
                             }
-                            else if (!zeroDots(builder.ToString()))
+                            else if (!StringHelper.ZeroDots(builder.ToString()))
                             {
-                                string before = (beforeDot(builder.ToString())), after = (afterDot(builder.ToString()));
+                                string before = (StringHelper.BeforeDot(builder.ToString())), after = (StringHelper.AfterDot(builder.ToString()));
 
-                                if (OExists(before))
+                                if (engine.ObjectExists(before))
                                 {
-                                    if (OMExists(before, beforeParameters(after)))
+                                    if (ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
                                     {
-                                        executeTemplate(GetOM(before, beforeParameters(after)), getParameters(after));
+                                        executeTemplate(GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(after));
 
                                         cleaned.Append(__LastValue);
                                     }
                                     else
-                                        error(ErrorLogger.METHOD_UNDEFINED, before + "." + beforeParameters(after), false);
+                                        ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, before + "." + StringHelper.BeforeParameters(after), false);
                                 }
                                 else
-                                    error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
+                                    ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
                             }
-                            else if (MExists(beforeParameters(builder.ToString())))
+                            else if (MethodExists(StringHelper.BeforeParameters(builder.ToString())))
                             {
-                                executeTemplate(GetM(beforeParameters(builder.ToString())), getParameters(builder.ToString()));
+                                executeTemplate(GetMethod(StringHelper.BeforeParameters(builder.ToString())), StringHelper.GetParameters(builder.ToString()));
 
                                 cleaned.Append(__LastValue);
                             }
                             else
                                 cleaned.Append("null");
                         }
-                        else if (containsBrackets(builder.ToString()))
+                        else if (StringHelper.ContainsBrackets(builder.ToString()))
                         {
                             // TODO revisit this logic.
-                            string _beforeBrackets = beforeBrackets(builder.ToString()), afterBrackets = builder.ToString();
+                            string beforeBrackets = StringHelper.BeforeBrackets(builder.ToString()), afterBrackets = builder.ToString();
                             string rangeBegin = "", rangeEnd = "", _build = "";
 
-                            System.Collections.Generic.List<string> listRange = getBracketRange(afterBrackets);
+                            System.Collections.Generic.List<string> listRange = StringHelper.GetBracketRange(afterBrackets);
 
-                            if (VExists(_beforeBrackets))
+                            if (VariableExists(beforeBrackets))
                             {
-                                if (isString(_beforeBrackets))
+                                if (IsStringVariable(beforeBrackets))
                                 {
-                                    string tempString = GetVString(_beforeBrackets);
+                                    string tempString = GetVariableString(beforeBrackets);
 
                                     if (listRange.Count == 2)
                                     {
@@ -93,32 +93,32 @@
 
                                         if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                                         {
-                                            if (stoi(rangeBegin) < stoi(rangeEnd))
+                                            if (StringHelper.StoI(rangeBegin) < StringHelper.StoI(rangeEnd))
                                             {
-                                                if ((int)tempString.Length - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                                if ((int)tempString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                                 {
-                                                    for (int z = stoi(rangeBegin); z <= stoi(rangeEnd); z++)
+                                                    for (int z = StringHelper.StoI(rangeBegin); z <= StringHelper.StoI(rangeEnd); z++)
                                                         _build += (tempString[z]);
 
                                                     cleaned.Append(_build);
                                                 }
                                                 else
-                                                    error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                             }
-                                            else if (stoi(rangeBegin) > stoi(rangeEnd))
+                                            else if (StringHelper.StoI(rangeBegin) > StringHelper.StoI(rangeEnd))
                                             {
-                                                if ((int)tempString.Length - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                                if ((int)tempString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                                 {
-                                                    for (int z = stoi(rangeBegin); z >= stoi(rangeEnd); z--)
+                                                    for (int z = StringHelper.StoI(rangeBegin); z >= StringHelper.StoI(rangeEnd); z--)
                                                         _build += (tempString[z]);
 
                                                     cleaned.Append(_build);
                                                 }
                                                 else
-                                                    error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                             }
                                             else
-                                                error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                                ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                         }
                                     }
                                     else if (listRange.Count == 1)
@@ -127,18 +127,18 @@
 
                                         if (StringHelper.IsNumeric(rangeBegin))
                                         {
-                                            if (stoi(rangeBegin) <= (int)tempString.Length - 1 && stoi(rangeBegin) >= 0)
+                                            if (StringHelper.StoI(rangeBegin) <= (int)tempString.Length - 1 && StringHelper.StoI(rangeBegin) >= 0)
                                             {
-                                                cleaned.Append(tempString[stoi(rangeBegin)]);
+                                                cleaned.Append(tempString[StringHelper.StoI(rangeBegin)]);
                                             }
-                                            else error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
+                                            else ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
                                         }
-                                        else error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
+                                        else ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
                                     }
-                                    else error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
+                                    else ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
                                 }
                             }
-                            else if (LExists(_beforeBrackets))
+                            else if (engine.ListExists(beforeBrackets))
                             {
                                 if (listRange.Count == 2)
                                 {
@@ -146,18 +146,18 @@
 
                                     if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                                     {
-                                        if (stoi(rangeBegin) < stoi(rangeEnd))
+                                        if (StringHelper.StoI(rangeBegin) < StringHelper.StoI(rangeEnd))
                                         {
-                                            if (GetLSize(_beforeBrackets) - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                            if (engine.GetListSize(beforeBrackets) - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                             {
                                                 System.Text.StringBuilder bigString = new();
                                                 bigString.Append("(");
 
-                                                for (int z = stoi(rangeBegin); z <= stoi(rangeEnd); z++)
+                                                for (int z = StringHelper.StoI(rangeBegin); z <= StringHelper.StoI(rangeEnd); z++)
                                                 {
-                                                    bigString.Append("\"" + GetLLine(_beforeBrackets, z) + "\"");
+                                                    bigString.Append("\"" + engine.GetListLine(beforeBrackets, z) + "\"");
 
-                                                    if (z < stoi(rangeEnd))
+                                                    if (z < StringHelper.StoI(rangeEnd))
                                                         bigString.Append(',');
                                                 }
 
@@ -166,20 +166,20 @@
                                                 cleaned.Append(bigString);
                                             }
                                             else
-                                                error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                                ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                         }
-                                        else if (stoi(rangeBegin) > stoi(rangeEnd))
+                                        else if (StringHelper.StoI(rangeBegin) > StringHelper.StoI(rangeEnd))
                                         {
-                                            if (GetLSize(_beforeBrackets) - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                            if (engine.GetListSize(beforeBrackets) - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                             {
                                                 System.Text.StringBuilder bigString = new();
                                                 bigString.Append('(');
 
-                                                for (int z = stoi(rangeBegin); z >= stoi(rangeEnd); z--)
+                                                for (int z = StringHelper.StoI(rangeBegin); z >= StringHelper.StoI(rangeEnd); z--)
                                                 {
-                                                    bigString.Append("\"" + GetLLine(_beforeBrackets, z) + "\"");
+                                                    bigString.Append("\"" + engine.GetListLine(beforeBrackets, z) + "\"");
 
-                                                    if (z > stoi(rangeEnd))
+                                                    if (z > StringHelper.StoI(rangeEnd))
                                                         bigString.Append(',');
                                                 }
 
@@ -188,13 +188,13 @@
                                                 cleaned.Append(bigString);
                                             }
                                             else
-                                                error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                                ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                         }
                                         else
-                                            error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                            ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                     }
                                     else
-                                        error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                        ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                 }
                                 else if (listRange.Count == 1)
                                 {
@@ -202,45 +202,45 @@
 
                                     if (StringHelper.IsNumeric(rangeBegin))
                                     {
-                                        if (stoi(rangeBegin) <= (int)GetLSize(_beforeBrackets) - 1 && stoi(rangeBegin) >= 0)
-                                            cleaned.Append(GetLLine(_beforeBrackets, stoi(rangeBegin)));
+                                        if (StringHelper.StoI(rangeBegin) <= (int)engine.GetListSize(beforeBrackets) - 1 && StringHelper.StoI(rangeBegin) >= 0)
+                                            cleaned.Append(engine.GetListLine(beforeBrackets, StringHelper.StoI(rangeBegin)));
                                         else
-                                            error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
+                                            ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
                                     }
                                     else
-                                        error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
+                                        ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
                                 }
                                 else
-                                    error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
+                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
                             }
                             else
                                 cleaned.Append("null");
                         }
-                        else if (!zeroDots(builder.ToString()))
+                        else if (!StringHelper.ZeroDots(builder.ToString()))
                         {
-                            string before = beforeDot(builder.ToString()), after = afterDot(builder.ToString());
+                            string before = StringHelper.BeforeDot(builder.ToString()), after = StringHelper.AfterDot(builder.ToString());
 
-                            if (OExists(before))
+                            if (engine.ObjectExists(before))
                             {
-                                if (OMExists(before, after))
+                                if (ObjectMethodExists(before, after))
                                 {
                                     parse(before + "." + after);
                                     cleaned.Append(__LastValue);
                                 }
-                                else if (OVExists(before, after))
+                                else if (ObjectVariableExists(before, after))
                                 {
-                                    if (GetOVString(before, after) != __Null)
-                                        cleaned.Append(GetOVString(before, after));
-                                    else if (GetOVNumber(before, after) != __NullNum)
-                                        cleaned.Append(dtos(GetOVNumber(before, after)));
+                                    if (GetObjectVariableString(before, after) != __Null)
+                                        cleaned.Append(GetObjectVariableString(before, after));
+                                    else if (GetObjectVariableNumber(before, after) != __NullNum)
+                                        cleaned.Append(StringHelper.DtoS(GetObjectVariableNumber(before, after)));
                                     else
                                         cleaned.Append("null");
                                 }
                                 else
-                                    error(ErrorLogger.VAR_UNDEFINED, before + "." + after, false);
+                                    ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before + "." + after, false);
                             }
                             else
-                                error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
+                                ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
                         }
                         else
                             cleaned.Append(builder.ToString());

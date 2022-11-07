@@ -1,6 +1,7 @@
 ﻿namespace MetaScriptLang.Processing
 {
     using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
     using MetaScriptLang.Logging;
 
     public partial class Parser
@@ -10,7 +11,7 @@
             List newList = new();
             System.Collections.Generic.List<string> dirList = new();
             // TODO: filesOnly logic
-            dirList.AddRange(System.IO.Directory.GetFileSystemEntries(GetVString(before)));
+            dirList.AddRange(System.IO.Directory.GetFileSystemEntries(GetVariableString(before)));
 
             for (int i = 0; i < dirList.Count; i++)
             {
@@ -32,63 +33,63 @@
 
         void appendText(string arg1, string arg2, bool newLine)
         {
-            if (VExists(arg1))
+            if (VariableExists(arg1))
             {
-                if (isString(arg1))
+                if (IsStringVariable(arg1))
                 {
-                    if (System.IO.File.Exists(GetVString(arg1)))
+                    if (System.IO.File.Exists(GetVariableString(arg1)))
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isString(arg2))
+                            if (IsStringVariable(arg2))
                             {
                                 if (newLine)
-                                    app(GetVString(arg1), GetVString(arg2) + "\r\n");
+                                    app(GetVariableString(arg1), GetVariableString(arg2) + "\r\n");
                                 else
-                                    app(GetVString(arg1), GetVString(arg2));
+                                    app(GetVariableString(arg1), GetVariableString(arg2));
                             }
-                            else if (isNumber(arg2))
+                            else if (IsNumberVariable(arg2))
                             {
                                 if (newLine)
-                                    app(GetVString(arg1), dtos(GetVNumber(arg2)) + "\r\n");
+                                    app(GetVariableString(arg1), StringHelper.DtoS(GetVariableNumber(arg2)) + "\r\n");
                                 else
-                                    app(GetVString(arg1), dtos(GetVNumber(arg2)));
+                                    app(GetVariableString(arg1), StringHelper.DtoS(GetVariableNumber(arg2)));
                             }
                             else
-                                error(ErrorLogger.IS_NULL, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                         }
                         else
                         {
                             if (newLine)
-                                app(GetVString(arg1), arg2 + "\r\n");
+                                app(GetVariableString(arg1), arg2 + "\r\n");
                             else
-                                app(GetVString(arg1), arg2);
+                                app(GetVariableString(arg1), arg2);
                         }
                     }
                     else
-                        error(ErrorLogger.READ_FAIL, GetVString(arg1), false);
+                        ErrorLogger.Error(ErrorLogger.READ_FAIL, GetVariableString(arg1), false);
                 }
                 else
-                    error(ErrorLogger.CONV_ERR, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg1, false);
             }
             else
             {
-                if (VExists(arg2))
+                if (VariableExists(arg2))
                 {
-                    if (isString(arg2))
+                    if (IsStringVariable(arg2))
                     {
                         if (System.IO.File.Exists(arg1))
                         {
                             if (newLine)
-                                app(arg1, GetVString(arg2) + "\r\n");
+                                app(arg1, GetVariableString(arg2) + "\r\n");
                             else
-                                app(arg1, GetVString(arg2));
+                                app(arg1, GetVariableString(arg2));
                         }
                         else
-                            error(ErrorLogger.READ_FAIL, GetVString(arg2), false);
+                            ErrorLogger.Error(ErrorLogger.READ_FAIL, GetVariableString(arg2), false);
                     }
                     else
-                        error(ErrorLogger.CONV_ERR, arg2, false);
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                 }
                 else
                 {
@@ -100,7 +101,7 @@
                             app(arg1, arg2);
                     }
                     else
-                        error(ErrorLogger.READ_FAIL, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.READ_FAIL, arg1, false);
                 }
             }
         }
@@ -116,53 +117,53 @@
 
         void __fwrite(string arg1, string arg2)
         {
-            if (VExists(arg1))
+            if (VariableExists(arg1))
             {
-                if (isString(arg1))
+                if (IsStringVariable(arg1))
                 {
-                    if (System.IO.File.Exists(GetVString(arg1)))
+                    if (System.IO.File.Exists(GetVariableString(arg1)))
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isString(arg2))
+                            if (IsStringVariable(arg2))
                             {
-                                app(GetVString(arg1), GetVString(arg2) + "\r\n");
+                                app(GetVariableString(arg1), GetVariableString(arg2) + "\r\n");
                                 __LastValue = "0";
                             }
-                            else if (isNumber(arg2))
+                            else if (IsNumberVariable(arg2))
                             {
-                                app(GetVString(arg1), dtos(GetVNumber(arg2)) + "\r\n");
+                                app(GetVariableString(arg1), StringHelper.DtoS(GetVariableNumber(arg2)) + "\r\n");
                                 __LastValue = "0";
                             }
                             else
                             {
-                                error(ErrorLogger.IS_NULL, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                                 __LastValue = "-1";
                             }
                         }
                         else
                         {
-                            app(GetVString(arg1), arg2 + "\r\n");
+                            app(GetVariableString(arg1), arg2 + "\r\n");
                             __LastValue = "0";
                         }
                     }
                     else
                     {
-                        createFile(GetVString(arg1));
+                        createFile(GetVariableString(arg1));
 
-                        if (isString(arg2))
+                        if (IsStringVariable(arg2))
                         {
-                            app(GetVString(arg1), GetVString(arg2) + "\r\n");
+                            app(GetVariableString(arg1), GetVariableString(arg2) + "\r\n");
                             __LastValue = "1";
                         }
-                        else if (isNumber(arg2))
+                        else if (IsNumberVariable(arg2))
                         {
-                            app(GetVString(arg1), dtos(GetVNumber(arg2)) + "\r\n");
+                            app(GetVariableString(arg1), StringHelper.DtoS(GetVariableNumber(arg2)) + "\r\n");
                             __LastValue = "1";
                         }
                         else
                         {
-                            error(ErrorLogger.IS_NULL, arg2, false);
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                             __LastValue = "-1";
                         }
 
@@ -171,31 +172,31 @@
                 }
                 else
                 {
-                    error(ErrorLogger.CONV_ERR, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg1, false);
                     __LastValue = "-1";
                 }
             }
             else
             {
-                if (VExists(arg2))
+                if (VariableExists(arg2))
                 {
-                    if (isString(arg2))
+                    if (IsStringVariable(arg2))
                     {
                         if (System.IO.File.Exists(arg1))
                         {
-                            app(arg1, GetVString(arg2) + "\r\n");
+                            app(arg1, GetVariableString(arg2) + "\r\n");
                             __LastValue = "0";
                         }
                         else
                         {
-                            createFile(GetVString(arg2));
-                            app(arg1, GetVString(arg2) + "\r\n");
+                            createFile(GetVariableString(arg2));
+                            app(arg1, GetVariableString(arg2) + "\r\n");
                             __LastValue = "1";
                         }
                     }
                     else
                     {
-                        error(ErrorLogger.CONV_ERR, arg2, false);
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                         __LastValue = "-1";
                     }
                 }

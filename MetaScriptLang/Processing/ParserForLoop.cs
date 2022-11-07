@@ -1,9 +1,9 @@
-﻿using MetaScriptLang.Data;
-using MetaScriptLang.Logging;
-using System.Linq;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
+    using MetaScriptLang.Logging;
+
     public partial class Parser
     {
         void forLoop(Method m)
@@ -38,7 +38,7 @@ namespace MetaScriptLang.Processing
                                     buildSymbol = false;
                                     ended = true;
 
-                                    builder = subtractString(builder, "{");
+                                    builder = StringHelper.SubtractString(builder, "{");
 
                                     if (builder == m.GetSymbol())
                                     {
@@ -102,7 +102,7 @@ namespace MetaScriptLang.Processing
                         }
                     }
                     else
-                        error(ErrorLogger.INFINITE_LOOP, "", true);
+                        ErrorLogger.Error(ErrorLogger.INFINITE_LOOP, "", true);
                 }
                 else if (m.Start() < m.Stop())
                 {
@@ -132,10 +132,10 @@ namespace MetaScriptLang.Processing
                                         buildSymbol = false;
                                         ended = true;
 
-                                        builder = subtractString(builder, "{");
+                                        builder = StringHelper.SubtractString(builder, "{");
 
                                         if (builder == m.GetSymbol())
-                                            cleanString += (itos(start));
+                                            cleanString += (StringHelper.ItoS(start));
 
                                         builder = string.Empty;
                                     }
@@ -195,10 +195,10 @@ namespace MetaScriptLang.Processing
                                         buildSymbol = false;
                                         ended = true;
 
-                                        builder = subtractString(builder, "{");
+                                        builder = StringHelper.SubtractString(builder, "{");
 
                                         if (builder == m.GetSymbol())
-                                            cleaned += (itos(start));
+                                            cleaned += (StringHelper.ItoS(start));
 
                                         builder = string.Empty;
                                     }

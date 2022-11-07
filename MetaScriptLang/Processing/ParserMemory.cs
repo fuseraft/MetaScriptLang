@@ -1,61 +1,62 @@
 ﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Helpers;
     using MetaScriptLang.Logging;
 
     public partial class Parser
     {
 
         #region Memory Stuff
-        void setLastValue(string s)
+        void SetLastValue(string s)
         {
             __LastValue = s;
         }
 
         void setList(string arg1, string arg2, System.Collections.Generic.List<string> parameters)
         {
-            if (MExists(beforeParameters(arg2)))
+            if (MethodExists(StringHelper.BeforeParameters(arg2)))
             {
-                executeTemplate(GetM(beforeParameters(arg2)), parameters);
+                executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), parameters);
 
-                if (containsParameters(__LastValue))
+                if (StringHelper.ContainsParameters(__LastValue))
                 {
-                    System.Collections.Generic.List<string> last_parameters = getParameters(__LastValue);
+                    System.Collections.Generic.List<string> last_parameters = StringHelper.GetParameters(__LastValue);
 
                     for (int i = 0; i < last_parameters.Count; i++)
-                        LAddToList(arg1, last_parameters[i]);
+                        engine.AddToList(arg1, last_parameters[i]);
                 }
                 else
-                    LAddToList(arg1, __LastValue);
+                    engine.AddToList(arg1, __LastValue);
             }
-            else if (OExists(beforeDot(beforeParameters(arg2))))
+            else if (engine.ObjectExists(StringHelper.BeforeDot(StringHelper.BeforeParameters(arg2))))
             {
-                executeTemplate(GetOM(beforeDot(beforeParameters(arg2)), afterDot(beforeParameters(arg2))), parameters);
+                executeTemplate(GetObjectMethod(StringHelper.BeforeDot(StringHelper.BeforeParameters(arg2)), StringHelper.AfterDot(StringHelper.BeforeParameters(arg2))), parameters);
 
-                if (containsParameters(__LastValue))
+                if (StringHelper.ContainsParameters(__LastValue))
                 {
-                    System.Collections.Generic.List<string> last_parameters = getParameters(__LastValue);
+                    System.Collections.Generic.List<string> last_parameters = StringHelper.GetParameters(__LastValue);
 
                     for (int i = 0; i < (int)last_parameters.Count; i++)
-                        LAddToList(arg1, last_parameters[i]);
+                        engine.AddToList(arg1, last_parameters[i]);
                 }
                 else
-                    LAddToList(arg1, __LastValue);
+                    engine.AddToList(arg1, __LastValue);
             }
             else
             {
                 for (int i = 0; i < parameters.Count; i++)
                 {
-                    if (VExists(parameters[i]))
+                    if (VariableExists(parameters[i]))
                     {
-                        if (isString(parameters[i]))
-                            LAddToList(arg1, GetVString(parameters[i]));
-                        else if (isNumber(parameters[i]))
-                            LAddToList(arg1, dtos(GetVNumber(parameters[i])));
+                        if (IsStringVariable(parameters[i]))
+                            engine.AddToList(arg1, GetVariableString(parameters[i]));
+                        else if (IsNumberVariable(parameters[i]))
+                            engine.AddToList(arg1, StringHelper.DtoS(GetVariableNumber(parameters[i])));
                         else
-                            error(ErrorLogger.IS_NULL, parameters[i], false);
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                     }
                     else
-                        LAddToList(arg1, parameters[i]);
+                        engine.AddToList(arg1, parameters[i]);
                 }
             }
         }
@@ -84,13 +85,13 @@
 
         bool notObjectMethod(string s)
         {
-            if (zeroDots(s))
+            if (StringHelper.ZeroDots(s))
                 return (true);
             else
             {
-                string before = beforeDot(s);
+                string before = StringHelper.BeforeDot(s);
 
-                if (OExists(before))
+                if (engine.ObjectExists(before))
                     return (false);
                 else
                     return (true);
@@ -123,17 +124,17 @@
         **/
         void MemRedefine(string target, string name)
         {
-            if (VExists(target))
+            if (VariableExists(target))
             {
-                if (System.IO.File.Exists(GetVString(target)) || System.IO.Directory.Exists(GetVString(target)))
+                if (System.IO.File.Exists(GetVariableString(target)) || System.IO.Directory.Exists(GetVariableString(target)))
                 {
-                    string old_name = (GetVString(target)), new_name = string.Empty;
+                    string old_name = (GetVariableString(target)), new_name = string.Empty;
 
-                    if (VExists(name))
+                    if (VariableExists(name))
                     {
-                        if (isString(name))
+                        if (IsStringVariable(name))
                         {
-                            new_name = GetVString(name);
+                            new_name = GetVariableString(name);
 
                             if (System.IO.File.Exists(old_name))
                             {
@@ -142,10 +143,10 @@
                                     if (System.IO.File.Exists(old_name))
                                         rename(old_name, new_name);
                                     else
-                                        error(ErrorLogger.FILE_NOT_FOUND, old_name, false);
+                                        ErrorLogger.Error(ErrorLogger.FILE_NOT_FOUND, old_name, false);
                                 }
                                 else
-                                    error(ErrorLogger.FILE_EXISTS, new_name, false);
+                                    ErrorLogger.Error(ErrorLogger.FILE_EXISTS, new_name, false);
                             }
                             else if (System.IO.Directory.Exists(old_name))
                             {
@@ -154,16 +155,16 @@
                                     if (System.IO.Directory.Exists(old_name))
                                         rename(old_name, new_name);
                                     else
-                                        error(ErrorLogger.DIR_NOT_FOUND, old_name, false);
+                                        ErrorLogger.Error(ErrorLogger.DIR_NOT_FOUND, old_name, false);
                                 }
                                 else
-                                    error(ErrorLogger.DIR_EXISTS, new_name, false);
+                                    ErrorLogger.Error(ErrorLogger.DIR_EXISTS, new_name, false);
                             }
                             else
-                                error(ErrorLogger.TARGET_UNDEFINED, old_name, false);
+                                ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, old_name, false);
                         }
                         else
-                            error(ErrorLogger.NULL_STRING, name, false);
+                            ErrorLogger.Error(ErrorLogger.NULL_STRING, name, false);
                     }
                     else
                     {
@@ -172,57 +173,57 @@
                             if (!System.IO.File.Exists(name))
                                 rename(old_name, name);
                             else
-                                error(ErrorLogger.FILE_EXISTS, name, false);
+                                ErrorLogger.Error(ErrorLogger.FILE_EXISTS, name, false);
                         }
                         else if (System.IO.Directory.Exists(old_name))
                         {
                             if (!System.IO.Directory.Exists(name))
                                 rename(old_name, name);
                             else
-                                error(ErrorLogger.DIR_EXISTS, name, false);
+                                ErrorLogger.Error(ErrorLogger.DIR_EXISTS, name, false);
                         }
                         else
-                            error(ErrorLogger.TARGET_UNDEFINED, old_name, false);
+                            ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, old_name, false);
                     }
                 }
                 else
                 {
-                    if (startsWith(name, "@"))
+                    if (StringHelper.StringStartsWith(name, "@"))
                     {
-                        if (!VExists(name))
-                            SetVName(target, name);
+                        if (!VariableExists(name))
+                            SetVariableName(target, name);
                         else
-                            error(ErrorLogger.VAR_DEFINED, name, false);
+                            ErrorLogger.Error(ErrorLogger.VAR_DEFINED, name, false);
                     }
                     else
-                        error(ErrorLogger.INVALID_VAR_DECL, name, false);
+                        ErrorLogger.Error(ErrorLogger.INVALID_VAR_DECL, name, false);
                 }
             }
-            else if (LExists(target))
+            else if (engine.ListExists(target))
             {
-                if (!LExists(name))
-                    SetLName(target, name);
+                if (!engine.ListExists(name))
+                    engine.SetListName(target, name);
                 else
-                    error(ErrorLogger.LIST_UNDEFINED, name, false);
+                    ErrorLogger.Error(ErrorLogger.LIST_UNDEFINED, name, false);
             }
-            else if (OExists(target))
+            else if (engine.ObjectExists(target))
             {
-                if (!OExists(name))
-                    SetOName(target, name);
+                if (!engine.ObjectExists(name))
+                    SetObjectName(target, name);
                 else
-                    error(ErrorLogger.OBJ_METHOD_UNDEFINED, name, false);
+                    ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, name, false);
             }
-            else if (MExists(target))
+            else if (MethodExists(target))
             {
-                if (!MExists(name))
-                    SetMName(target, name);
+                if (!MethodExists(name))
+                    SetMethodName(target, name);
                 else
-                    error(ErrorLogger.METHOD_UNDEFINED, name, false);
+                    ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, name, false);
             }
             else if (System.IO.File.Exists(target) || System.IO.Directory.Exists(target))
                 rename(target, name);
             else
-                error(ErrorLogger.TARGET_UNDEFINED, target, false);
+                ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, target, false);
         }
         #endregion
     }

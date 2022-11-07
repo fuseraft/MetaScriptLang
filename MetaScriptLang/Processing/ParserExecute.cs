@@ -17,28 +17,28 @@
 
             for (int i = 0; i < (int)methodVariables.Count; i++)
             {
-                if (VExists(strings[i]))
+                if (VariableExists(strings[i]))
                 {
-                    if (isString(strings[i]))
-                        CreateVString(methodVariables[i].name(), GetVString(strings[i]));
-                    else if (isNumber(strings[i]))
-                        CreateVNumber(methodVariables[i].name(), GetVNumber(strings[i]));
+                    if (IsStringVariable(strings[i]))
+                        CreateVariableString(methodVariables[i].name(), GetVariableString(strings[i]));
+                    else if (IsNumberVariable(strings[i]))
+                        CreateVariableNumber(methodVariables[i].name(), GetVariableNumber(strings[i]));
                 }
-                else if (MExists(strings[i]))
+                else if (MethodExists(strings[i]))
                 {
                     parse(strings[i]);
 
                     if (StringHelper.IsNumeric(__LastValue))
-                        CreateVNumber(methodVariables[i].name(), stod(__LastValue));
+                        CreateVariableNumber(methodVariables[i].name(), StringHelper.StoD(__LastValue));
                     else
-                        CreateVString(methodVariables[i].name(), __LastValue);
+                        CreateVariableString(methodVariables[i].name(), __LastValue);
                 }
                 else
                 {
                     if (StringHelper.IsNumeric(strings[i]))
-                        CreateVNumber(methodVariables[i].name(), stod(strings[i]));
+                        CreateVariableNumber(methodVariables[i].name(), StringHelper.StoD(strings[i]));
                     else
-                        CreateVString(methodVariables[i].name(), strings[i]);
+                        CreateVariableString(methodVariables[i].name(), strings[i]);
                 }
             }
 
@@ -71,7 +71,7 @@
                     for (int a = 0; a < (int)strings.Count; a++)
                     {
                         string variableString = ("$");
-                        variableString += (itos(a));
+                        variableString += (StringHelper.ItoS(a));
 
                         if (words[x] == variableString)
                         {
@@ -104,7 +104,7 @@
             __ExecutedTemplate = false;
             __DontCollectMethodVars = false;
 
-            collectGarbage(); // if (!__DontCollectMethodVars)
+            gc.DoGarbageCollection(); // if (!__DontCollectMethodVars)
         }
 
         void executeMethod(Method m)
@@ -145,7 +145,7 @@
                         for (int a = 0; a < (int)m.GetVariables().Count; a++)
                         {
                             string variableString = ("$");
-                            variableString += (itos(a));
+                            variableString += (StringHelper.ItoS(a));
 
                             if (words[x] == m.GetVariables()[a].name())
                             {
@@ -154,7 +154,7 @@
                                 if (m.GetVariables()[a].getString() != __Null)
                                     newWords.Add(m.GetVariables()[a].getString());
                                 else if (m.GetVariables()[a].getNumber() != __NullNum)
-                                    newWords.Add(dtos(m.GetVariables()[a].getNumber()));
+                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].getNumber()));
                             }
                             else if (words[x] == variableString)
                             {
@@ -163,7 +163,7 @@
                                 if (m.GetVariables()[a].getString() != __Null)
                                     newWords.Add(m.GetVariables()[a].getString());
                                 else if (m.GetVariables()[a].getNumber() != __NullNum)
-                                    newWords.Add(dtos(m.GetVariables()[a].getNumber()));
+                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].getNumber()));
                             }
                         }
 
@@ -193,7 +193,7 @@
 
             __ExecutedMethod = false;
 
-            collectGarbage();
+            gc.DoGarbageCollection();
         }
 
         void executeNest(MetaScriptLang.Data.SwitchCase n)

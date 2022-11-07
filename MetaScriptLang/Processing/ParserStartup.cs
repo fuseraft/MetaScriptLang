@@ -53,7 +53,7 @@
                 varValues.Clear();
             }
             else
-                error(ErrorLogger.READ_FAIL, __SavedVars, false);
+                ErrorLogger.Error(ErrorLogger.READ_FAIL, __SavedVars, false);
         }
     }
 }

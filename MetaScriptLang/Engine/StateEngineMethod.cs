@@ -1,9 +1,9 @@
-﻿using MetaScriptLang.Data;
-using MetaScriptLang.Helpers;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Engine
 {
-    public partial class Parser
+    using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
+
+    public partial class StateEngine
     {
         private string CurrentMethodName = string.Empty;
 
@@ -23,7 +23,7 @@ namespace MetaScriptLang.Processing
                         return true;
                 }
             }
-            else if (engine.ObjectExists(StringHelper.BeforeDot(s)) && ObjectMethodExists(StringHelper.BeforeDot(s), StringHelper.AfterDot(s)))
+            else if (ObjectExists(StringHelper.BeforeDot(s)) && ObjectMethodExists(StringHelper.BeforeDot(s), StringHelper.AfterDot(s)))
             {
                 return true;
             }

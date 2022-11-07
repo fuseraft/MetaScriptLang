@@ -1,8 +1,8 @@
-﻿using MetaScriptLang.Data;
-using System.Linq;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
+
     public partial class Parser
     {
         #region Loop
@@ -96,7 +96,7 @@ namespace MetaScriptLang.Processing
                     if (!__DefiningObject && !__DefiningMethod)
                     {
                         active = false;
-                        clearAll();
+                        gc.ClearAll();
                     }
                     else
                         parse(s);
@@ -104,7 +104,7 @@ namespace MetaScriptLang.Processing
                 else
                 {
                     string c = s;
-                    parse(trimLeadingWhitespace(c));
+                    parse(StringHelper.LTrim(c));
                 }
             }
         }
@@ -128,10 +128,10 @@ namespace MetaScriptLang.Processing
 
                     for (int z = 0; z < GetSSize(__CurrentScript); z++)
                     {
-                        if (endsWith(GetSLine(__CurrentScript, z), "::"))
+                        if (StringHelper.StringEndsWith(GetSLine(__CurrentScript, z), "::"))
                         {
                             string s = GetSLine(__CurrentScript, z);
-                            s = subtractString(s, "::");
+                            s = StringHelper.SubtractString(s, "::");
 
                             if (s == __GoTo)
                                 startParsing = true;
@@ -169,7 +169,7 @@ namespace MetaScriptLang.Processing
                     }
                     else
                     {
-                        newScript.add(trimLeadingWhitespace(s));
+                        newScript.add(StringHelper.LTrim(s));
                     }
                 }
                 else

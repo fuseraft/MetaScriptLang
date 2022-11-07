@@ -9,11 +9,11 @@
         {
             string returnValue = ("");
 
-            if (isString(beforeBracket))
+            if (IsStringVariable(beforeBracket))
             {
-                System.Collections.Generic.List<string> listRange = getBracketRange(arg2);
+                System.Collections.Generic.List<string> listRange = StringHelper.GetBracketRange(arg2);
 
-                string variableString = GetVString(beforeBracket);
+                string variableString = GetVariableString(beforeBracket);
 
                 if (listRange.Count == 2)
                 {
@@ -23,42 +23,42 @@
                     {
                         if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                         {
-                            if (stoi(rangeBegin) < stoi(rangeEnd))
+                            if (StringHelper.StoI(rangeBegin) < StringHelper.StoI(rangeEnd))
                             {
-                                if ((int)variableString.Length - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                if ((int)variableString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                 {
                                     string tempString = ("");
 
-                                    for (int i = stoi(rangeBegin); i <= stoi(rangeEnd); i++)
+                                    for (int i = StringHelper.StoI(rangeBegin); i <= StringHelper.StoI(rangeEnd); i++)
                                         tempString += (variableString[i]);
 
                                     returnValue = tempString;
                                 }
                                 else
-                                    error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                             }
-                            else if (stoi(rangeBegin) > stoi(rangeEnd))
+                            else if (StringHelper.StoI(rangeBegin) > StringHelper.StoI(rangeEnd))
                             {
-                                if ((int)variableString.Length >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                if ((int)variableString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                 {
                                     string tempString = ("");
 
-                                    for (int i = stoi(rangeBegin); i >= stoi(rangeEnd); i--)
+                                    for (int i = StringHelper.StoI(rangeBegin); i >= StringHelper.StoI(rangeEnd); i--)
                                         tempString += (variableString[i]);
 
                                     returnValue = tempString;
                                 }
                                 else
-                                    error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                             }
                             else
-                                error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                         }
                         else
-                            error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                            ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                     }
                     else
-                        error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                        ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                 }
                 else if (listRange.Count == 1)
                 {
@@ -68,10 +68,10 @@
                     {
                         if (StringHelper.IsNumeric(rangeBegin))
                         {
-                            if ((int)variableString.Length - 1 >= stoi(rangeBegin) && stoi(rangeBegin) >= 0)
+                            if ((int)variableString.Length - 1 >= StringHelper.StoI(rangeBegin) && StringHelper.StoI(rangeBegin) >= 0)
                             {
                                 string tmp_ = ("");
-                                tmp_ += (variableString[stoi(rangeBegin)]);
+                                tmp_ += (variableString[StringHelper.StoI(rangeBegin)]);
 
                                 returnValue = tmp_;
                             }
@@ -79,21 +79,21 @@
                     }
                 }
                 else
-                    error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
+                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
             }
             else
-                error(ErrorLogger.NULL_STRING, beforeBracket, false);
+                ErrorLogger.Error(ErrorLogger.NULL_STRING, beforeBracket, false);
 
             return (returnValue);
         }
 
         void setSubString(string arg1, string arg2, string beforeBracket)
         {
-            if (isString(beforeBracket))
+            if (IsStringVariable(beforeBracket))
             {
-                System.Collections.Generic.List<string> listRange = getBracketRange(arg2);
+                System.Collections.Generic.List<string> listRange = StringHelper.GetBracketRange(arg2);
 
-                string variableString = GetVString(beforeBracket);
+                string variableString = GetVariableString(beforeBracket);
 
                 if (listRange.Count == 2)
                 {
@@ -103,48 +103,48 @@
                     {
                         if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                         {
-                            if (stoi(rangeBegin) < stoi(rangeEnd))
+                            if (StringHelper.StoI(rangeBegin) < StringHelper.StoI(rangeEnd))
                             {
-                                if ((int)variableString.Length - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                if ((int)variableString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                 {
                                     string tempString = ("");
 
-                                    for (int i = stoi(rangeBegin); i <= stoi(rangeEnd); i++)
+                                    for (int i = StringHelper.StoI(rangeBegin); i <= StringHelper.StoI(rangeEnd); i++)
                                         tempString += (variableString[i]);
 
-                                    if (VExists(arg1))
-                                        SetVString(arg1, tempString);
+                                    if (VariableExists(arg1))
+                                        SetVariableString(arg1, tempString);
                                     else
-                                        CreateVString(arg1, tempString);
+                                        CreateVariableString(arg1, tempString);
                                 }
                                 else
-                                    error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                             }
-                            else if (stoi(rangeBegin) > stoi(rangeEnd))
+                            else if (StringHelper.StoI(rangeBegin) > StringHelper.StoI(rangeEnd))
                             {
-                                if ((int)variableString.Length >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                if ((int)variableString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                 {
                                     string tempString = ("");
 
-                                    for (int i = stoi(rangeBegin); i >= stoi(rangeEnd); i--)
+                                    for (int i = StringHelper.StoI(rangeBegin); i >= StringHelper.StoI(rangeEnd); i--)
                                         tempString += (variableString[i]);
 
-                                    if (VExists(arg1))
-                                        SetVString(arg1, tempString);
+                                    if (VariableExists(arg1))
+                                        SetVariableString(arg1, tempString);
                                     else
-                                        CreateVString(arg1, tempString);
+                                        CreateVariableString(arg1, tempString);
                                 }
                                 else
-                                    error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                             }
                             else
-                                error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                         }
                         else
-                            error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                            ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                     }
                     else
-                        error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                        ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                 }
                 else if (listRange.Count == 1)
                 {
@@ -154,24 +154,24 @@
                     {
                         if (StringHelper.IsNumeric(rangeBegin))
                         {
-                            if ((int)variableString.Length - 1 >= stoi(rangeBegin) && stoi(rangeBegin) >= 0)
+                            if ((int)variableString.Length - 1 >= StringHelper.StoI(rangeBegin) && StringHelper.StoI(rangeBegin) >= 0)
                             {
                                 string tmp_ = ("");
-                                tmp_ += (variableString[stoi(rangeBegin)]);
+                                tmp_ += (variableString[StringHelper.StoI(rangeBegin)]);
 
-                                if (VExists(arg1))
-                                    SetVString(arg1, tmp_);
+                                if (VariableExists(arg1))
+                                    SetVariableString(arg1, tmp_);
                                 else
-                                    CreateVString(arg1, tmp_);
+                                    CreateVariableString(arg1, tmp_);
                             }
                         }
                     }
                 }
                 else
-                    error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
+                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
             }
             else
-                error(ErrorLogger.NULL_STRING, beforeBracket, false);
+                ErrorLogger.Error(ErrorLogger.NULL_STRING, beforeBracket, false);
         }
     }
 }

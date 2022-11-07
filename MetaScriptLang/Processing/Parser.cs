@@ -1,11 +1,22 @@
 ﻿namespace MetaScriptLang.Processing
 {
     using MetaScriptLang.Data;
+    using MetaScriptLang.Engine;
+    using MetaScriptLang.Engine.Memory;
     using MetaScriptLang.Helpers;
     using MetaScriptLang.Logging;
 
     public partial class Parser
     {
+        StateEngine engine = null;
+        GarbageCollector gc = null;
+
+        public Parser()
+        {
+            engine = new();
+            gc = new(engine);
+        }
+
         void whileLoop(Method m)
         {
             for (int i = 0; i < m.GetMethodSize(); i++)
@@ -19,256 +30,256 @@
 
         void initializeVariable(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
         {
-            string tmpObjName = beforeDot(arg0), tmpVarName = afterDot(arg0);
-            bool tmpObjExists = OExists(tmpObjName);
-            if (tmpObjExists || startsWith(arg0, "@"))
+            string tmpObjName = StringHelper.BeforeDot(arg0), tmpVarName = StringHelper.AfterDot(arg0);
+            bool tmpObjExists = engine.ObjectExists(tmpObjName);
+            if (tmpObjExists || StringHelper.StringStartsWith(arg0, "@"))
             {
                 if (tmpObjExists)
                 {
-                    if (GetOVString(tmpObjName, tmpVarName) != __Null)
+                    if (GetObjectVariableString(tmpObjName, tmpVarName) != __Null)
                     {
                         string tempObjectVariableName = ("@ " + tmpObjName + tmpVarName + "_string");
-                        CreateVString(tempObjectVariableName, GetOVString(tmpObjName, tmpVarName));
+                        CreateVariableString(tempObjectVariableName, GetObjectVariableString(tmpObjName, tmpVarName));
                         twoSpace(tempObjectVariableName, arg1, arg2, "", command);
-                        SetVName(tempObjectVariableName, tmpVarName);
-                        DeleteOV(tmpObjName, tmpVarName);
-                        CreateOV(tmpObjName, GetV(tmpVarName));
-                        DeleteV(tmpVarName);
+                        SetVariableName(tempObjectVariableName, tmpVarName);
+                        engine.DeleteObjectVariable(tmpObjName, tmpVarName);
+                        CreateObjectVariable(tmpObjName, GetVariable(tmpVarName));
+                        DeleteVariable(tmpVarName);
                     }
-                    else if (GetOVNumber(tmpObjName, tmpVarName) != __NullNum)
+                    else if (GetObjectVariableNumber(tmpObjName, tmpVarName) != __NullNum)
                     {
-                        string tempObjectVariableName = ("@____" + beforeDot(arg0) + "___" + afterDot(arg0) + "_number");
-                        CreateVNumber(tempObjectVariableName, GetOVNumber(beforeDot(arg0), afterDot(arg0)));
+                        string tempObjectVariableName = ("@____" + StringHelper.BeforeDot(arg0) + "___" + StringHelper.AfterDot(arg0) + "_number");
+                        CreateVariableNumber(tempObjectVariableName, GetObjectVariableNumber(StringHelper.BeforeDot(arg0), StringHelper.AfterDot(arg0)));
                         twoSpace(tempObjectVariableName, arg1, arg2, tempObjectVariableName + " " + arg1 + " " + arg2, command);
-                        SetVName(tempObjectVariableName, afterDot(arg0));
-                        DeleteOV(beforeDot(arg0), afterDot(arg0));
-                        CreateOV(beforeDot(arg0), GetV(afterDot(arg0)));
-                        DeleteV(afterDot(arg0));
+                        SetVariableName(tempObjectVariableName, StringHelper.AfterDot(arg0));
+                        engine.DeleteObjectVariable(StringHelper.BeforeDot(arg0), StringHelper.AfterDot(arg0));
+                        CreateObjectVariable(StringHelper.BeforeDot(arg0), GetVariable(StringHelper.AfterDot(arg0)));
+                        DeleteVariable(StringHelper.AfterDot(arg0));
                     }
                 }
                 else if (arg1 == "=")
                 {
-                    string before = (beforeDot(arg2)), after = (afterDot(arg2));
+                    string before = (StringHelper.BeforeDot(arg2)), after = (StringHelper.AfterDot(arg2));
 
-                    if (containsBrackets(arg2) && (VExists(beforeBrackets(arg2)) || LExists(beforeBrackets(arg2))))
+                    if (StringHelper.ContainsBrackets(arg2) && (VariableExists(StringHelper.BeforeBrackets(arg2)) || engine.ListExists(StringHelper.BeforeBrackets(arg2))))
                     {
-                        string beforeBracket = (beforeBrackets(arg2)), afterBracket = (afterBrackets(arg2));
+                        string beforeBracket = (StringHelper.BeforeBrackets(arg2)), afterBracket = (StringHelper.AfterBrackets(arg2));
 
-                        afterBracket = subtractString(afterBracket, "]");
+                        afterBracket = StringHelper.SubtractString(afterBracket, "]");
 
-                        if (LExists(beforeBracket))
+                        if (engine.ListExists(beforeBracket))
                         {
-                            if (GetLSize(beforeBracket) >= stoi(afterBracket))
+                            if (engine.GetListSize(beforeBracket) >= StringHelper.StoI(afterBracket))
                             {
-                                if (GetLLine(beforeBracket, stoi(afterBracket)) == "#!=no_line")
-                                    error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
+                                if (engine.GetListLine(beforeBracket, StringHelper.StoI(afterBracket)) == "#!=no_line")
+                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
                                 else
                                 {
-                                    string listValue = GetLLine(beforeBracket, stoi(afterBracket));
+                                    string listValue = engine.GetListLine(beforeBracket, StringHelper.StoI(afterBracket));
 
                                     if (StringHelper.IsNumeric(listValue))
                                     {
-                                        if (isNumber(arg0))
-                                            SetVNumber(arg0, stod(listValue));
+                                        if (engine.IsNumberVariable(arg0))
+                                            engine.SetVariableNumber(arg0, StringHelper.StoD(listValue));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
                                     {
-                                        if (isString(arg0))
-                                            SetVString(arg0, listValue);
+                                        if (engine.IsStringVariable(arg0))
+                                            engine.SetVariableString(arg0, listValue);
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                 }
                             }
                         }
-                        else if (isString(beforeBracket))
+                        else if (IsStringVariable(beforeBracket))
                             setSubString(arg0, arg2, beforeBracket);
                         else
-                            error(ErrorLogger.LIST_UNDEFINED, beforeBracket, false);
+                            ErrorLogger.Error(ErrorLogger.LIST_UNDEFINED, beforeBracket, false);
                     }
                     else if (before.Length != 0 && after.Length != 0)
                     {
-                        if (containsParameters(arg2))
+                        if (StringHelper.ContainsParameters(arg2))
                         {
-                            if (beforeParameters(arg2) == "random")
+                            if (StringHelper.BeforeParameters(arg2) == "random")
                             {
-                                if (contains(arg2, ".."))
+                                if (StringHelper.ContainsString(arg2, ".."))
                                 {
-                                    System.Collections.Generic.List<string> range = getRange(arg2);
+                                    System.Collections.Generic.List<string> range = StringHelper.GetRange(arg2);
                                     string s0 = (range[0]), s2 = (range[1]);
 
                                     if (StringHelper.IsNumeric(s0) && StringHelper.IsNumeric(s2))
                                     {
-                                        if (isNumber(arg0))
+                                        if (IsNumberVariable(arg0))
                                         {
-                                            double n0 = stod(s0), n2 = stod(s2);
+                                            double n0 = StringHelper.StoD(s0), n2 = StringHelper.StoD(s2);
 
                                             if (n0 < n2)
-                                                SetVNumber(arg0, (int)random(n0, n2));
+                                                SetVariableNumber(arg0, (int)random(n0, n2));
                                             else if (n0 > n2)
-                                                SetVNumber(arg0, (int)random(n2, n0));
+                                                SetVariableNumber(arg0, (int)random(n2, n0));
                                             else
-                                                SetVNumber(arg0, (int)random(n0, n2));
+                                                SetVariableNumber(arg0, (int)random(n0, n2));
                                         }
-                                        else if (isString(arg0))
+                                        else if (IsStringVariable(arg0))
                                         {
-                                            double n0 = stod(s0), n2 = stod(s2);
+                                            double n0 = StringHelper.StoD(s0), n2 = StringHelper.StoD(s2);
 
                                             if (n0 < n2)
-                                                SetVString(arg0, itos((int)random(n0, n2)));
+                                                SetVariableString(arg0, StringHelper.ItoS((int)random(n0, n2)));
                                             else if (n0 > n2)
-                                                SetVString(arg0, itos((int)random(n2, n0)));
+                                                SetVariableString(arg0, StringHelper.ItoS((int)random(n2, n0)));
                                             else
-                                                SetVString(arg0, itos((int)random(n0, n2)));
+                                                SetVariableString(arg0, StringHelper.ItoS((int)random(n0, n2)));
                                         }
                                     }
-                                    else if (isAlpha(s0) && isAlpha(s2))
+                                    else if (StringHelper.IsAlphabetical(s0) && StringHelper.IsAlphabetical(s2))
                                     {
-                                        if (isString(arg0))
+                                        if (IsStringVariable(arg0))
                                         {
-                                            if (get_alpha_num(s0[0]) < get_alpha_num(s2[0]))
-                                                SetVString(arg0, random(s0, s2));
-                                            else if (get_alpha_num(s0[0]) > get_alpha_num(s2[0]))
-                                                SetVString(arg0, random(s2, s0));
+                                            if (StringHelper.GetCharAsInt32(s0[0]) < StringHelper.GetCharAsInt32(s2[0]))
+                                                SetVariableString(arg0, random(s0, s2));
+                                            else if (StringHelper.GetCharAsInt32(s0[0]) > StringHelper.GetCharAsInt32(s2[0]))
+                                                SetVariableString(arg0, random(s2, s0));
                                             else
-                                                SetVString(arg0, random(s2, s0));
+                                                SetVariableString(arg0, random(s2, s0));
                                         }
                                         else
-                                            error(ErrorLogger.NULL_STRING, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.NULL_STRING, arg0, false);
                                     }
-                                    else if (VExists(s0) || VExists(s2))
+                                    else if (VariableExists(s0) || VariableExists(s2))
                                     {
-                                        if (VExists(s0))
+                                        if (VariableExists(s0))
                                         {
-                                            if (isNumber(s0))
-                                                s0 = dtos(GetVNumber(s0));
-                                            else if (isString(s0))
-                                                s0 = GetVString(s0);
+                                            if (IsNumberVariable(s0))
+                                                s0 = StringHelper.DtoS(GetVariableNumber(s0));
+                                            else if (IsStringVariable(s0))
+                                                s0 = GetVariableString(s0);
                                         }
 
-                                        if (VExists(s2))
+                                        if (VariableExists(s2))
                                         {
-                                            if (isNumber(s2))
-                                                s2 = dtos(GetVNumber(s2));
-                                            else if (isString(s2))
-                                                s2 = GetVString(s2);
+                                            if (IsNumberVariable(s2))
+                                                s2 = StringHelper.DtoS(GetVariableNumber(s2));
+                                            else if (IsStringVariable(s2))
+                                                s2 = GetVariableString(s2);
                                         }
 
                                         if (StringHelper.IsNumeric(s0) && StringHelper.IsNumeric(s2))
                                         {
-                                            if (isNumber(arg0))
+                                            if (IsNumberVariable(arg0))
                                             {
-                                                double n0 = stod(s0), n2 = stod(s2);
+                                                double n0 = StringHelper.StoD(s0), n2 = StringHelper.StoD(s2);
 
                                                 if (n0 < n2)
-                                                    SetVNumber(arg0, (int)random(n0, n2));
+                                                    SetVariableNumber(arg0, (int)random(n0, n2));
                                                 else if (n0 > n2)
-                                                    SetVNumber(arg0, (int)random(n2, n0));
+                                                    SetVariableNumber(arg0, (int)random(n2, n0));
                                                 else
-                                                    SetVNumber(arg0, (int)random(n0, n2));
+                                                    SetVariableNumber(arg0, (int)random(n0, n2));
                                             }
-                                            else if (isString(arg0))
+                                            else if (IsStringVariable(arg0))
                                             {
-                                                double n0 = stod(s0), n2 = stod(s2);
+                                                double n0 = StringHelper.StoD(s0), n2 = StringHelper.StoD(s2);
 
                                                 if (n0 < n2)
-                                                    SetVString(arg0, itos((int)random(n0, n2)));
+                                                    SetVariableString(arg0, StringHelper.ItoS((int)random(n0, n2)));
                                                 else if (n0 > n2)
-                                                    SetVString(arg0, itos((int)random(n2, n0)));
+                                                    SetVariableString(arg0, StringHelper.ItoS((int)random(n2, n0)));
                                                 else
-                                                    SetVString(arg0, itos((int)random(n0, n2)));
+                                                    SetVariableString(arg0, StringHelper.ItoS((int)random(n0, n2)));
                                             }
                                         }
-                                        else if (isAlpha(s0) && isAlpha(s2))
+                                        else if (StringHelper.IsAlphabetical(s0) && StringHelper.IsAlphabetical(s2))
                                         {
-                                            if (isString(arg0))
+                                            if (IsStringVariable(arg0))
                                             {
-                                                if (get_alpha_num(s0[0]) < get_alpha_num(s2[0]))
-                                                    SetVString(arg0, random(s0, s2));
-                                                else if (get_alpha_num(s0[0]) > get_alpha_num(s2[0]))
-                                                    SetVString(arg0, random(s2, s0));
+                                                if (StringHelper.GetCharAsInt32(s0[0]) < StringHelper.GetCharAsInt32(s2[0]))
+                                                    SetVariableString(arg0, random(s0, s2));
+                                                else if (StringHelper.GetCharAsInt32(s0[0]) > StringHelper.GetCharAsInt32(s2[0]))
+                                                    SetVariableString(arg0, random(s2, s0));
                                                 else
-                                                    SetVString(arg0, random(s2, s0));
+                                                    SetVariableString(arg0, random(s2, s0));
                                             }
                                             else
-                                                error(ErrorLogger.NULL_STRING, arg0, false);
+                                                ErrorLogger.Error(ErrorLogger.NULL_STRING, arg0, false);
                                         }
                                     }
                                     else
-                                        error(ErrorLogger.INVALID_SEQ, s0 + "_" + s2, false);
+                                        ErrorLogger.Error(ErrorLogger.INVALID_SEQ, s0 + "_" + s2, false);
                                 }
                                 else
-                                    error(ErrorLogger.INVALID_SEQ_SEP, arg2, false);
+                                    ErrorLogger.Error(ErrorLogger.INVALID_SEQ_SEP, arg2, false);
                             }
                         }
-                        else if (LExists(before) && after == "size")
+                        else if (engine.ListExists(before) && after == "size")
                         {
-                            if (isNumber(arg0))
-                                SetVNumber(arg0, stod(itos(GetLSize(before))));
-                            else if (isString(arg0))
-                                SetVString(arg0, itos(GetLSize(before)));
+                            if (IsNumberVariable(arg0))
+                                SetVariableNumber(arg0, StringHelper.StoD(StringHelper.ItoS(engine.GetListSize(before))));
+                            else if (IsStringVariable(arg0))
+                                SetVariableString(arg0, StringHelper.ItoS(engine.GetListSize(before)));
                             else
-                                error(ErrorLogger.IS_NULL, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                         }
                         else if (before == "self")
                         {
-                            if (OExists(__CurrentMethodObject))
+                            if (engine.ObjectExists(__CurrentMethodObject))
                                 twoSpace(arg0, arg1, (__CurrentMethodObject + "." + after), (arg0 + " " + arg1 + " " + (__CurrentMethodObject + "." + after)), command);
                             else
                                 twoSpace(arg0, arg1, after, (arg0 + " " + arg1 + " " + after), command);
                         }
-                        else if (OExists(before))
+                        else if (engine.ObjectExists(before))
                         {
-                            if (OVExists(before, after))
+                            if (ObjectVariableExists(before, after))
                             {
-                                if (GetOVString(before, after) != __Null)
-                                    SetVString(arg0, GetOVString(before, after));
-                                else if (GetOVNumber(before, after) != __NullNum)
-                                    SetVNumber(arg0, GetOVNumber(before, after));
+                                if (GetObjectVariableString(before, after) != __Null)
+                                    SetVariableString(arg0, GetObjectVariableString(before, after));
+                                else if (GetObjectVariableNumber(before, after) != __NullNum)
+                                    SetVariableNumber(arg0, GetObjectVariableNumber(before, after));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg2, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                             }
-                            else if (OMExists(before, after) && !containsParameters(after))
+                            else if (ObjectMethodExists(before, after) && !StringHelper.ContainsParameters(after))
                             {
                                 parse(arg2);
 
-                                if (isString(arg0))
-                                    SetVString(arg0, __LastValue);
-                                else if (isNumber(arg0))
-                                    SetVNumber(arg0, stod(__LastValue));
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, __LastValue);
+                                else if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, StringHelper.StoD(__LastValue));
                             }
-                            else if (containsParameters(after))
+                            else if (StringHelper.ContainsParameters(after))
                             {
-                                if (OMExists(before, beforeParameters(after)))
+                                if (ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
                                 {
-                                    executeTemplate(GetOM(before, beforeParameters(after)), getParameters(after));
+                                    executeTemplate(GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(after));
 
                                     if (StringHelper.IsNumeric(__LastValue))
                                     {
-                                        if (isString(arg0))
-                                            SetVString(arg0, __LastValue);
-                                        else if (isNumber(arg0))
-                                            SetVNumber(arg0, stod(__LastValue));
+                                        if (IsStringVariable(arg0))
+                                            SetVariableString(arg0, __LastValue);
+                                        else if (IsNumberVariable(arg0))
+                                            SetVariableNumber(arg0, StringHelper.StoD(__LastValue));
                                         else
-                                            error(ErrorLogger.IS_NULL, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                                     }
                                     else
                                     {
-                                        if (isString(arg0))
-                                            SetVString(arg0, __LastValue);
-                                        else if (isNumber(arg0))
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                        if (IsStringVariable(arg0))
+                                            SetVariableString(arg0, __LastValue);
+                                        else if (IsNumberVariable(arg0))
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                         else
-                                            error(ErrorLogger.IS_NULL, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                                     }
                                 }
                                 else
                                     sysExec(s, command);
                             }
                             else
-                                error(ErrorLogger.VAR_UNDEFINED, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, arg2, false);
                         }
                         else if (before == "env")
                         {
@@ -276,83 +287,83 @@
                         }
                         else if (after == "to_int")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isString(before))
-                                    SetVNumber(arg0, (int)GetVString(before)[0]);
-                                else if (isNumber(before))
+                                if (IsStringVariable(before))
+                                    SetVariableNumber(arg0, (int)GetVariableString(before)[0]);
+                                else if (IsNumberVariable(before))
                                 {
-                                    int i = (int)GetVNumber(before);
-                                    SetVNumber(arg0, (double)i);
+                                    int i = (int)GetVariableNumber(before);
+                                    SetVariableNumber(arg0, (double)i);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, before, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
                             }
                             else
-                                error(ErrorLogger.VAR_UNDEFINED, before, false);
+                                ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                         }
                         else if (after == "to_double")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isString(before))
-                                    SetVNumber(arg0, (double)GetVString(before)[0]);
-                                else if (isNumber(before))
+                                if (IsStringVariable(before))
+                                    SetVariableNumber(arg0, (double)GetVariableString(before)[0]);
+                                else if (IsNumberVariable(before))
                                 {
-                                    double i = GetVNumber(before);
-                                    SetVNumber(arg0, (double)i);
+                                    double i = GetVariableNumber(before);
+                                    SetVariableNumber(arg0, (double)i);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, before, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
                             }
                             else
-                                error(ErrorLogger.VAR_UNDEFINED, before, false);
+                                ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                         }
                         else if (after == "to_string")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(before))
-                                    SetVString(arg0, dtos(GetVNumber(before)));
+                                if (IsNumberVariable(before))
+                                    SetVariableString(arg0, StringHelper.DtoS(GetVariableNumber(before)));
                                 else
-                                    error(ErrorLogger.IS_NULL, before, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
                             }
                             else
-                                error(ErrorLogger.VAR_UNDEFINED, before, false);
+                                ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                         }
                         else if (after == "to_number")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isString(before))
-                                    SetVNumber(arg0, stod(GetVString(before)));
+                                if (IsStringVariable(before))
+                                    SetVariableNumber(arg0, StringHelper.StoD(GetVariableString(before)));
                                 else
-                                    error(ErrorLogger.IS_NULL, before, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
                             }
                             else
-                                error(ErrorLogger.VAR_UNDEFINED, before, false);
+                                ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                         }
                         else if (before == "readline")
                         {
-                            if (VExists(after))
+                            if (VariableExists(after))
                             {
-                                if (isString(after))
+                                if (IsStringVariable(after))
                                 {
                                     string line = "";
-                                    write(cleanString(GetVString(after)));
+                                    write(cleanString(GetVariableString(after)));
                                     line = Console.ReadLine();
 
-                                    if (isNumber(arg0))
+                                    if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(line))
-                                            SetVNumber(arg0, stod(line));
+                                            SetVariableNumber(arg0, StringHelper.StoD(line));
                                         else
-                                            error(ErrorLogger.CONV_ERR, line, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, line, false);
                                     }
-                                    else if (isString(arg0))
-                                        SetVString(arg0, line);
+                                    else if (IsStringVariable(arg0))
+                                        SetVariableString(arg0, line);
                                     else
-                                        error(ErrorLogger.IS_NULL, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                                 }
                                 else
                                 {
@@ -360,17 +371,17 @@
                                     cout = "readline: ";
                                     line = Console.ReadLine();
 
-                                    if (isNumber(arg0))
+                                    if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(line))
-                                            SetVNumber(arg0, stod(line));
+                                            SetVariableNumber(arg0, StringHelper.StoD(line));
                                         else
-                                            error(ErrorLogger.CONV_ERR, line, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, line, false);
                                     }
-                                    else if (isString(arg0))
-                                        SetVString(arg0, line);
+                                    else if (IsStringVariable(arg0))
+                                        SetVariableString(arg0, line);
                                     else
-                                        error(ErrorLogger.IS_NULL, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                                 }
                             }
                             else
@@ -380,31 +391,31 @@
                                 line = Console.ReadLine();
 
                                 if (StringHelper.IsNumeric(line))
-                                    SetVNumber(arg0, stod(line));
+                                    SetVariableNumber(arg0, StringHelper.StoD(line));
                                 else
-                                    SetVString(arg0, line);
+                                    SetVariableString(arg0, line);
                             }
                         }
                         else if (before == "password")
                         {
-                            if (VExists(after))
+                            if (VariableExists(after))
                             {
-                                if (isString(after))
+                                if (IsStringVariable(after))
                                 {
                                     string line = "";
-                                    line = getSilentOutput(GetVString(after));
+                                    line = getSilentOutput(GetVariableString(after));
 
-                                    if (isNumber(arg0))
+                                    if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(line))
-                                            SetVNumber(arg0, stod(line));
+                                            SetVariableNumber(arg0, StringHelper.StoD(line));
                                         else
-                                            error(ErrorLogger.CONV_ERR, line, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, line, false);
                                     }
-                                    else if (isString(arg0))
-                                        SetVString(arg0, line);
+                                    else if (IsStringVariable(arg0))
+                                        SetVariableString(arg0, line);
                                     else
-                                        error(ErrorLogger.IS_NULL, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
 
                                     cout = System.Environment.NewLine;
                                 }
@@ -413,17 +424,17 @@
                                     string line = "";
                                     line = getSilentOutput("password: ");
 
-                                    if (isNumber(arg0))
+                                    if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(line))
-                                            SetVNumber(arg0, stod(line));
+                                            SetVariableNumber(arg0, StringHelper.StoD(line));
                                         else
-                                            error(ErrorLogger.CONV_ERR, line, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, line, false);
                                     }
-                                    else if (isString(arg0))
-                                        SetVString(arg0, line);
+                                    else if (IsStringVariable(arg0))
+                                        SetVariableString(arg0, line);
                                     else
-                                        error(ErrorLogger.IS_NULL, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
 
                                     cout = System.Environment.NewLine;
                                 }
@@ -434,380 +445,380 @@
                                 line = getSilentOutput(cleanString(after));
 
                                 if (StringHelper.IsNumeric(line))
-                                    SetVNumber(arg0, stod(line));
+                                    SetVariableNumber(arg0, StringHelper.StoD(line));
                                 else
-                                    SetVString(arg0, line);
+                                    SetVariableString(arg0, line);
 
                                 cout = System.Environment.NewLine;
                             }
                         }
                         else if (after == "cos")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Cos(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Cos(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Cos(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Cos(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "acos")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Acos(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Acos(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Acos(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Acos(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "cosh")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Cosh(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Cosh(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Cosh(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Cosh(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "log")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Log(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Log(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Log(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Log(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "sqrt")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Sqrt(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Sqrt(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Sqrt(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Sqrt(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "abs")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Abs(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Abs(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Abs(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Abs(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "floor")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Floor(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Floor(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Floor(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Floor(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "ceil")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Ceiling(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Ceiling(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Ceiling(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Ceiling(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "exp")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Exp(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Exp(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Exp(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Exp(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "sin")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Sin(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Sin(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Sin(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Sin(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "sinh")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Sinh(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Sinh(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Sinh(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Sinh(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "asin")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Asin(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Asin(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Asin(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Asin(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "tan")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Tan(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Tan(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Tan(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Tan(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "tanh")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Tanh(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Tanh(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Tanh(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Tanh(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "atan")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVNumber(arg0, System.Math.Atan(GetVNumber(before)));
+                                    if (IsNumberVariable(before))
+                                        SetVariableNumber(arg0, System.Math.Atan(GetVariableNumber(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
-                                else if (isString(arg0))
+                                else if (IsStringVariable(arg0))
                                 {
-                                    if (isNumber(before))
-                                        SetVString(arg0, dtos(System.Math.Atan(GetVNumber(before))));
+                                    if (IsNumberVariable(before))
+                                        SetVariableString(arg0, StringHelper.DtoS(System.Math.Atan(GetVariableNumber(before))));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "to_lower")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isString(arg0))
+                                if (IsStringVariable(arg0))
                                 {
-                                    if (isString(before))
-                                        SetVString(arg0, getLower(GetVString(before)));
+                                    if (IsStringVariable(before))
+                                        SetVariableString(arg0, StringHelper.ToLowercase(GetVariableString(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "read")
                         {
-                            if (isString(arg0))
+                            if (IsStringVariable(arg0))
                             {
-                                if (VExists(before))
+                                if (VariableExists(before))
                                 {
-                                    if (isString(before))
+                                    if (IsStringVariable(before))
                                     {
-                                        if (System.IO.File.Exists(GetVString(before)))
+                                        if (System.IO.File.Exists(GetVariableString(before)))
                                         {
                                             string bigString = "";
-                                            foreach (var line in System.IO.File.ReadAllLines(GetVString(before)))
+                                            foreach (var line in System.IO.File.ReadAllLines(GetVariableString(before)))
                                             {
                                                 bigString += line + System.Environment.NewLine;
                                             }
-                                            SetVString(arg0, bigString);
+                                            SetVariableString(arg0, bigString);
                                         }
                                         else
-                                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
+                                            ErrorLogger.Error(ErrorLogger.READ_FAIL, GetVariableString(before), false);
                                     }
                                     else
-                                        error(ErrorLogger.NULL_STRING, before, false);
+                                        ErrorLogger.Error(ErrorLogger.NULL_STRING, before, false);
                                 }
                                 else
                                 {
@@ -818,167 +829,167 @@
                                         {
                                             bigString += (line + "\r\n");
                                         }
-                                        SetVString(arg0, bigString);
+                                        SetVariableString(arg0, bigString);
                                     }
                                     else
-                                        error(ErrorLogger.READ_FAIL, before, false);
+                                        ErrorLogger.Error(ErrorLogger.READ_FAIL, before, false);
                                 }
                             }
                             else
-                                error(ErrorLogger.NULL_STRING, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.NULL_STRING, arg0, false);
                         }
                         else if (after == "to_upper")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isString(arg0))
+                                if (IsStringVariable(arg0))
                                 {
-                                    if (isString(before))
-                                        SetVString(arg0, getUpper(GetVString(before)));
+                                    if (IsStringVariable(before))
+                                        SetVariableString(arg0, StringHelper.ToUppercase(GetVariableString(before)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else if (after == "size")
                         {
-                            if (VExists(before))
+                            if (VariableExists(before))
                             {
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
-                                    if (isString(before))
-                                        SetVNumber(arg0, (double)GetVString(before).Length);
+                                    if (IsStringVariable(before))
+                                        SetVariableNumber(arg0, (double)GetVariableString(before).Length);
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
-                                    error(ErrorLogger.CONV_ERR, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                             }
                             else
                             {
-                                if (isNumber(arg0))
-                                    SetVNumber(arg0, (double)before.Length);
+                                if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, (double)before.Length);
                                 else
-                                    error(ErrorLogger.CONV_ERR, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                             }
                         }
                         else if (after == "bytes")
                         {
-                            if (isNumber(arg0))
+                            if (IsNumberVariable(arg0))
                             {
-                                if (VExists(before))
+                                if (VariableExists(before))
                                 {
-                                    if (isString(before))
+                                    if (IsStringVariable(before))
                                     {
-                                        if (System.IO.File.Exists(GetVString(before)))
-                                            SetVNumber(arg0, getBytes(GetVString(before)));
+                                        if (System.IO.File.Exists(GetVariableString(before)))
+                                            SetVariableNumber(arg0, getBytes(GetVariableString(before)));
                                         else
-                                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
+                                            ErrorLogger.Error(ErrorLogger.READ_FAIL, GetVariableString(before), false);
                                     }
                                     else
-                                        error(ErrorLogger.CONV_ERR, before, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else
                                 {
                                     if (System.IO.File.Exists(before))
-                                        SetVNumber(arg0, getBytes(before));
+                                        SetVariableNumber(arg0, getBytes(before));
                                     else
-                                        error(ErrorLogger.READ_FAIL, before, false);
+                                        ErrorLogger.Error(ErrorLogger.READ_FAIL, before, false);
                                 }
                             }
                             else
-                                error(ErrorLogger.CONV_ERR, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                         }
                         else
                         {
-                            if (isNumber(arg0))
+                            if (IsNumberVariable(arg0))
                             {
                                 if (StringHelper.IsNumeric(arg2))
-                                    SetVNumber(arg0, stod(arg2));
+                                    SetVariableNumber(arg0, StringHelper.StoD(arg2));
                                 else
-                                    error(ErrorLogger.CONV_ERR, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                             }
-                            else if (isString(arg0))
-                                SetVString(arg0, arg2);
-                            else if (GetVWaiting(arg0))
+                            else if (IsStringVariable(arg0))
+                                SetVariableString(arg0, arg2);
+                            else if (VariableWaiting(arg0))
                             {
                                 if (StringHelper.IsNumeric(arg2))
-                                    SetVNumber(arg0, stod(before + "." + after));
+                                    SetVariableNumber(arg0, StringHelper.StoD(before + "." + after));
                                 else
-                                    SetVString(arg0, arg2);
+                                    SetVariableString(arg0, arg2);
                             }
                             else
-                                error(ErrorLogger.IS_NULL, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                         }
                     }
                     else
                     {
-                        if (GetVWaiting(arg0))
+                        if (VariableWaiting(arg0))
                         {
                             if (StringHelper.IsNumeric(arg2))
-                                SetVNumber(arg0, stod(arg2));
+                                SetVariableNumber(arg0, StringHelper.StoD(arg2));
                             else
-                                SetVString(arg0, arg2);
+                                SetVariableString(arg0, arg2);
                         }
                         else if (arg2 == "null")
                         {
-                            if (isString(arg0) || isNumber(arg0))
-                                SetVNull(arg0);
+                            if (IsStringVariable(arg0) || IsNumberVariable(arg0))
+                                SetVariableNull(arg0);
                             else
-                                error(ErrorLogger.IS_NULL, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                         }
-                        else if (CExists(arg2))
+                        else if (engine.ConstantExists(arg2))
                         {
-                            if (isString(arg0))
+                            if (IsStringVariable(arg0))
                             {
-                                if (IsCNumber(arg2))
-                                    SetVString(arg0, dtos(GetCNumber(arg2)));
-                                else if (IsCString(arg2))
-                                    SetVString(arg0, GetCString(arg2));
+                                if (engine.IsNumberConstant(arg2))
+                                    SetVariableString(arg0, StringHelper.DtoS(engine.GetConstantNumber(arg2)));
+                                else if (engine.IsStringConstant(arg2))
+                                    SetVariableString(arg0, engine.GetConstantString(arg2));
                             }
-                            else if (isNumber(arg0))
+                            else if (IsNumberVariable(arg0))
                             {
-                                if (IsCNumber(arg2))
-                                    SetVNumber(arg0, GetCNumber(arg2));
+                                if (engine.IsNumberConstant(arg2))
+                                    SetVariableNumber(arg0, engine.GetConstantNumber(arg2));
                                 else
-                                    error(ErrorLogger.CONV_ERR, arg2, false);
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                             }
                             else
-                                error(ErrorLogger.IS_NULL, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                         }
-                        else if (MExists(arg2))
+                        else if (MethodExists(arg2))
                         {
                             parse(arg2);
 
-                            if (isString(arg0))
-                                SetVString(arg0, __LastValue);
-                            else if (isNumber(arg0))
-                                SetVNumber(arg0, stod(__LastValue));
+                            if (IsStringVariable(arg0))
+                                SetVariableString(arg0, __LastValue);
+                            else if (IsNumberVariable(arg0))
+                                SetVariableNumber(arg0, StringHelper.StoD(__LastValue));
                         }
-                        else if (VExists(arg2))
+                        else if (VariableExists(arg2))
                         {
-                            if (isString(arg2))
+                            if (IsStringVariable(arg2))
                             {
-                                if (isString(arg0))
-                                    SetVString(arg0, GetVString(arg2));
-                                else if (isNumber(arg0))
-                                    error(ErrorLogger.CONV_ERR, arg2, false);
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, GetVariableString(arg2));
+                                else if (IsNumberVariable(arg0))
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
-                            else if (isNumber(arg2))
+                            else if (IsNumberVariable(arg2))
                             {
-                                if (isString(arg0))
-                                    SetVString(arg0, dtos(GetVNumber(arg2)));
-                                else if (isNumber(arg0))
-                                    SetVNumber(arg0, GetVNumber(arg2));
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, StringHelper.DtoS(GetVariableNumber(arg2)));
+                                else if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, GetVariableNumber(arg2));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                             else
-                                error(ErrorLogger.IS_NULL, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                         }
                         else if (arg2 == "password" || arg2 == "readline")
                         {
@@ -987,17 +998,17 @@
                                 string passworder = ("");
                                 passworder = getSilentOutput("");
 
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
                                     if (StringHelper.IsNumeric(passworder))
-                                        SetVNumber(arg0, stod(passworder));
+                                        SetVariableNumber(arg0, StringHelper.StoD(passworder));
                                     else
-                                        error(ErrorLogger.CONV_ERR, passworder, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, passworder, false);
                                 }
-                                else if (isString(arg0))
-                                    SetVString(arg0, passworder);
+                                else if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, passworder);
                                 else
-                                    SetVString(arg0, passworder);
+                                    SetVariableString(arg0, passworder);
                             }
                             else
                             {
@@ -1006,59 +1017,59 @@
                                 line = Console.ReadLine();
 
                                 if (StringHelper.IsNumeric(line))
-                                    CreateVNumber(arg0, stod(line));
+                                    CreateVariableNumber(arg0, StringHelper.StoD(line));
                                 else
-                                    CreateVString(arg0, line);
+                                    CreateVariableString(arg0, line);
                             }
                         }
-                        else if (containsParameters(arg2))
+                        else if (StringHelper.ContainsParameters(arg2))
                         {
-                            if (MExists(beforeParameters(arg2)))
+                            if (MethodExists(StringHelper.BeforeParameters(arg2)))
                             {
                                 // execute the method
-                                executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
                                 // set the variable = last value
-                                if (isString(arg0))
+                                if (IsStringVariable(arg0))
                                 {
-                                    SetVString(arg0, __LastValue);
+                                    SetVariableString(arg0, __LastValue);
                                 }
-                                else if (isNumber(arg0))
+                                else if (IsNumberVariable(arg0))
                                 {
-                                    SetVNumber(arg0, stod(__LastValue));
+                                    SetVariableNumber(arg0, StringHelper.StoD(__LastValue));
                                 }
                             }
                             else if (isStringStack(arg2))
                             {
-                                if (isString(arg0))
-                                    SetVString(arg0, getStringStack(arg2));
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, getStringStack(arg2));
                                 else
-                                    error(ErrorLogger.CONV_ERR, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                             }
                             else if (stackReady(arg2))
                             {
-                                if (isString(arg0))
-                                    SetVString(arg0, dtos(getStack(arg2)));
-                                else if (isNumber(arg0))
-                                    SetVNumber(arg0, getStack(arg2));
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, StringHelper.DtoS(getStack(arg2)));
+                                else if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, getStack(arg2));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else
                         {
                             if (StringHelper.IsNumeric(arg2))
                             {
-                                if (isNumber(arg0))
-                                    SetVNumber(arg0, stod(arg2));
-                                else if (isString(arg0))
-                                    SetVString(arg0, arg2);
+                                if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, StringHelper.StoD(arg2));
+                                else if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, arg2);
                             }
                             else
                             {
-                                if (isNumber(arg0))
-                                    error(ErrorLogger.CONV_ERR, arg0, false);
-                                else if (isString(arg0))
-                                    SetVString(arg0, cleanString(arg2));
+                                if (IsNumberVariable(arg0))
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
+                                else if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, cleanString(arg2));
                             }
                         }
                     }
@@ -1067,521 +1078,521 @@
                 {
                     if (arg1 == "+=")
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isString(arg0))
+                            if (IsStringVariable(arg0))
                             {
-                                if (isString(arg2))
-                                    SetVString(arg0, GetVString(arg0) + GetVString(arg2));
-                                else if (isNumber(arg2))
-                                    SetVString(arg0, GetVString(arg0) + dtos(GetVNumber(arg2)));
+                                if (IsStringVariable(arg2))
+                                    SetVariableString(arg0, GetVariableString(arg0) + GetVariableString(arg2));
+                                else if (IsNumberVariable(arg2))
+                                    SetVariableString(arg0, GetVariableString(arg0) + StringHelper.DtoS(GetVariableNumber(arg2)));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg2, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                             }
-                            else if (isNumber(arg0))
+                            else if (IsNumberVariable(arg0))
                             {
-                                if (isString(arg2))
-                                    error(ErrorLogger.CONV_ERR, arg2, false);
-                                else if (isNumber(arg2))
-                                    SetVNumber(arg0, GetVNumber(arg0) + GetVNumber(arg2));
+                                if (IsStringVariable(arg2))
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
+                                else if (IsNumberVariable(arg2))
+                                    SetVariableNumber(arg0, GetVariableNumber(arg0) + GetVariableNumber(arg2));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg2, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                             }
                             else
-                                error(ErrorLogger.IS_NULL, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                         }
                         else
                         {
-                            if (containsParameters(arg2))
+                            if (StringHelper.ContainsParameters(arg2))
                             {
                                 if (isStringStack(arg2))
                                 {
-                                    if (isString(arg0))
-                                        SetVString(arg0, GetVString(arg0) + getStringStack(arg2));
+                                    if (IsStringVariable(arg0))
+                                        SetVariableString(arg0, GetVariableString(arg0) + getStringStack(arg2));
                                     else
-                                        error(ErrorLogger.CONV_ERR, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else if (stackReady(arg2))
                                 {
-                                    if (isNumber(arg0))
-                                        SetVNumber(arg0, GetVNumber(arg0) + getStack(arg2));
+                                    if (IsNumberVariable(arg0))
+                                        SetVariableNumber(arg0, GetVariableNumber(arg0) + getStack(arg2));
                                 }
-                                else if (MExists(beforeParameters(arg2)))
+                                else if (MethodExists(StringHelper.BeforeParameters(arg2)))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                    executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
-                                    if (isString(arg0))
-                                        SetVString(arg0, GetVString(arg0) + __LastValue);
-                                    else if (isNumber(arg0))
+                                    if (IsStringVariable(arg0))
+                                        SetVariableString(arg0, GetVariableString(arg0) + __LastValue);
+                                    else if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(__LastValue))
-                                            SetVNumber(arg0, GetVNumber(arg0) + stod(__LastValue));
+                                            SetVariableNumber(arg0, GetVariableNumber(arg0) + StringHelper.StoD(__LastValue));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
-                                        error(ErrorLogger.IS_NULL, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                                 }
-                                else if (OExists(beforeDot(arg2)))
+                                else if (engine.ObjectExists(StringHelper.BeforeDot(arg2)))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                    executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
-                                    if (isString(arg0))
-                                        SetVString(arg0, GetVString(arg0) + __LastValue);
-                                    else if (isNumber(arg0))
+                                    if (IsStringVariable(arg0))
+                                        SetVariableString(arg0, GetVariableString(arg0) + __LastValue);
+                                    else if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(__LastValue))
-                                            SetVNumber(arg0, GetVNumber(arg0) + stod(__LastValue));
+                                            SetVariableNumber(arg0, GetVariableNumber(arg0) + StringHelper.StoD(__LastValue));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
-                                        error(ErrorLogger.IS_NULL, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                                 }
                             }
-                            else if (MExists(arg2))
+                            else if (MethodExists(arg2))
                             {
                                 parse(arg2);
 
-                                if (isString(arg0))
-                                    SetVString(arg0, GetVString(arg0) + __LastValue);
-                                else if (isNumber(arg0))
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, GetVariableString(arg0) + __LastValue);
+                                else if (IsNumberVariable(arg0))
                                 {
                                     if (StringHelper.IsNumeric(__LastValue))
-                                        SetVNumber(arg0, GetVNumber(arg0) + stod(__LastValue));
+                                        SetVariableNumber(arg0, GetVariableNumber(arg0) + StringHelper.StoD(__LastValue));
                                     else
-                                        error(ErrorLogger.CONV_ERR, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                             else if (StringHelper.IsNumeric(arg2))
                             {
-                                if (isString(arg0))
-                                    SetVString(arg0, GetVString(arg0) + arg2);
-                                else if (isNumber(arg0))
-                                    SetVNumber(arg0, GetVNumber(arg0) + stod(arg2));
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, GetVariableString(arg0) + arg2);
+                                else if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, GetVariableNumber(arg0) + StringHelper.StoD(arg2));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                             else
                             {
-                                if (isString(arg0))
-                                    SetVString(arg0, GetVString(arg0) + cleanString(arg2));
-                                else if (isNumber(arg0))
-                                    error(ErrorLogger.CONV_ERR, arg0, false);
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, GetVariableString(arg0) + cleanString(arg2));
+                                else if (IsNumberVariable(arg0))
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                     }
                     else if (arg1 == "-=")
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isString(arg0))
+                            if (IsStringVariable(arg0))
                             {
-                                if (isString(arg2))
+                                if (IsStringVariable(arg2))
                                 {
-                                    if (GetVString(arg2).Length == 1)
-                                        SetVString(arg0, subtractChar(GetVString(arg0), GetVString(arg2)));
+                                    if (GetVariableString(arg2).Length == 1)
+                                        SetVariableString(arg0, StringHelper.SubtractChars(GetVariableString(arg0), GetVariableString(arg2)));
                                     else
-                                        SetVString(arg0, subtractString(GetVString(arg0), GetVString(arg2)));
+                                        SetVariableString(arg0, StringHelper.SubtractString(GetVariableString(arg0), GetVariableString(arg2)));
                                 }
-                                else if (isNumber(arg2))
-                                    SetVString(arg0, subtractString(GetVString(arg0), dtos(GetVNumber(arg2))));
+                                else if (IsNumberVariable(arg2))
+                                    SetVariableString(arg0, StringHelper.SubtractString(GetVariableString(arg0), StringHelper.DtoS(GetVariableNumber(arg2))));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg2, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                             }
-                            else if (isNumber(arg0))
+                            else if (IsNumberVariable(arg0))
                             {
-                                if (isString(arg2))
-                                    error(ErrorLogger.CONV_ERR, arg2, false);
-                                else if (isNumber(arg2))
-                                    SetVNumber(arg0, GetVNumber(arg0) - GetVNumber(arg2));
+                                if (IsStringVariable(arg2))
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
+                                else if (IsNumberVariable(arg2))
+                                    SetVariableNumber(arg0, GetVariableNumber(arg0) - GetVariableNumber(arg2));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg2, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                             }
                             else
-                                error(ErrorLogger.IS_NULL, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                         }
                         else
                         {
-                            if (containsParameters(arg2))
+                            if (StringHelper.ContainsParameters(arg2))
                             {
                                 if (isStringStack(arg2))
                                 {
-                                    if (isString(arg0))
-                                        SetVString(arg0, subtractString(GetVString(arg0), getStringStack(arg2)));
+                                    if (IsStringVariable(arg0))
+                                        SetVariableString(arg0, StringHelper.SubtractString(GetVariableString(arg0), getStringStack(arg2)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else if (stackReady(arg2))
                                 {
-                                    if (isNumber(arg0))
-                                        SetVNumber(arg0, GetVNumber(arg0) - getStack(arg2));
+                                    if (IsNumberVariable(arg0))
+                                        SetVariableNumber(arg0, GetVariableNumber(arg0) - getStack(arg2));
                                 }
-                                else if (MExists(beforeParameters(arg2)))
+                                else if (MethodExists(StringHelper.BeforeParameters(arg2)))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                    executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
-                                    if (isString(arg0))
-                                        SetVString(arg0, subtractString(GetVString(arg0), __LastValue));
-                                    else if (isNumber(arg0))
+                                    if (IsStringVariable(arg0))
+                                        SetVariableString(arg0, StringHelper.SubtractString(GetVariableString(arg0), __LastValue));
+                                    else if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(__LastValue))
-                                            SetVNumber(arg0, GetVNumber(arg0) - stod(__LastValue));
+                                            SetVariableNumber(arg0, GetVariableNumber(arg0) - StringHelper.StoD(__LastValue));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
-                                        error(ErrorLogger.IS_NULL, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                                 }
-                                else if (OExists(beforeDot(arg2)))
+                                else if (engine.ObjectExists(StringHelper.BeforeDot(arg2)))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                    executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
-                                    if (isString(arg0))
-                                        SetVString(arg0, subtractString(GetVString(arg0), __LastValue));
-                                    else if (isNumber(arg0))
+                                    if (IsStringVariable(arg0))
+                                        SetVariableString(arg0, StringHelper.SubtractString(GetVariableString(arg0), __LastValue));
+                                    else if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(__LastValue))
-                                            SetVNumber(arg0, GetVNumber(arg0) - stod(__LastValue));
+                                            SetVariableNumber(arg0, GetVariableNumber(arg0) - StringHelper.StoD(__LastValue));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
-                                        error(ErrorLogger.IS_NULL, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                                 }
                             }
-                            else if (MExists(arg2))
+                            else if (MethodExists(arg2))
                             {
                                 parse(arg2);
 
-                                if (isString(arg0))
-                                    SetVString(arg0, subtractString(GetVString(arg0), __LastValue));
-                                else if (isNumber(arg0))
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, StringHelper.SubtractString(GetVariableString(arg0), __LastValue));
+                                else if (IsNumberVariable(arg0))
                                 {
                                     if (StringHelper.IsNumeric(__LastValue))
-                                        SetVNumber(arg0, GetVNumber(arg0) - stod(__LastValue));
+                                        SetVariableNumber(arg0, GetVariableNumber(arg0) - StringHelper.StoD(__LastValue));
                                     else
-                                        error(ErrorLogger.CONV_ERR, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                             else if (StringHelper.IsNumeric(arg2))
                             {
-                                if (isString(arg0))
+                                if (IsStringVariable(arg0))
                                 {
                                     if (arg2.Length == 1)
-                                        SetVString(arg0, subtractChar(GetVString(arg0), arg2));
+                                        SetVariableString(arg0, StringHelper.SubtractChars(GetVariableString(arg0), arg2));
                                     else
-                                        SetVString(arg0, subtractString(GetVString(arg0), arg2));
+                                        SetVariableString(arg0, StringHelper.SubtractString(GetVariableString(arg0), arg2));
                                 }
-                                else if (isNumber(arg0))
-                                    SetVNumber(arg0, GetVNumber(arg0) - stod(arg2));
+                                else if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, GetVariableNumber(arg0) - StringHelper.StoD(arg2));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                             else
                             {
-                                if (isString(arg0))
+                                if (IsStringVariable(arg0))
                                 {
                                     if (arg2.Length == 1)
-                                        SetVString(arg0, subtractChar(GetVString(arg0), arg2));
+                                        SetVariableString(arg0, StringHelper.SubtractChars(GetVariableString(arg0), arg2));
                                     else
-                                        SetVString(arg0, subtractString(GetVString(arg0), cleanString(arg2)));
+                                        SetVariableString(arg0, StringHelper.SubtractString(GetVariableString(arg0), cleanString(arg2)));
                                 }
-                                else if (isNumber(arg0))
-                                    error(ErrorLogger.CONV_ERR, arg0, false);
+                                else if (IsNumberVariable(arg0))
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                     }
                     else if (arg1 == "*=")
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isNumber(arg2))
-                                SetVNumber(arg0, GetVNumber(arg0) * GetVNumber(arg2));
-                            else if (isString(arg2))
-                                error(ErrorLogger.CONV_ERR, arg2, false);
+                            if (IsNumberVariable(arg2))
+                                SetVariableNumber(arg0, GetVariableNumber(arg0) * GetVariableNumber(arg2));
+                            else if (IsStringVariable(arg2))
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                             else
-                                error(ErrorLogger.IS_NULL, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                         }
                         else
                         {
-                            if (containsParameters(arg2))
+                            if (StringHelper.ContainsParameters(arg2))
                             {
                                 if (stackReady(arg2))
                                 {
-                                    if (isNumber(arg0))
-                                        SetVNumber(arg0, GetVNumber(arg0) * getStack(arg2));
+                                    if (IsNumberVariable(arg0))
+                                        SetVariableNumber(arg0, GetVariableNumber(arg0) * getStack(arg2));
                                 }
-                                else if (MExists(beforeParameters(arg2)))
+                                else if (MethodExists(StringHelper.BeforeParameters(arg2)))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                    executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
-                                    if (isNumber(arg0))
+                                    if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(__LastValue))
-                                            SetVNumber(arg0, GetVNumber(arg0) * stod(__LastValue));
+                                            SetVariableNumber(arg0, GetVariableNumber(arg0) * StringHelper.StoD(__LastValue));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
-                                        error(ErrorLogger.NULL_NUMBER, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.NULL_NUMBER, arg0, false);
                                 }
-                                else if (OExists(beforeDot(arg2)))
+                                else if (engine.ObjectExists(StringHelper.BeforeDot(arg2)))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                    executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
-                                    if (isNumber(arg0))
+                                    if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(__LastValue))
-                                            SetVNumber(arg0, GetVNumber(arg0) * stod(__LastValue));
+                                            SetVariableNumber(arg0, GetVariableNumber(arg0) * StringHelper.StoD(__LastValue));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
-                                        error(ErrorLogger.NULL_NUMBER, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.NULL_NUMBER, arg0, false);
                                 }
                             }
-                            else if (MExists(arg2))
+                            else if (MethodExists(arg2))
                             {
                                 parse(arg2);
 
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
                                     if (StringHelper.IsNumeric(__LastValue))
-                                        SetVNumber(arg0, GetVNumber(arg0) * stod(__LastValue));
+                                        SetVariableNumber(arg0, GetVariableNumber(arg0) * StringHelper.StoD(__LastValue));
                                     else
-                                        error(ErrorLogger.CONV_ERR, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else
-                                    error(ErrorLogger.NULL_NUMBER, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.NULL_NUMBER, arg0, false);
                             }
                             else if (StringHelper.IsNumeric(arg2))
                             {
-                                if (isNumber(arg0))
-                                    SetVNumber(arg0, GetVNumber(arg0) * stod(arg2));
+                                if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, GetVariableNumber(arg0) * StringHelper.StoD(arg2));
                             }
                             else
-                                SetVString(arg0, cleanString(arg2));
+                                SetVariableString(arg0, cleanString(arg2));
                         }
                     }
                     else if (arg1 == "%=")
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isNumber(arg2))
-                                SetVNumber(arg0, (int)GetVNumber(arg0) % (int)GetVNumber(arg2));
-                            else if (isString(arg2))
-                                error(ErrorLogger.CONV_ERR, arg2, false);
+                            if (IsNumberVariable(arg2))
+                                SetVariableNumber(arg0, (int)GetVariableNumber(arg0) % (int)GetVariableNumber(arg2));
+                            else if (IsStringVariable(arg2))
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                             else
-                                error(ErrorLogger.IS_NULL, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                         }
-                        else if (MExists(arg2))
+                        else if (MethodExists(arg2))
                         {
                             parse(arg2);
 
-                            if (isNumber(arg0))
+                            if (IsNumberVariable(arg0))
                             {
                                 if (StringHelper.IsNumeric(__LastValue))
-                                    SetVNumber(arg0, (int)GetVNumber(arg0) % (int)stod(__LastValue));
+                                    SetVariableNumber(arg0, (int)GetVariableNumber(arg0) % (int)StringHelper.StoD(__LastValue));
                                 else
-                                    error(ErrorLogger.CONV_ERR, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                             }
                             else
-                                error(ErrorLogger.NULL_NUMBER, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.NULL_NUMBER, arg0, false);
                         }
                         else
                         {
                             if (StringHelper.IsNumeric(arg2))
                             {
-                                if (isNumber(arg0))
-                                    SetVNumber(arg0, (int)GetVNumber(arg0) % (int)stod(arg2));
+                                if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, (int)GetVariableNumber(arg0) % (int)StringHelper.StoD(arg2));
                             }
                             else
-                                SetVString(arg0, cleanString(arg2));
+                                SetVariableString(arg0, cleanString(arg2));
                         }
                     }
                     else if (arg1 == "**=")
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isNumber(arg2))
-                                SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), GetVNumber(arg2)));
-                            else if (isString(arg2))
-                                error(ErrorLogger.CONV_ERR, arg2, false);
+                            if (IsNumberVariable(arg2))
+                                SetVariableNumber(arg0, System.Math.Pow(GetVariableNumber(arg0), GetVariableNumber(arg2)));
+                            else if (IsStringVariable(arg2))
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                             else
-                                error(ErrorLogger.IS_NULL, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                         }
                         else
                         {
-                            if (containsParameters(arg2))
+                            if (StringHelper.ContainsParameters(arg2))
                             {
                                 if (stackReady(arg2))
                                 {
-                                    if (isNumber(arg0))
-                                        SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), (int)getStack(arg2)));
+                                    if (IsNumberVariable(arg0))
+                                        SetVariableNumber(arg0, System.Math.Pow(GetVariableNumber(arg0), (int)getStack(arg2)));
                                 }
-                                else if (MExists(beforeParameters(arg2)))
+                                else if (MethodExists(StringHelper.BeforeParameters(arg2)))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                    executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
-                                    if (isNumber(arg0))
+                                    if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(__LastValue))
-                                            SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), (int)stod(__LastValue)));
+                                            SetVariableNumber(arg0, System.Math.Pow(GetVariableNumber(arg0), (int)StringHelper.StoD(__LastValue)));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
-                                        error(ErrorLogger.NULL_NUMBER, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.NULL_NUMBER, arg0, false);
                                 }
-                                else if (OExists(beforeDot(arg2)))
+                                else if (engine.ObjectExists(StringHelper.BeforeDot(arg2)))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                    executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
-                                    if (isNumber(arg0))
+                                    if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(__LastValue))
-                                            SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), (int)stod(__LastValue)));
+                                            SetVariableNumber(arg0, System.Math.Pow(GetVariableNumber(arg0), (int)StringHelper.StoD(__LastValue)));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
-                                        error(ErrorLogger.NULL_NUMBER, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.NULL_NUMBER, arg0, false);
                                 }
                             }
-                            else if (MExists(arg2))
+                            else if (MethodExists(arg2))
                             {
                                 parse(arg2);
 
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
                                     if (StringHelper.IsNumeric(__LastValue))
-                                        SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), (int)stod(__LastValue)));
+                                        SetVariableNumber(arg0, System.Math.Pow(GetVariableNumber(arg0), (int)StringHelper.StoD(__LastValue)));
                                     else
-                                        error(ErrorLogger.CONV_ERR, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else
-                                    error(ErrorLogger.NULL_NUMBER, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.NULL_NUMBER, arg0, false);
                             }
                             else if (StringHelper.IsNumeric(arg2))
                             {
-                                if (isNumber(arg0))
-                                    SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), stod(arg2)));
+                                if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, System.Math.Pow(GetVariableNumber(arg0), StringHelper.StoD(arg2)));
                             }
                             else
-                                SetVString(arg0, cleanString(arg2));
+                                SetVariableString(arg0, cleanString(arg2));
                         }
                     }
                     else if (arg1 == "/=")
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isNumber(arg2))
-                                SetVNumber(arg0, GetVNumber(arg0) / GetVNumber(arg2));
-                            else if (isString(arg2))
-                                error(ErrorLogger.CONV_ERR, arg2, false);
+                            if (IsNumberVariable(arg2))
+                                SetVariableNumber(arg0, GetVariableNumber(arg0) / GetVariableNumber(arg2));
+                            else if (IsStringVariable(arg2))
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                             else
-                                error(ErrorLogger.IS_NULL, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                         }
                         else
                         {
-                            if (containsParameters(arg2))
+                            if (StringHelper.ContainsParameters(arg2))
                             {
                                 if (stackReady(arg2))
                                 {
-                                    if (isNumber(arg0))
-                                        SetVNumber(arg0, GetVNumber(arg0) / getStack(arg2));
+                                    if (IsNumberVariable(arg0))
+                                        SetVariableNumber(arg0, GetVariableNumber(arg0) / getStack(arg2));
                                 }
-                                else if (MExists(beforeParameters(arg2)))
+                                else if (MethodExists(StringHelper.BeforeParameters(arg2)))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                    executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
-                                    if (isNumber(arg0))
+                                    if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(__LastValue))
-                                            SetVNumber(arg0, GetVNumber(arg0) / stod(__LastValue));
+                                            SetVariableNumber(arg0, GetVariableNumber(arg0) / StringHelper.StoD(__LastValue));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
-                                        error(ErrorLogger.NULL_NUMBER, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.NULL_NUMBER, arg0, false);
                                 }
-                                else if (OExists(beforeDot(arg2)))
+                                else if (engine.ObjectExists(StringHelper.BeforeDot(arg2)))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                                    executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
-                                    if (isNumber(arg0))
+                                    if (IsNumberVariable(arg0))
                                     {
                                         if (StringHelper.IsNumeric(__LastValue))
-                                            SetVNumber(arg0, GetVNumber(arg0) / stod(__LastValue));
+                                            SetVariableNumber(arg0, GetVariableNumber(arg0) / StringHelper.StoD(__LastValue));
                                         else
-                                            error(ErrorLogger.CONV_ERR, arg0, false);
+                                            ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
-                                        error(ErrorLogger.NULL_NUMBER, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.NULL_NUMBER, arg0, false);
                                 }
                             }
-                            else if (MExists(arg2))
+                            else if (MethodExists(arg2))
                             {
                                 parse(arg2);
 
-                                if (isNumber(arg0))
+                                if (IsNumberVariable(arg0))
                                 {
                                     if (StringHelper.IsNumeric(__LastValue))
-                                        SetVNumber(arg0, GetVNumber(arg0) / stod(__LastValue));
+                                        SetVariableNumber(arg0, GetVariableNumber(arg0) / StringHelper.StoD(__LastValue));
                                     else
-                                        error(ErrorLogger.CONV_ERR, arg0, false);
+                                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else
-                                    error(ErrorLogger.NULL_NUMBER, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.NULL_NUMBER, arg0, false);
                             }
                             else if (StringHelper.IsNumeric(arg2))
                             {
-                                if (isNumber(arg0))
-                                    SetVNumber(arg0, GetVNumber(arg0) / stod(arg2));
+                                if (IsNumberVariable(arg0))
+                                    SetVariableNumber(arg0, GetVariableNumber(arg0) / StringHelper.StoD(arg2));
                             }
                             else
-                                SetVString(arg0, cleanString(arg2));
+                                SetVariableString(arg0, cleanString(arg2));
                         }
                     }
                     else if (arg1 == "++=")
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isNumber(arg2))
+                            if (IsNumberVariable(arg2))
                             {
-                                if (isString(arg0))
+                                if (IsStringVariable(arg0))
                                 {
-                                    int tempVarNumber = ((int)GetVNumber(arg2));
-                                    string tempVarString = (GetVString(arg0));
+                                    int tempVarNumber = ((int)GetVariableNumber(arg2));
+                                    string tempVarString = (GetVariableString(arg0));
                                     int len = (tempVarString.Length);
                                     string cleaned = ("");
 
                                     for (int i = 0; i < len; i++)
                                         cleaned += ((char)(((int)tempVarString[i]) + tempVarNumber));
 
-                                    SetVString(arg0, cleaned);
+                                    SetVariableString(arg0, cleaned);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                             else
-                                error(ErrorLogger.CONV_ERR, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                         }
                         else
                         {
                             if (StringHelper.IsNumeric(arg2))
                             {
-                                int tempVarNumber = (stoi(arg2));
-                                string tempVarString = (GetVString(arg0));
+                                int tempVarNumber = (StringHelper.StoI(arg2));
+                                string tempVarString = (GetVariableString(arg0));
 
                                 if (tempVarString != __Null)
                                 {
@@ -1591,45 +1602,45 @@
                                     for (int i = 0; i < len; i++)
                                         cleaned += ((char)(((int)tempVarString[i]) + tempVarNumber));
 
-                                    SetVString(arg0, cleaned);
+                                    SetVariableString(arg0, cleaned);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, tempVarString, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, tempVarString, false);
                             }
                             else
-                                error(ErrorLogger.CONV_ERR, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                         }
                     }
                     else if (arg1 == "--=")
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isNumber(arg2))
+                            if (IsNumberVariable(arg2))
                             {
-                                if (isString(arg0))
+                                if (IsStringVariable(arg0))
                                 {
-                                    int tempVarNumber = ((int)GetVNumber(arg2));
-                                    string tempVarString = (GetVString(arg0));
+                                    int tempVarNumber = ((int)GetVariableNumber(arg2));
+                                    string tempVarString = (GetVariableString(arg0));
                                     int len = (tempVarString.Length);
                                     string cleaned = ("");
 
                                     for (int i = 0; i < len; i++)
                                         cleaned += ((char)(((int)tempVarString[i]) - tempVarNumber));
 
-                                    SetVString(arg0, cleaned);
+                                    SetVariableString(arg0, cleaned);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg0, false);
                             }
                             else
-                                error(ErrorLogger.CONV_ERR, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                         }
                         else
                         {
                             if (StringHelper.IsNumeric(arg2))
                             {
-                                int tempVarNumber = (stoi(arg2));
-                                string tempVarString = (GetVString(arg0));
+                                int tempVarNumber = (StringHelper.StoI(arg2));
+                                string tempVarString = (GetVariableString(arg0));
 
                                 if (tempVarString != __Null)
                                 {
@@ -1639,62 +1650,62 @@
                                     for (int i = 0; i < len; i++)
                                         cleaned += ((char)(((int)tempVarString[i]) - tempVarNumber));
 
-                                    SetVString(arg0, cleaned);
+                                    SetVariableString(arg0, cleaned);
                                 }
                                 else
-                                    error(ErrorLogger.IS_NULL, tempVarString, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, tempVarString, false);
                             }
                             else
-                                error(ErrorLogger.CONV_ERR, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                         }
                     }
                     else if (arg1 == "?")
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isString(arg2))
+                            if (IsStringVariable(arg2))
                             {
-                                if (isString(arg0))
-                                    SetVString(arg0, getStdout(GetVString(arg2)));
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, getStdout(GetVariableString(arg2)));
                                 else
-                                    error(ErrorLogger.CONV_ERR, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                             }
                             else
-                                error(ErrorLogger.CONV_ERR, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                         }
                         else
                         {
-                            if (isString(arg0))
-                                SetVString(arg0, getStdout(cleanString(arg2)));
+                            if (IsStringVariable(arg0))
+                                SetVariableString(arg0, getStdout(cleanString(arg2)));
                             else
-                                error(ErrorLogger.CONV_ERR, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                         }
                     }
                     else if (arg1 == "!")
                     {
-                        if (VExists(arg2))
+                        if (VariableExists(arg2))
                         {
-                            if (isString(arg2))
+                            if (IsStringVariable(arg2))
                             {
-                                if (isString(arg0))
-                                    SetVString(arg0, getParsedOutput(GetVString(arg2)));
+                                if (IsStringVariable(arg0))
+                                    SetVariableString(arg0, getParsedOutput(GetVariableString(arg2)));
                                 else
-                                    error(ErrorLogger.CONV_ERR, arg0, false);
+                                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                             }
                             else
-                                error(ErrorLogger.CONV_ERR, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                         }
                         else
                         {
-                            if (isString(arg0))
-                                SetVString(arg0, getParsedOutput(cleanString(arg2)));
+                            if (IsStringVariable(arg0))
+                                SetVariableString(arg0, getParsedOutput(cleanString(arg2)));
                             else
-                                error(ErrorLogger.CONV_ERR, arg0, false);
+                                ErrorLogger.Error(ErrorLogger.CONV_ERR, arg0, false);
                         }
                     }
                     else
                     {
-                        error(ErrorLogger.INVALID_OPERATOR, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg1, false);
                     }
                 }
             }
@@ -1702,62 +1713,62 @@
 
         void initializeListValues(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
         {
-            string _b = (beforeDot(arg2)), _a = (afterDot(arg2)), __b = (beforeParameters(arg2));
+            string _b = (StringHelper.BeforeDot(arg2)), _a = (StringHelper.AfterDot(arg2)), __b = (StringHelper.BeforeParameters(arg2));
 
-            if (containsBrackets(arg0))
+            if (StringHelper.ContainsBrackets(arg0))
             {
-                string after = (afterBrackets(arg0)), before = (beforeBrackets(arg0));
-                after = subtractString(after, "]");
+                string after = (StringHelper.AfterBrackets(arg0)), before = (StringHelper.BeforeBrackets(arg0));
+                after = StringHelper.SubtractString(after, "]");
 
-                if (GetLSize(before) >= stoi(after))
+                if (engine.GetListSize(before) >= StringHelper.StoI(after))
                 {
-                    if (stoi(after) == 0)
+                    if (StringHelper.StoI(after) == 0)
                     {
                         if (arg1 == "=")
                         {
-                            if (VExists(arg2))
+                            if (VariableExists(arg2))
                             {
-                                if (isString(arg2))
-                                    LReplace(before, after, GetVString(arg2));
-                                else if (isNumber(arg2))
-                                    LReplace(before, after, dtos(GetVNumber(arg2)));
+                                if (IsStringVariable(arg2))
+                                    engine.ListReplace(before, after, GetVariableString(arg2));
+                                else if (IsNumberVariable(arg2))
+                                    engine.ListReplace(before, after, StringHelper.DtoS(GetVariableNumber(arg2)));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg2, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                             }
                             else
-                                LReplace(before, after, arg2);
+                                engine.ListReplace(before, after, arg2);
                         }
                     }
-                    else if (GetLLine(before, stoi(after))  == "#!=no_line")
-                        error(ErrorLogger.OUT_OF_BOUNDS, arg0, false);
+                    else if (engine.GetListLine(before, StringHelper.StoI(after))  == "#!=no_line")
+                        ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, arg0, false);
                     else
                     {
                         if (arg1 == "=")
                         {
-                            if (VExists(arg2))
+                            if (VariableExists(arg2))
                             {
-                                if (isString(arg2))
-                                    LReplace(before, after, GetVString(arg2));
-                                else if (isNumber(arg2))
-                                    LReplace(before, after, dtos(GetVNumber(arg2)));
+                                if (IsStringVariable(arg2))
+                                    engine.ListReplace(before, after, GetVariableString(arg2));
+                                else if (IsNumberVariable(arg2))
+                                    engine.ListReplace(before, after, StringHelper.DtoS(GetVariableNumber(arg2)));
                                 else
-                                    error(ErrorLogger.IS_NULL, arg2, false);
+                                    ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
                             }
                             else
-                                LReplace(before, after, arg2);
+                                engine.ListReplace(before, after, arg2);
                         }
                     }
                 }
                 else
-                    error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
+                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
             }
-            else if (containsBrackets(arg2)) // INITIALIZE LIST FROM RANGE
+            else if (StringHelper.ContainsBrackets(arg2)) // INITIALIZE LIST FROM RANGE
             {
-                string listName = (beforeBrackets(arg2));
+                string listName = (StringHelper.BeforeBrackets(arg2));
 
-                if (LExists(listName))
+                if (engine.ListExists(listName))
                 {
-                    System.Collections.Generic.List<string> listRange = getBracketRange(arg2);
+                    System.Collections.Generic.List<string> listRange = StringHelper.GetBracketRange(arg2);
 
                     if (listRange.Count == 2)
                     {
@@ -1767,107 +1778,107 @@
                         {
                             if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                             {
-                                if (stoi(rangeBegin) < stoi(rangeEnd))
+                                if (StringHelper.StoI(rangeBegin) < StringHelper.StoI(rangeEnd))
                                 {
-                                    if (GetLSize(listName) >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                    if (engine.GetListSize(listName) >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                     {
-                                        if (stoi(rangeBegin) >= 0)
+                                        if (StringHelper.StoI(rangeBegin) >= 0)
                                         {
                                             if (arg1 == "+=")
                                             {
-                                                for (int i = stoi(rangeBegin); i <= stoi(rangeEnd); i++)
-                                                    LAddToList(arg0, GetLLine(listName, i));
+                                                for (int i = StringHelper.StoI(rangeBegin); i <= StringHelper.StoI(rangeEnd); i++)
+                                                    engine.AddToList(arg0, engine.GetListLine(listName, i));
                                             }
                                             else if (arg1 == "=")
                                             {
-                                                LClear(arg0);
+                                                engine.ListClear(arg0);
 
-                                                for (int i = stoi(rangeBegin); i <= stoi(rangeEnd); i++)
-                                                    LAddToList(arg0, GetLLine(listName, i));
+                                                for (int i = StringHelper.StoI(rangeBegin); i <= StringHelper.StoI(rangeEnd); i++)
+                                                    engine.AddToList(arg0, engine.GetListLine(listName, i));
                                             }
                                             else
-                                                error(ErrorLogger.INVALID_OPERATOR, arg1, false);
+                                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg1, false);
                                         }
                                         else
-                                            error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin, false);
+                                            ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin, false);
                                     }
                                     else
-                                        error(ErrorLogger.OUT_OF_BOUNDS, rangeEnd, false);
+                                        ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeEnd, false);
                                 }
-                                else if (stoi(rangeBegin) > stoi(rangeEnd))
+                                else if (StringHelper.StoI(rangeBegin) > StringHelper.StoI(rangeEnd))
                                 {
-                                    if (GetLSize(listName) >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                    if (engine.GetListSize(listName) >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                     {
-                                        if (stoi(rangeBegin) >= 0)
+                                        if (StringHelper.StoI(rangeBegin) >= 0)
                                         {
                                             if (arg1 == "+=")
                                             {
-                                                for (int i = stoi(rangeBegin); i >= stoi(rangeEnd); i--)
-                                                    LAddToList(arg0, GetLLine(listName, i));
+                                                for (int i = StringHelper.StoI(rangeBegin); i >= StringHelper.StoI(rangeEnd); i--)
+                                                    engine.AddToList(arg0, engine.GetListLine(listName, i));
                                             }
                                             else if (arg1 == "=")
                                             {
-                                                LClear(arg0);
+                                                engine.ListClear(arg0);
 
-                                                for (int i = stoi(rangeBegin); i >= stoi(rangeEnd); i--)
-                                                    LAddToList(arg0, GetLLine(listName, i));
+                                                for (int i = StringHelper.StoI(rangeBegin); i >= StringHelper.StoI(rangeEnd); i--)
+                                                    engine.AddToList(arg0, engine.GetListLine(listName, i));
                                             }
                                             else
-                                                error(ErrorLogger.INVALID_OPERATOR, arg1, false);
+                                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg1, false);
                                         }
                                         else
-                                            error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin, false);
+                                            ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin, false);
                                     }
                                     else
-                                        error(ErrorLogger.OUT_OF_BOUNDS, rangeEnd, false);
+                                        ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeEnd, false);
                                 }
                                 else
-                                    error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                             }
                             else
-                                error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                         }
                         else
-                            error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                            ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                     }
                     else
-                        error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
+                        ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
                 }
                 else
-                    error(ErrorLogger.LIST_UNDEFINED, listName, false);
+                    ErrorLogger.Error(ErrorLogger.LIST_UNDEFINED, listName, false);
             }
-            else if (VExists(_b) && contains(_a, "split") && arg1 == "=")
+            else if (VariableExists(_b) && StringHelper.ContainsString(_a, "split") && arg1 == "=")
             {
-                if (isString(_b))
+                if (IsStringVariable(_b))
                 {
-                    System.Collections.Generic.List<string> parameters = getParameters(_a);
+                    System.Collections.Generic.List<string> parameters = StringHelper.GetParameters(_a);
                     System.Collections.Generic.List<string> elements = new();
 
                     if (parameters[0] == "")
-                        elements = split(GetVString(_b), ' ');
+                        elements = StringHelper.SplitString(GetVariableString(_b), ' ');
                     else
                     {
                         if (parameters[0][0] == ';')
-                            elements = split(GetVString(_b), ';');
+                            elements = StringHelper.SplitString(GetVariableString(_b), ';');
                         else
-                            elements = split(GetVString(_b), parameters[0][0]);
+                            elements = StringHelper.SplitString(GetVariableString(_b), parameters[0][0]);
                     }
 
-                    LClear(arg0);
+                    engine.ListClear(arg0);
 
                     for (int i = 0; i < elements.Count; i++)
-                        LAddToList(arg0, elements[i]);
+                        engine.AddToList(arg0, elements[i]);
                 }
                 else
-                    error(ErrorLogger.NULL_STRING, _b, false);
+                    ErrorLogger.Error(ErrorLogger.NULL_STRING, _b, false);
             }
-            else if (containsParameters(arg2)) // ADD/REMOVE ARRAY FROM LIST
+            else if (StringHelper.ContainsParameters(arg2)) // ADD/REMOVE ARRAY FROM LIST
             {
-                System.Collections.Generic.List<string> parameters = getParameters(arg2);
+                System.Collections.Generic.List<string> parameters = StringHelper.GetParameters(arg2);
 
                 if (arg1 == "=")
                 {
-                    LClear(arg0);
+                    engine.ListClear(arg0);
 
                     setList(arg0, arg2, parameters);
                 }
@@ -1877,81 +1888,81 @@
                 {
                     for (int i = 0; i < parameters.Count; i++)
                     {
-                        if (VExists(parameters[i]))
+                        if (VariableExists(parameters[i]))
                         {
-                            if (isString(parameters[i]))
-                                LRemoveFromList(arg0, GetVString(parameters[i]));
-                            else if (isNumber(parameters[i]))
-                                LRemoveFromList(arg0, dtos(GetVNumber(parameters[i])));
+                            if (IsStringVariable(parameters[i]))
+                                engine.RemoveFromList(arg0, GetVariableString(parameters[i]));
+                            else if (IsNumberVariable(parameters[i]))
+                                engine.RemoveFromList(arg0, StringHelper.DtoS(GetVariableNumber(parameters[i])));
                             else
-                                error(ErrorLogger.IS_NULL, parameters[i], false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                         }
                         else
-                            LRemoveFromList(arg0, parameters[i]);
+                            engine.RemoveFromList(arg0, parameters[i]);
                     }
                 }
                 else
-                    error(ErrorLogger.INVALID_OPERATOR, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg1, false);
             }
-            else if (VExists(arg2)) // ADD/REMOVE VARIABLE VALUE TO/FROM LIST
+            else if (VariableExists(arg2)) // ADD/REMOVE VARIABLE VALUE TO/FROM LIST
             {
                 if (arg1 == "+=")
                 {
-                    if (isString(arg2))
-                        LAddToList(arg0, GetVString(arg2));
-                    else if (isNumber(arg2))
-                        LAddToList(arg0, dtos(GetVNumber(arg2)));
+                    if (IsStringVariable(arg2))
+                        engine.AddToList(arg0, GetVariableString(arg2));
+                    else if (IsNumberVariable(arg2))
+                        engine.AddToList(arg0, StringHelper.DtoS(GetVariableNumber(arg2)));
                     else
-                        error(ErrorLogger.CONV_ERR, arg2, false);
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                 }
                 else if (arg1 == "-=")
                 {
-                    if (isString(arg2))
-                        LRemoveFromList(arg0, GetVString(arg2));
-                    else if (isNumber(arg2))
-                        LRemoveFromList(arg0, dtos(GetVNumber(arg2)));
+                    if (IsStringVariable(arg2))
+                        engine.RemoveFromList(arg0, GetVariableString(arg2));
+                    else if (IsNumberVariable(arg2))
+                        engine.RemoveFromList(arg0, StringHelper.DtoS(GetVariableNumber(arg2)));
                     else
-                        error(ErrorLogger.CONV_ERR, arg2, false);
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                 }
                 else
-                    error(ErrorLogger.INVALID_OPERATOR, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg1, false);
             }
-            else if (MExists(arg2)) // INITIALIZE LIST FROM METHOD RETURN
+            else if (MethodExists(arg2)) // INITIALIZE LIST FROM METHOD RETURN
             {
                 parse(arg2);
 
-                System.Collections.Generic.List<string> _p = getParameters(__LastValue);
+                System.Collections.Generic.List<string> _p = StringHelper.GetParameters(__LastValue);
 
                 if (arg1 == "=")
                 {
-                    LClear(arg0);
+                    engine.ListClear(arg0);
 
                     for (int i = 0; i < _p.Count; i++)
-                        LAddToList(arg0, _p[i]);
+                        engine.AddToList(arg0, _p[i]);
                 }
                 else if (arg1 == "+=")
                 {
                     for (int i = 0; i < _p.Count; i++)
-                        LAddToList(arg0, _p[i]);
+                        engine.AddToList(arg0, _p[i]);
                 }
                 else
-                    error(ErrorLogger.INVALID_OPERATOR, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg1, false);
             }
             else // ADD/REMOVE STRING TO/FROM LIST
             {
                 if (arg1 == "+=")
                 {
                     if (arg2.Length != 0)
-                        LAddToList(arg0, arg2);
+                        engine.AddToList(arg0, arg2);
                     else
-                        error(ErrorLogger.IS_EMPTY, arg2, false);
+                        ErrorLogger.Error(ErrorLogger.IS_EMPTY, arg2, false);
                 }
                 else if (arg1 == "-=")
                 {
                     if (arg2.Length != 0)
-                        LRemoveFromList(arg0, arg2);
+                        engine.RemoveFromList(arg0, arg2);
                     else
-                        error(ErrorLogger.IS_EMPTY, arg2, false);
+                        ErrorLogger.Error(ErrorLogger.IS_EMPTY, arg2, false);
                 }
             }
         }
@@ -1960,171 +1971,171 @@
         {
             if (arg1 == "=")
             {
-                string before = (beforeDot(arg2)), after = (afterDot(arg2));
+                string before = (StringHelper.BeforeDot(arg2)), after = (StringHelper.AfterDot(arg2));
 
-                if (containsBrackets(arg2) && (VExists(beforeBrackets(arg2)) || LExists(beforeBrackets(arg2))))
+                if (StringHelper.ContainsBrackets(arg2) && (VariableExists(StringHelper.BeforeBrackets(arg2)) || engine.ListExists(StringHelper.BeforeBrackets(arg2))))
                 {
-                    string beforeBracket = (beforeBrackets(arg2)), afterBracket = (afterBrackets(arg2));
+                    string beforeBracket = (StringHelper.BeforeBrackets(arg2)), afterBracket = (StringHelper.AfterBrackets(arg2));
 
-                    afterBracket = subtractString(afterBracket, "]");
+                    afterBracket = StringHelper.SubtractString(afterBracket, "]");
 
-                    if (LExists(beforeBracket))
+                    if (engine.ListExists(beforeBracket))
                     {
-                        if (GetLSize(beforeBracket) >= stoi(afterBracket))
+                        if (engine.GetListSize(beforeBracket) >= StringHelper.StoI(afterBracket))
                         {
-                            if (GetLLine(beforeBracket, stoi(afterBracket)) == "#!=no_line")
-                                error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
+                            if (engine.GetListLine(beforeBracket, StringHelper.StoI(afterBracket)) == "#!=no_line")
+                                ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
                             else
                             {
-                                string listValue = GetLLine(beforeBracket, stoi(afterBracket));
+                                string listValue = engine.GetListLine(beforeBracket, StringHelper.StoI(afterBracket));
 
                                 if (StringHelper.IsNumeric(listValue))
-                                    CreateVNumber(arg0, stod(listValue));
+                                    CreateVariableNumber(arg0, StringHelper.StoD(listValue));
                                 else
-                                    CreateVString(arg0, listValue);
+                                    CreateVariableString(arg0, listValue);
                             }
                         }
                         else
-                            error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
+                            ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
                     }
-                    else if (VExists(beforeBracket))
+                    else if (VariableExists(beforeBracket))
                         setSubString(arg0, arg2, beforeBracket);
                     else
-                        error(ErrorLogger.LIST_UNDEFINED, beforeBracket, false);
+                        ErrorLogger.Error(ErrorLogger.LIST_UNDEFINED, beforeBracket, false);
                 }
-                else if (LExists(before) && after == "size")
-                    CreateVNumber(arg0, stod(itos(GetLSize(before))));
+                else if (engine.ListExists(before) && after == "size")
+                    CreateVariableNumber(arg0, StringHelper.StoD(StringHelper.ItoS(engine.GetListSize(before))));
                 else if (before == "self")
                 {
-                    if (OExists(__CurrentMethodObject))
+                    if (engine.ObjectExists(__CurrentMethodObject))
                         twoSpace(arg0, arg1, (__CurrentMethodObject + "." + after), (arg0 + " " + arg1 + " " + (__CurrentMethodObject + "." + after)), command);
                     else
                         twoSpace(arg0, arg1, after, (arg0 + " " + arg1 + " " + after), command);
                 }
                 else if (after == "to_integer")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isString(before))
-                            CreateVNumber(arg0, (int)GetVString(before)[0]);
-                        else if (isNumber(before))
+                        if (IsStringVariable(before))
+                            CreateVariableNumber(arg0, (int)GetVariableString(before)[0]);
+                        else if (IsNumberVariable(before))
                         {
-                            int i = (int)GetVNumber(before);
-                            CreateVNumber(arg0, (double)i);
+                            int i = (int)GetVariableNumber(before);
+                            CreateVariableNumber(arg0, (double)i);
                         }
                         else
-                            error(ErrorLogger.IS_NULL, before, false);
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "to_double")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isString(before))
-                            CreateVNumber(arg0, (double)GetVString(before)[0]);
-                        else if (isNumber(before))
+                        if (IsStringVariable(before))
+                            CreateVariableNumber(arg0, (double)GetVariableString(before)[0]);
+                        else if (IsNumberVariable(before))
                         {
-                            double i = GetVNumber(before);
-                            CreateVNumber(arg0, (double)i);
+                            double i = GetVariableNumber(before);
+                            CreateVariableNumber(arg0, (double)i);
                         }
                         else
-                            error(ErrorLogger.IS_NULL, before, false);
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "to_string")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVString(arg0, dtos(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableString(arg0, StringHelper.DtoS(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.IS_NULL, before, false);
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "to_number")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isString(before))
-                            CreateVNumber(arg0, stod(GetVString(before)));
+                        if (IsStringVariable(before))
+                            CreateVariableNumber(arg0, StringHelper.StoD(GetVariableString(before)));
                         else
-                            error(ErrorLogger.IS_NULL, before, false);
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
-                else if (OExists(before))
+                else if (engine.ObjectExists(before))
                 {
-                    if (OMExists(before, after) && !containsParameters(after))
+                    if (ObjectMethodExists(before, after) && !StringHelper.ContainsParameters(after))
                     {
                         parse(arg2);
 
                         if (StringHelper.IsNumeric(__LastValue))
-                            CreateVNumber(arg0, stod(__LastValue));
+                            CreateVariableNumber(arg0, StringHelper.StoD(__LastValue));
                         else
-                            CreateVString(arg0, __LastValue);
+                            CreateVariableString(arg0, __LastValue);
                     }
-                    else if (containsParameters(after))
+                    else if (StringHelper.ContainsParameters(after))
                     {
-                        if (OMExists(before, beforeParameters(after)))
+                        if (ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
                         {
-                            executeTemplate(GetOM(before, beforeParameters(after)), getParameters(after));
+                            executeTemplate(GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(after));
 
                             if (StringHelper.IsNumeric(__LastValue))
-                                CreateVNumber(arg0, stod(__LastValue));
+                                CreateVariableNumber(arg0, StringHelper.StoD(__LastValue));
                             else
-                                CreateVString(arg0, __LastValue);
+                                CreateVariableString(arg0, __LastValue);
                         }
                         else
                             sysExec(s, command);
                     }
-                    else if (OVExists(before, after))
+                    else if (ObjectVariableExists(before, after))
                     {
-                        if (GetOVString(before, after) != __Null)
-                            CreateVString(arg0, GetOVString(before, after));
-                        else if (GetOVNumber(before, after) != __NullNum)
-                            CreateVNumber(arg0, GetOVNumber(before, after));
+                        if (GetObjectVariableString(before, after) != __Null)
+                            CreateVariableString(arg0, GetObjectVariableString(before, after));
+                        else if (GetObjectVariableNumber(before, after) != __NullNum)
+                            CreateVariableNumber(arg0, GetObjectVariableNumber(before, after));
                         else
-                            error(ErrorLogger.IS_NULL, GetOVName(before, after), false);
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, GetObjectVariableName(before, after), false);
                     }
                 }
-                else if (VExists(before) && after == "read")
+                else if (VariableExists(before) && after == "read")
                 {
-                    if (isString(before))
+                    if (IsStringVariable(before))
                     {
-                        if (System.IO.File.Exists(GetVString(before)))
+                        if (System.IO.File.Exists(GetVariableString(before)))
                         {
                             string bigString = ("");
-                            foreach (var line in System.IO.File.ReadAllLines(GetVString(before)))
+                            foreach (var line in System.IO.File.ReadAllLines(GetVariableString(before)))
                             {
                                 bigString += (line + "\r\n");
                             }
-                            CreateVString(arg0, bigString);
+                            CreateVariableString(arg0, bigString);
                         }
                         else
-                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
+                            ErrorLogger.Error(ErrorLogger.READ_FAIL, GetVariableString(before), false);
                     }
                     else
-                        error(ErrorLogger.NULL_STRING, before, false);
+                        ErrorLogger.Error(ErrorLogger.NULL_STRING, before, false);
                 }
                 else if (__DefiningObject)
                 {
                     if (StringHelper.IsNumeric(arg2))
                     {
-                        Variable newVariable = new(arg0, stod(arg2));
+                        Variable newVariable = new(arg0, StringHelper.StoD(arg2));
 
                         if (__DefiningPrivateCode)
                             newVariable.setPrivate();
                         else if (__DefiningPublicCode)
                             newVariable.setPublic();
 
-                        CreateOV(__CurrentObject, newVariable);
+                        CreateObjectVariable(__CurrentObject, newVariable);
                     }
                     else
                     {
@@ -2135,125 +2146,125 @@
                         else if (__DefiningPublicCode)
                             newVariable.setPublic();
 
-                        CreateOV(__CurrentObject, newVariable);
+                        CreateObjectVariable(__CurrentObject, newVariable);
                     }
                 }
                 else if (arg2 == "null")
-                    CreateVString(arg0, arg2);
-                else if (MExists(arg2))
+                    CreateVariableString(arg0, arg2);
+                else if (MethodExists(arg2))
                 {
                     parse(arg2);
 
                     if (StringHelper.IsNumeric(__LastValue))
-                        CreateVNumber(arg0, stod(__LastValue));
+                        CreateVariableNumber(arg0, StringHelper.StoD(__LastValue));
                     else
-                        CreateVString(arg0, __LastValue);
+                        CreateVariableString(arg0, __LastValue);
                 }
-                else if (CExists(arg2))
+                else if (engine.ConstantExists(arg2))
                 {
-                    if (IsCNumber(arg2))
-                        CreateVNumber(arg0, GetCNumber(arg2));
-                    else if (IsCString(arg2))
-                        CreateVString(arg0, GetCString(arg2));
+                    if (engine.IsNumberConstant(arg2))
+                        CreateVariableNumber(arg0, engine.GetConstantNumber(arg2));
+                    else if (engine.IsStringConstant(arg2))
+                        CreateVariableString(arg0, engine.GetConstantString(arg2));
                     else
-                        error(ErrorLogger.CONV_ERR, arg2, false);
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                 }
-                else if (containsParameters(arg2))
+                else if (StringHelper.ContainsParameters(arg2))
                 {
                     if (isStringStack(arg2))
-                        CreateVString(arg0, getStringStack(arg2));
+                        CreateVariableString(arg0, getStringStack(arg2));
                     else if (stackReady(arg2))
-                        CreateVNumber(arg0, getStack(arg2));
-                    else if (beforeParameters(arg2) == "random")
+                        CreateVariableNumber(arg0, getStack(arg2));
+                    else if (StringHelper.BeforeParameters(arg2) == "random")
                     {
-                        if (contains(arg2, ".."))
+                        if (StringHelper.ContainsString(arg2, ".."))
                         {
-                            System.Collections.Generic.List<string> range = getRange(arg2);
+                            System.Collections.Generic.List<string> range = StringHelper.GetRange(arg2);
                             string s0 = (range[0]), s2 = (range[1]);
 
                             if (StringHelper.IsNumeric(s0) && StringHelper.IsNumeric(s2))
                             {
-                                double n0 = stod(s0), n2 = stod(s2);
+                                double n0 = StringHelper.StoD(s0), n2 = StringHelper.StoD(s2);
 
                                 if (n0 < n2)
-                                    CreateVNumber(arg0, (int)random(n0, n2));
+                                    CreateVariableNumber(arg0, (int)random(n0, n2));
                                 else if (n0 > n2)
-                                    CreateVNumber(arg0, (int)random(n2, n0));
+                                    CreateVariableNumber(arg0, (int)random(n2, n0));
                                 else
-                                    CreateVNumber(arg0, (int)random(n0, n2));
+                                    CreateVariableNumber(arg0, (int)random(n0, n2));
                             }
-                            else if (isAlpha(s0) && isAlpha(s2))
+                            else if (StringHelper.IsAlphabetical(s0) && StringHelper.IsAlphabetical(s2))
                             {
-                                if (get_alpha_num(s0[0]) < get_alpha_num(s2[0]))
-                                    CreateVString(arg0, random(s0, s2));
-                                else if (get_alpha_num(s0[0]) > get_alpha_num(s2[0]))
-                                    CreateVString(arg0, random(s2, s0));
+                                if (StringHelper.GetCharAsInt32(s0[0]) < StringHelper.GetCharAsInt32(s2[0]))
+                                    CreateVariableString(arg0, random(s0, s2));
+                                else if (StringHelper.GetCharAsInt32(s0[0]) > StringHelper.GetCharAsInt32(s2[0]))
+                                    CreateVariableString(arg0, random(s2, s0));
                                 else
-                                    CreateVString(arg0, random(s2, s0));
+                                    CreateVariableString(arg0, random(s2, s0));
                             }
-                            else if (VExists(s0) || VExists(s2))
+                            else if (VariableExists(s0) || VariableExists(s2))
                             {
-                                if (VExists(s0))
+                                if (VariableExists(s0))
                                 {
-                                    if (isNumber(s0))
-                                        s0 = dtos(GetVNumber(s0));
-                                    else if (isString(s0))
-                                        s0 = GetVString(s0);
+                                    if (IsNumberVariable(s0))
+                                        s0 = StringHelper.DtoS(GetVariableNumber(s0));
+                                    else if (IsStringVariable(s0))
+                                        s0 = GetVariableString(s0);
                                 }
 
-                                if (VExists(s2))
+                                if (VariableExists(s2))
                                 {
-                                    if (isNumber(s2))
-                                        s2 = dtos(GetVNumber(s2));
-                                    else if (isString(s2))
-                                        s2 = GetVString(s2);
+                                    if (IsNumberVariable(s2))
+                                        s2 = StringHelper.DtoS(GetVariableNumber(s2));
+                                    else if (IsStringVariable(s2))
+                                        s2 = GetVariableString(s2);
                                 }
 
                                 if (StringHelper.IsNumeric(s0) && StringHelper.IsNumeric(s2))
                                 {
-                                    double n0 = stod(s0), n2 = stod(s2);
+                                    double n0 = StringHelper.StoD(s0), n2 = StringHelper.StoD(s2);
 
                                     if (n0 < n2)
-                                        CreateVNumber(arg0, (int)random(n0, n2));
+                                        CreateVariableNumber(arg0, (int)random(n0, n2));
                                     else if (n0 > n2)
-                                        CreateVNumber(arg0, (int)random(n2, n0));
+                                        CreateVariableNumber(arg0, (int)random(n2, n0));
                                     else
-                                        CreateVNumber(arg0, (int)random(n0, n2));
+                                        CreateVariableNumber(arg0, (int)random(n0, n2));
                                 }
-                                else if (isAlpha(s0) && isAlpha(s2))
+                                else if (StringHelper.IsAlphabetical(s0) && StringHelper.IsAlphabetical(s2))
                                 {
-                                    if (get_alpha_num(s0[0]) < get_alpha_num(s2[0]))
-                                        CreateVString(arg0, random(s0, s2));
-                                    else if (get_alpha_num(s0[0]) > get_alpha_num(s2[0]))
-                                        CreateVString(arg0, random(s2, s0));
+                                    if (StringHelper.GetCharAsInt32(s0[0]) < StringHelper.GetCharAsInt32(s2[0]))
+                                        CreateVariableString(arg0, random(s0, s2));
+                                    else if (StringHelper.GetCharAsInt32(s0[0]) > StringHelper.GetCharAsInt32(s2[0]))
+                                        CreateVariableString(arg0, random(s2, s0));
                                     else
-                                        CreateVString(arg0, random(s2, s0));
+                                        CreateVariableString(arg0, random(s2, s0));
                                 }
                             }
                             else
-                                error(ErrorLogger.OUT_OF_BOUNDS, s0 + ".." + s2, false);
+                                ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, s0 + ".." + s2, false);
                         }
                         else
-                            error(ErrorLogger.INVALID_RANGE_SEP, arg2, false);
+                            ErrorLogger.Error(ErrorLogger.INVALID_RANGE_SEP, arg2, false);
                     }
                     else
                     {
-                        executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
+                        executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
                         if (StringHelper.IsNumeric(__LastValue))
-                            CreateVNumber(arg0, stod(__LastValue));
+                            CreateVariableNumber(arg0, StringHelper.StoD(__LastValue));
                         else
-                            CreateVString(arg0, __LastValue);
+                            CreateVariableString(arg0, __LastValue);
                     }
                 }
-                else if (VExists(arg2))
+                else if (VariableExists(arg2))
                 {
-                    if (isNumber(arg2))
-                        CreateVNumber(arg0, GetVNumber(arg2));
-                    else if (isString(arg2))
-                        CreateVString(arg0, GetVString(arg2));
+                    if (IsNumberVariable(arg2))
+                        CreateVariableNumber(arg0, GetVariableNumber(arg2));
+                    else if (IsStringVariable(arg2))
+                        CreateVariableString(arg0, GetVariableString(arg2));
                     else
-                        CreateVString(arg0, __Null);
+                        CreateVariableString(arg0, __Null);
                 }
                 else if (arg2 == "password" || arg2 == "readline")
                 {
@@ -2263,9 +2274,9 @@
                         line = getSilentOutput("");
 
                         if (StringHelper.IsNumeric(line))
-                            CreateVNumber(arg0, stod(line));
+                            CreateVariableNumber(arg0, StringHelper.StoD(line));
                         else
-                            CreateVString(arg0, line);
+                            CreateVariableString(arg0, line);
                     }
                     else
                     {
@@ -2273,27 +2284,27 @@
                         line = Console.ReadLine();
 
                         if (StringHelper.IsNumeric(line))
-                            CreateVNumber(arg0, stod(line));
+                            CreateVariableNumber(arg0, StringHelper.StoD(line));
                         else
-                            CreateVString(arg0, line);
+                            CreateVariableString(arg0, line);
                     }
                 }
                 else if (arg2 == "args.size")
-                    CreateVNumber(arg0, (double)__ArgumentCount);
+                    CreateVariableNumber(arg0, (double)__ArgumentCount);
                 else if (before == "readline")
                 {
-                    if (VExists(after))
+                    if (VariableExists(after))
                     {
-                        if (isString(after))
+                        if (IsStringVariable(after))
                         {
                             string line = "";
-                            cout = cleanString(GetVString(after));
+                            cout = cleanString(GetVariableString(after));
                             line = Console.ReadLine();
 
                             if (StringHelper.IsNumeric(line))
-                                CreateVNumber(arg0, stod(line));
+                                CreateVariableNumber(arg0, StringHelper.StoD(line));
                             else
-                                CreateVString(arg0, line);
+                                CreateVariableString(arg0, line);
                         }
                         else
                         {
@@ -2302,9 +2313,9 @@
                             line = Console.ReadLine();
 
                             if (StringHelper.IsNumeric(line))
-                                CreateVNumber(arg0, stod(line));
+                                CreateVariableNumber(arg0, StringHelper.StoD(line));
                             else
-                                CreateVString(arg0, line);
+                                CreateVariableString(arg0, line);
                         }
                     }
                     else
@@ -2314,24 +2325,24 @@
                         line = Console.ReadLine();
 
                         if (StringHelper.IsNumeric(line))
-                            CreateVNumber(arg0, stod(line));
+                            CreateVariableNumber(arg0, StringHelper.StoD(line));
                         else
-                            CreateVString(arg0, line);
+                            CreateVariableString(arg0, line);
                     }
                 }
                 else if (before == "password")
                 {
-                    if (VExists(after))
+                    if (VariableExists(after))
                     {
-                        if (isString(after))
+                        if (IsStringVariable(after))
                         {
                             string line = "";
-                            line = getSilentOutput(GetVString(after));
+                            line = getSilentOutput(GetVariableString(after));
 
                             if (StringHelper.IsNumeric(line))
-                                CreateVNumber(arg0, stod(line));
+                                CreateVariableNumber(arg0, StringHelper.StoD(line));
                             else
-                                CreateVString(arg0, line);
+                                CreateVariableString(arg0, line);
 
                             cout = System.Environment.NewLine;
                         }
@@ -2341,9 +2352,9 @@
                             line = getSilentOutput("password: ");
 
                             if (StringHelper.IsNumeric(line))
-                                CreateVNumber(arg0, stod(line));
+                                CreateVariableNumber(arg0, StringHelper.StoD(line));
                             else
-                                CreateVString(arg0, line);
+                                CreateVariableString(arg0, line);
 
                             cout = System.Environment.NewLine;
                         }
@@ -2354,249 +2365,249 @@
                         line = getSilentOutput(cleanString(after));
 
                         if (StringHelper.IsNumeric(line))
-                            CreateVNumber(arg0, stod(line));
+                            CreateVariableNumber(arg0, StringHelper.StoD(line));
                         else
-                            CreateVString(arg0, line);
+                            CreateVariableString(arg0, line);
 
                         cout = System.Environment.NewLine;
                     }
                 }
                 else if (after == "size")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isString(before))
-                            CreateVNumber(arg0, (double)GetVString(before).Length);
+                        if (IsStringVariable(before))
+                            CreateVariableNumber(arg0, (double)GetVariableString(before).Length);
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        CreateVNumber(arg0, (double)before.Length);
+                        CreateVariableNumber(arg0, (double)before.Length);
                 }
                 else if (after == "sin")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Sin(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Sin(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "sinh")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Sinh(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Sinh(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "asin")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Asin(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Asin(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "tan")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Tan(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Tan(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "tanh")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Tanh(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Tanh(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "atan")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Atan(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Atan(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "cos")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Cos(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Cos(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "acos")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Acos(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Acos(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "cosh")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Cosh(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Cosh(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "log")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Log(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Log(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "sqrt")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Sqrt(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Sqrt(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "abs")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Abs(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Abs(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "floor")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Floor(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Floor(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "ceil")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Ceiling(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Ceiling(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "exp")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isNumber(before))
-                            CreateVNumber(arg0, System.Math.Exp(GetVNumber(before)));
+                        if (IsNumberVariable(before))
+                            CreateVariableNumber(arg0, System.Math.Exp(GetVariableNumber(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "to_upper")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isString(before))
-                            CreateVString(arg0, getUpper(GetVString(before)));
+                        if (IsStringVariable(before))
+                            CreateVariableString(arg0, StringHelper.ToUppercase(GetVariableString(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "to_lower")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isString(before))
-                            CreateVString(arg0, getLower(GetVString(before)));
+                        if (IsStringVariable(before))
+                            CreateVariableString(arg0, StringHelper.ToLowercase(GetVariableString(before)));
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        error(ErrorLogger.VAR_UNDEFINED, before, false);
+                        ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
                 else if (after == "bytes")
                 {
-                    if (VExists(before))
+                    if (VariableExists(before))
                     {
-                        if (isString(before))
+                        if (IsStringVariable(before))
                         {
-                            if (System.IO.File.Exists(GetVString(before)))
-                                CreateVNumber(arg0, getBytes(GetVString(before)));
+                            if (System.IO.File.Exists(GetVariableString(before)))
+                                CreateVariableNumber(arg0, getBytes(GetVariableString(before)));
                             else
-                                error(ErrorLogger.READ_FAIL, GetVString(before), false);
+                                ErrorLogger.Error(ErrorLogger.READ_FAIL, GetVariableString(before), false);
                         }
                         else
-                            error(ErrorLogger.CONV_ERR, before, false);
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
                     {
                         if (System.IO.File.Exists(before))
-                            CreateVNumber(arg0, getBytes(before));
+                            CreateVariableNumber(arg0, getBytes(before));
                         else
-                            error(ErrorLogger.READ_FAIL, before, false);
+                            ErrorLogger.Error(ErrorLogger.READ_FAIL, before, false);
                     }
                 }
                 else if (before == "env")
@@ -2606,101 +2617,101 @@
                 else
                 {
                     if (StringHelper.IsNumeric(arg2))
-                        CreateVNumber(arg0, stod(arg2));
+                        CreateVariableNumber(arg0, StringHelper.StoD(arg2));
                     else
-                        CreateVString(arg0, cleanString(arg2));
+                        CreateVariableString(arg0, cleanString(arg2));
                 }
             }
             else if (arg1 == "+=")
             {
-                if (VExists(arg2))
+                if (VariableExists(arg2))
                 {
-                    if (isString(arg2))
-                        CreateVString(arg0, GetVString(arg2));
-                    else if (isNumber(arg2))
-                        CreateVNumber(arg0, GetVNumber(arg2));
+                    if (IsStringVariable(arg2))
+                        CreateVariableString(arg0, GetVariableString(arg2));
+                    else if (IsNumberVariable(arg2))
+                        CreateVariableNumber(arg0, GetVariableNumber(arg2));
                     else
-                        CreateVString(arg0, __Null);
+                        CreateVariableString(arg0, __Null);
                 }
                 else
                 {
                     if (StringHelper.IsNumeric(arg2))
-                        CreateVNumber(arg0, stod(arg2));
+                        CreateVariableNumber(arg0, StringHelper.StoD(arg2));
                     else
-                        CreateVString(arg0, cleanString(arg2));
+                        CreateVariableString(arg0, cleanString(arg2));
                 }
             }
             else if (arg1 == "-=")
             {
-                if (VExists(arg2))
+                if (VariableExists(arg2))
                 {
-                    if (isNumber(arg2))
-                        CreateVNumber(arg0, 0 - GetVNumber(arg2));
+                    if (IsNumberVariable(arg2))
+                        CreateVariableNumber(arg0, 0 - GetVariableNumber(arg2));
                     else
-                        CreateVString(arg0, __Null);
+                        CreateVariableString(arg0, __Null);
                 }
                 else
                 {
                     if (StringHelper.IsNumeric(arg2))
-                        CreateVNumber(arg0, stod(arg2));
+                        CreateVariableNumber(arg0, StringHelper.StoD(arg2));
                     else
-                        CreateVString(arg0, cleanString(arg2));
+                        CreateVariableString(arg0, cleanString(arg2));
                 }
             }
             else if (arg1 == "?")
             {
-                if (VExists(arg2))
+                if (VariableExists(arg2))
                 {
-                    if (isString(arg2))
-                        CreateVString(arg0, getStdout(GetVString(arg2)));
+                    if (IsStringVariable(arg2))
+                        CreateVariableString(arg0, getStdout(GetVariableString(arg2)));
                     else
-                        error(ErrorLogger.CONV_ERR, arg2, false);
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                 }
                 else
-                    CreateVString(arg0, getStdout(cleanString(arg2)));
+                    CreateVariableString(arg0, getStdout(cleanString(arg2)));
             }
             else if (arg1 == "!")
             {
-                if (VExists(arg2))
+                if (VariableExists(arg2))
                 {
-                    if (isString(arg2))
-                        CreateVString(arg0, getParsedOutput(GetVString(arg2)));
+                    if (IsStringVariable(arg2))
+                        CreateVariableString(arg0, getParsedOutput(GetVariableString(arg2)));
                     else
-                        error(ErrorLogger.CONV_ERR, arg2, false);
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                 }
                 else
-                    CreateVString(arg0, getParsedOutput(cleanString(arg2)));
+                    CreateVariableString(arg0, getParsedOutput(cleanString(arg2)));
             }
             else
-                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
         }
 
         void createObjectVariable(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
         {
-            string before = beforeDot(arg2),
-                   after = afterDot(arg2);
+            string before = StringHelper.BeforeDot(arg2),
+                   after = StringHelper.AfterDot(arg2);
 
-            if (OExists(before))
+            if (engine.ObjectExists(before))
             {
                 if (arg1 == "=")
                 {
-                    if (GetOVString(before, after) != __Null)
-                        CreateVString(arg0, GetOVString(before, after));
-                    else if (GetOVNumber(before, after) != __NullNum)
-                        CreateVNumber(arg0, GetOVNumber(before, after));
+                    if (GetObjectVariableString(before, after) != __Null)
+                        CreateVariableString(arg0, GetObjectVariableString(before, after));
+                    else if (GetObjectVariableNumber(before, after) != __NullNum)
+                        CreateVariableNumber(arg0, GetObjectVariableNumber(before, after));
                 }
             }
         }
 
         void createConstant(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
         {
-            if (!CExists(arg0))
+            if (!engine.ConstantExists(arg0))
             {
                 if (arg1 == "=")
                 {
                     if (StringHelper.IsNumeric(arg2))
                     {
-                        Constant newConstant = new(arg0, stod(arg2));
+                        Constant newConstant = new(arg0, StringHelper.StoD(arg2));
                         constants.Add(arg0, newConstant);
                     }
                     else
@@ -2710,10 +2721,10 @@
                     }
                 }
                 else
-                    error(ErrorLogger.INVALID_OPERATOR, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg1, false);
             }
             else
-                error(ErrorLogger.CONST_UNDEFINED, arg0, false);
+                ErrorLogger.Error(ErrorLogger.CONST_UNDEFINED, arg0, false);
         }
 
         void executeSimpleStatement(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
@@ -2721,58 +2732,58 @@
             if (StringHelper.IsNumeric(arg0) && StringHelper.IsNumeric(arg2))
             {
                 if (arg1 == "+")
-                    writeline(dtos(stod(arg0) + stod(arg2)));
+                    writeline(StringHelper.DtoS(StringHelper.StoD(arg0) + StringHelper.StoD(arg2)));
                 else if (arg1 == "-")
-                    writeline(dtos(stod(arg0) - stod(arg2)));
+                    writeline(StringHelper.DtoS(StringHelper.StoD(arg0) - StringHelper.StoD(arg2)));
                 else if (arg1 == "*")
-                    writeline(dtos(stod(arg0) * stod(arg2)));
+                    writeline(StringHelper.DtoS(StringHelper.StoD(arg0) * StringHelper.StoD(arg2)));
                 else if (arg1 == "/")
-                    writeline(dtos(stod(arg0) / stod(arg2)));
+                    writeline(StringHelper.DtoS(StringHelper.StoD(arg0) / StringHelper.StoD(arg2)));
                 else if (arg1 == "**")
-                    writeline(dtos(System.Math.Pow(stod(arg0), stod(arg2))));
+                    writeline(StringHelper.DtoS(System.Math.Pow(StringHelper.StoD(arg0), StringHelper.StoD(arg2))));
                 else if (arg1 == "%")
                 {
-                    if ((int)stod(arg2) == 0)
-                        error(ErrorLogger.DIVIDED_BY_ZERO, s, false);
+                    if ((int)StringHelper.StoD(arg2) == 0)
+                        ErrorLogger.Error(ErrorLogger.DIVIDED_BY_ZERO, s, false);
                     else
-                        writeline(dtos((int)stod(arg0) % (int)stod(arg2)));
+                        writeline(StringHelper.DtoS((int)StringHelper.StoD(arg0) % (int)StringHelper.StoD(arg2)));
                 }
                 else
-                    error(ErrorLogger.INVALID_OPERATOR, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg1, false);
             }
             else
             {
                 if (arg1 == "+")
                     writeline(arg0 + arg2);
                 else if (arg1 == "-")
-                    writeline(subtractString(arg0, arg2));
+                    writeline(StringHelper.SubtractString(arg0, arg2));
                 else if (arg1 == "*")
                 {
-                    if (!zeroNumbers(arg2))
+                    if (!StringHelper.ZeroNumbers(arg2))
                     {
                         string bigstr = string.Empty;
-                        for (int i = 0; i < stoi(arg2); i++)
+                        for (int i = 0; i < StringHelper.StoI(arg2); i++)
                         {
                             bigstr += (arg0);
                             write(arg0);
                         }
 
-                        setLastValue(bigstr);
+                        SetLastValue(bigstr);
                     }
                     else
-                        error(ErrorLogger.INVALID_OP, s, false);
+                        ErrorLogger.Error(ErrorLogger.INVALID_OP, s, false);
                 }
                 else if (arg1 == "/")
-                    writeline(subtractString(arg0, arg2));
+                    writeline(StringHelper.SubtractString(arg0, arg2));
                 else
-                    error(ErrorLogger.INVALID_OPERATOR, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg1, false);
             }
         }
 
         void InternalEncryptDecrypt(string arg0, string arg1)
         {
             Crypt c = new();
-            string text = VExists(arg1) ? (isString(arg1) ? GetVString(arg1) : dtos(GetVNumber(arg1))) : arg1;
+            string text = VariableExists(arg1) ? (IsStringVariable(arg1) ? GetVariableString(arg1) : StringHelper.DtoS(GetVariableNumber(arg1))) : arg1;
             write(arg0 == "encrypt" ? c.e(text) : c.d(text));
         }
 
@@ -2790,7 +2801,7 @@
         string random(string start, string sc)
         {
             string s = string.Empty;
-            char c = start[0] == sc[0] ? sc[0] : (char)((new System.Random().Next() % get_alpha_num(sc[0])) + start[0]);
+            char c = start[0] == sc[0] ? sc[0] : (char)((new System.Random().Next() % StringHelper.GetCharAsInt32(sc[0])) + start[0]);
             s += (c);
 
             return (s);
@@ -2893,19 +2904,19 @@
             __ArgumentCount = 0;
             __NullNum = -Double.MaxValue;
 
-            if (contains(System.Environment.GetEnvironmentVariable("HOMEPATH"), "Users"))
+            if (StringHelper.ContainsString(System.Environment.GetEnvironmentVariable("HOMEPATH"), "Users"))
             {
                 __GuessedOS = "win64";
                 __SavedVarsPath = (System.Environment.GetEnvironmentVariable("HOMEPATH") + "\\AppData") + "\\.__SavedVarsPath";
                 __SavedVars = __SavedVarsPath + "\\.__SavedVars";
             }
-            else if (contains(System.Environment.GetEnvironmentVariable("HOMEPATH"), "Documents"))
+            else if (StringHelper.ContainsString(System.Environment.GetEnvironmentVariable("HOMEPATH"), "Documents"))
             {
                 __GuessedOS = "win32";
                 __SavedVarsPath = System.Environment.GetEnvironmentVariable("HOMEPATH") + "\\Application Data\\.__SavedVarsPath";
                 __SavedVars = __SavedVarsPath + "\\.__SavedVars";
             }
-            else if (startsWith(System.Environment.GetEnvironmentVariable("HOME"), "/"))
+            else if (StringHelper.StringStartsWith(System.Environment.GetEnvironmentVariable("HOME"), "/"))
             {
                 __GuessedOS = "linux";
                 __SavedVarsPath = System.Environment.GetEnvironmentVariable("HOME") + "/.__SavedVarsPath";
