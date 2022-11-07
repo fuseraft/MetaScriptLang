@@ -5,26 +5,6 @@
 
     public partial class Parser
     {
-        void replaceElement(string before, string after, string replacement)
-        {
-            System.Collections.Generic.List<string> newList = new();
-
-            for (int i = 0; i < lists[indexOfList(before)].size(); i++)
-            {
-                if (i == stoi(after))
-                    newList.Add(replacement);
-                else
-                    newList.Add(lists[indexOfList(before)].at(i));
-            }
-
-            lists[indexOfList(before)].clear();
-
-            for (int i = 0; i < (int)newList.Count; i++)
-                lists[indexOfList(before)].add(newList[i]);
-
-            newList.Clear();
-        }
-
         List getDirectoryList(string before, bool filesOnly)
         {
             List newList = new();

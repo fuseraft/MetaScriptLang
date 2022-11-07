@@ -20,37 +20,29 @@
         void initializeVariable(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
         {
             string tmpObjName = beforeDot(arg0), tmpVarName = afterDot(arg0);
-            bool tmpObjExists = objectExists(tmpObjName);
+            bool tmpObjExists = OExists(tmpObjName);
             if (tmpObjExists || startsWith(arg0, "@"))
             {
                 if (tmpObjExists)
                 {
-                    if (objects[indexOfObject(tmpObjName)].getVariable(tmpVarName).getString() != __Null)
+                    if (GetOVString(tmpObjName, tmpVarName) != __Null)
                     {
                         string tempObjectVariableName = ("@ " + tmpObjName + tmpVarName + "_string");
-
-                        CreateVString(tempObjectVariableName, objects[indexOfObject(tmpObjName)].getVariable(tmpVarName).getString());
-
+                        CreateVString(tempObjectVariableName, GetOVString(tmpObjName, tmpVarName));
                         twoSpace(tempObjectVariableName, arg1, arg2, "", command);
-
                         SetVName(tempObjectVariableName, tmpVarName);
-
-                        objects[indexOfObject(tmpObjName)].removeVariable(tmpVarName);
-                        objects[indexOfObject(tmpObjName)].addVariable(GetV(tmpVarName));
+                        DeleteOV(tmpObjName, tmpVarName);
+                        CreateOV(tmpObjName, GetV(tmpVarName));
                         DeleteV(tmpVarName);
                     }
-                    else if (objects[indexOfObject(tmpObjName)].getVariable(tmpVarName).getNumber() != __NullNum)
+                    else if (GetOVNumber(tmpObjName, tmpVarName) != __NullNum)
                     {
                         string tempObjectVariableName = ("@____" + beforeDot(arg0) + "___" + afterDot(arg0) + "_number");
-
-                        CreateVNumber(tempObjectVariableName, objects[indexOfObject(beforeDot(arg0))].getVariable(afterDot(arg0)).getNumber());
-
+                        CreateVNumber(tempObjectVariableName, GetOVNumber(beforeDot(arg0), afterDot(arg0)));
                         twoSpace(tempObjectVariableName, arg1, arg2, tempObjectVariableName + " " + arg1 + " " + arg2, command);
-
                         SetVName(tempObjectVariableName, afterDot(arg0));
-
-                        objects[indexOfObject(beforeDot(arg0))].removeVariable(afterDot(arg0));
-                        objects[indexOfObject(beforeDot(arg0))].addVariable(GetV(afterDot(arg0)));
+                        DeleteOV(beforeDot(arg0), afterDot(arg0));
+                        CreateOV(beforeDot(arg0), GetV(afterDot(arg0)));
                         DeleteV(afterDot(arg0));
                     }
                 }
@@ -58,21 +50,21 @@
                 {
                     string before = (beforeDot(arg2)), after = (afterDot(arg2));
 
-                    if (containsBrackets(arg2) && (VExists(beforeBrackets(arg2)) || listExists(beforeBrackets(arg2))))
+                    if (containsBrackets(arg2) && (VExists(beforeBrackets(arg2)) || LExists(beforeBrackets(arg2))))
                     {
                         string beforeBracket = (beforeBrackets(arg2)), afterBracket = (afterBrackets(arg2));
 
                         afterBracket = subtractString(afterBracket, "]");
 
-                        if (listExists(beforeBracket))
+                        if (LExists(beforeBracket))
                         {
-                            if (lists[indexOfList(beforeBracket)].size() >= stoi(afterBracket))
+                            if (GetLSize(beforeBracket) >= stoi(afterBracket))
                             {
-                                if (lists[indexOfList(beforeBracket)].at(stoi(afterBracket)) == "#!=no_line")
+                                if (GetLLine(beforeBracket, stoi(afterBracket)) == "#!=no_line")
                                     error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
                                 else
                                 {
-                                    string listValue = (lists[indexOfList(beforeBracket)].at(stoi(afterBracket)));
+                                    string listValue = GetLLine(beforeBracket, stoi(afterBracket));
 
                                     if (StringHelper.IsNumeric(listValue))
                                     {
@@ -211,34 +203,34 @@
                                     error(ErrorLogger.INVALID_SEQ_SEP, arg2, false);
                             }
                         }
-                        else if (listExists(before) && after == "size")
+                        else if (LExists(before) && after == "size")
                         {
                             if (isNumber(arg0))
-                                SetVNumber(arg0, stod(itos(lists[indexOfList(before)].size())));
+                                SetVNumber(arg0, stod(itos(GetLSize(before))));
                             else if (isString(arg0))
-                                SetVString(arg0, itos(lists[indexOfList(before)].size()));
+                                SetVString(arg0, itos(GetLSize(before)));
                             else
                                 error(ErrorLogger.IS_NULL, arg0, false);
                         }
                         else if (before == "self")
                         {
-                            if (objectExists(__CurrentMethodObject))
+                            if (OExists(__CurrentMethodObject))
                                 twoSpace(arg0, arg1, (__CurrentMethodObject + "." + after), (arg0 + " " + arg1 + " " + (__CurrentMethodObject + "." + after)), command);
                             else
                                 twoSpace(arg0, arg1, after, (arg0 + " " + arg1 + " " + after), command);
                         }
-                        else if (objectExists(before))
+                        else if (OExists(before))
                         {
-                            if (objects[indexOfObject(before)].variableExists(after))
+                            if (OVExists(before, after))
                             {
-                                if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
-                                    SetVString(arg0, objects[indexOfObject(before)].getVariable(after).getString());
-                                else if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
-                                    SetVNumber(arg0, objects[indexOfObject(before)].getVariable(after).getNumber());
+                                if (GetOVString(before, after) != __Null)
+                                    SetVString(arg0, GetOVString(before, after));
+                                else if (GetOVNumber(before, after) != __NullNum)
+                                    SetVNumber(arg0, GetOVNumber(before, after));
                                 else
                                     error(ErrorLogger.IS_NULL, arg2, false);
                             }
-                            else if (objects[indexOfObject(before)].methodExists(after) && !containsParameters(after))
+                            else if (OMExists(before, after) && !containsParameters(after))
                             {
                                 parse(arg2);
 
@@ -249,9 +241,9 @@
                             }
                             else if (containsParameters(after))
                             {
-                                if (objects[indexOfObject(before)].methodExists(beforeParameters(after)))
+                                if (OMExists(before, beforeParameters(after)))
                                 {
-                                    executeTemplate(objects[indexOfObject(before)].getMethod(beforeParameters(after)), getParameters(after));
+                                    executeTemplate(GetOM(before, beforeParameters(after)), getParameters(after));
 
                                     if (StringHelper.IsNumeric(__LastValue))
                                     {
@@ -937,19 +929,19 @@
                             else
                                 error(ErrorLogger.IS_NULL, arg0, false);
                         }
-                        else if (constantExists(arg2))
+                        else if (CExists(arg2))
                         {
                             if (isString(arg0))
                             {
-                                if (constants[indexOfConstant(arg2)].ConstNumber())
-                                    SetVString(arg0, dtos(constants[indexOfConstant(arg2)].getNumber()));
-                                else if (constants[indexOfConstant(arg2)].ConstString())
-                                    SetVString(arg0, constants[indexOfConstant(arg2)].getString());
+                                if (IsCNumber(arg2))
+                                    SetVString(arg0, dtos(GetCNumber(arg2)));
+                                else if (IsCString(arg2))
+                                    SetVString(arg0, GetCString(arg2));
                             }
                             else if (isNumber(arg0))
                             {
-                                if (constants[indexOfConstant(arg2)].ConstNumber())
-                                    SetVNumber(arg0, constants[indexOfConstant(arg2)].getNumber());
+                                if (IsCNumber(arg2))
+                                    SetVNumber(arg0, GetCNumber(arg2));
                                 else
                                     error(ErrorLogger.CONV_ERR, arg2, false);
                             }
@@ -1130,7 +1122,7 @@
                                     else
                                         error(ErrorLogger.IS_NULL, arg0, false);
                                 }
-                                else if (objectExists(beforeDot(arg2)))
+                                else if (OExists(beforeDot(arg2)))
                                 {
                                     executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
 
@@ -1245,7 +1237,7 @@
                                     else
                                         error(ErrorLogger.IS_NULL, arg0, false);
                                 }
-                                else if (objectExists(beforeDot(arg2)))
+                                else if (OExists(beforeDot(arg2)))
                                 {
                                     executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
 
@@ -1342,7 +1334,7 @@
                                     else
                                         error(ErrorLogger.NULL_NUMBER, arg0, false);
                                 }
-                                else if (objectExists(beforeDot(arg2)))
+                                else if (OExists(beforeDot(arg2)))
                                 {
                                     executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
 
@@ -1450,7 +1442,7 @@
                                     else
                                         error(ErrorLogger.NULL_NUMBER, arg0, false);
                                 }
-                                else if (objectExists(beforeDot(arg2)))
+                                else if (OExists(beforeDot(arg2)))
                                 {
                                     executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
 
@@ -1522,7 +1514,7 @@
                                     else
                                         error(ErrorLogger.NULL_NUMBER, arg0, false);
                                 }
-                                else if (objectExists(beforeDot(arg2)))
+                                else if (OExists(beforeDot(arg2)))
                                 {
                                     executeTemplate(GetM(beforeParameters(arg2)), getParameters(arg2));
 
@@ -1717,7 +1709,7 @@
                 string after = (afterBrackets(arg0)), before = (beforeBrackets(arg0));
                 after = subtractString(after, "]");
 
-                if (lists[indexOfList(before)].size() >= stoi(after))
+                if (GetLSize(before) >= stoi(after))
                 {
                     if (stoi(after) == 0)
                     {
@@ -1726,17 +1718,17 @@
                             if (VExists(arg2))
                             {
                                 if (isString(arg2))
-                                    replaceElement(before, after, GetVString(arg2));
+                                    LReplace(before, after, GetVString(arg2));
                                 else if (isNumber(arg2))
-                                    replaceElement(before, after, dtos(GetVNumber(arg2)));
+                                    LReplace(before, after, dtos(GetVNumber(arg2)));
                                 else
                                     error(ErrorLogger.IS_NULL, arg2, false);
                             }
                             else
-                                replaceElement(before, after, arg2);
+                                LReplace(before, after, arg2);
                         }
                     }
-                    else if (lists[indexOfList(before)].at(stoi(after)) == "#!=no_line")
+                    else if (GetLLine(before, stoi(after))  == "#!=no_line")
                         error(ErrorLogger.OUT_OF_BOUNDS, arg0, false);
                     else
                     {
@@ -1745,14 +1737,14 @@
                             if (VExists(arg2))
                             {
                                 if (isString(arg2))
-                                    replaceElement(before, after, GetVString(arg2));
+                                    LReplace(before, after, GetVString(arg2));
                                 else if (isNumber(arg2))
-                                    replaceElement(before, after, dtos(GetVNumber(arg2)));
+                                    LReplace(before, after, dtos(GetVNumber(arg2)));
                                 else
                                     error(ErrorLogger.IS_NULL, arg2, false);
                             }
                             else
-                                replaceElement(before, after, arg2);
+                                LReplace(before, after, arg2);
                         }
                     }
                 }
@@ -1763,7 +1755,7 @@
             {
                 string listName = (beforeBrackets(arg2));
 
-                if (listExists(listName))
+                if (LExists(listName))
                 {
                     System.Collections.Generic.List<string> listRange = getBracketRange(arg2);
 
@@ -1777,21 +1769,21 @@
                             {
                                 if (stoi(rangeBegin) < stoi(rangeEnd))
                                 {
-                                    if (lists[indexOfList(listName)].size() >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                    if (GetLSize(listName) >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
                                     {
                                         if (stoi(rangeBegin) >= 0)
                                         {
                                             if (arg1 == "+=")
                                             {
                                                 for (int i = stoi(rangeBegin); i <= stoi(rangeEnd); i++)
-                                                    lists[indexOfList(arg0)].add(lists[indexOfList(listName)].at(i));
+                                                    LAddToList(arg0, GetLLine(listName, i));
                                             }
                                             else if (arg1 == "=")
                                             {
-                                                lists[indexOfList(arg0)].clear();
+                                                LClear(arg0);
 
                                                 for (int i = stoi(rangeBegin); i <= stoi(rangeEnd); i++)
-                                                    lists[indexOfList(arg0)].add(lists[indexOfList(listName)].at(i));
+                                                    LAddToList(arg0, GetLLine(listName, i));
                                             }
                                             else
                                                 error(ErrorLogger.INVALID_OPERATOR, arg1, false);
@@ -1804,21 +1796,21 @@
                                 }
                                 else if (stoi(rangeBegin) > stoi(rangeEnd))
                                 {
-                                    if (lists[indexOfList(listName)].size() >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                    if (GetLSize(listName) >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
                                     {
                                         if (stoi(rangeBegin) >= 0)
                                         {
                                             if (arg1 == "+=")
                                             {
                                                 for (int i = stoi(rangeBegin); i >= stoi(rangeEnd); i--)
-                                                    lists[indexOfList(arg0)].add(lists[indexOfList(listName)].at(i));
+                                                    LAddToList(arg0, GetLLine(listName, i));
                                             }
                                             else if (arg1 == "=")
                                             {
-                                                lists[indexOfList(arg0)].clear();
+                                                LClear(arg0);
 
                                                 for (int i = stoi(rangeBegin); i >= stoi(rangeEnd); i--)
-                                                    lists[indexOfList(arg0)].add(lists[indexOfList(listName)].at(i));
+                                                    LAddToList(arg0, GetLLine(listName, i));
                                             }
                                             else
                                                 error(ErrorLogger.INVALID_OPERATOR, arg1, false);
@@ -1861,10 +1853,10 @@
                             elements = split(GetVString(_b), parameters[0][0]);
                     }
 
-                    lists[indexOfList(arg0)].clear();
+                    LClear(arg0);
 
-                    for (int i = 0; i < (int)elements.Count; i++)
-                        lists[indexOfList(arg0)].add(elements[i]);
+                    for (int i = 0; i < elements.Count; i++)
+                        LAddToList(arg0, elements[i]);
                 }
                 else
                     error(ErrorLogger.NULL_STRING, _b, false);
@@ -1875,7 +1867,7 @@
 
                 if (arg1 == "=")
                 {
-                    lists[indexOfList(arg0)].clear();
+                    LClear(arg0);
 
                     setList(arg0, arg2, parameters);
                 }
@@ -1888,14 +1880,14 @@
                         if (VExists(parameters[i]))
                         {
                             if (isString(parameters[i]))
-                                lists[indexOfList(arg0)].remove(GetVString(parameters[i]));
+                                LRemoveFromList(arg0, GetVString(parameters[i]));
                             else if (isNumber(parameters[i]))
-                                lists[indexOfList(arg0)].remove(dtos(GetVNumber(parameters[i])));
+                                LRemoveFromList(arg0, dtos(GetVNumber(parameters[i])));
                             else
                                 error(ErrorLogger.IS_NULL, parameters[i], false);
                         }
                         else
-                            lists[indexOfList(arg0)].remove(parameters[i]);
+                            LRemoveFromList(arg0, parameters[i]);
                     }
                 }
                 else
@@ -1906,18 +1898,18 @@
                 if (arg1 == "+=")
                 {
                     if (isString(arg2))
-                        lists[indexOfList(arg0)].add(GetVString(arg2));
+                        LAddToList(arg0, GetVString(arg2));
                     else if (isNumber(arg2))
-                        lists[indexOfList(arg0)].add(dtos(GetVNumber(arg2)));
+                        LAddToList(arg0, dtos(GetVNumber(arg2)));
                     else
                         error(ErrorLogger.CONV_ERR, arg2, false);
                 }
                 else if (arg1 == "-=")
                 {
                     if (isString(arg2))
-                        lists[indexOfList(arg0)].remove(GetVString(arg2));
+                        LRemoveFromList(arg0, GetVString(arg2));
                     else if (isNumber(arg2))
-                        lists[indexOfList(arg0)].remove(dtos(GetVNumber(arg2)));
+                        LRemoveFromList(arg0, dtos(GetVNumber(arg2)));
                     else
                         error(ErrorLogger.CONV_ERR, arg2, false);
                 }
@@ -1932,15 +1924,15 @@
 
                 if (arg1 == "=")
                 {
-                    lists[indexOfList(arg0)].clear();
+                    LClear(arg0);
 
-                    for (int i = 0; i < (int)_p.Count; i++)
-                        lists[indexOfList(arg0)].add(_p[i]);
+                    for (int i = 0; i < _p.Count; i++)
+                        LAddToList(arg0, _p[i]);
                 }
                 else if (arg1 == "+=")
                 {
-                    for (int i = 0; i < (int)_p.Count; i++)
-                        lists[indexOfList(arg0)].add(_p[i]);
+                    for (int i = 0; i < _p.Count; i++)
+                        LAddToList(arg0, _p[i]);
                 }
                 else
                     error(ErrorLogger.INVALID_OPERATOR, arg1, false);
@@ -1950,14 +1942,14 @@
                 if (arg1 == "+=")
                 {
                     if (arg2.Length != 0)
-                        lists[indexOfList(arg0)].add(arg2);
+                        LAddToList(arg0, arg2);
                     else
                         error(ErrorLogger.IS_EMPTY, arg2, false);
                 }
                 else if (arg1 == "-=")
                 {
                     if (arg2.Length != 0)
-                        lists[indexOfList(arg0)].remove(arg2);
+                        LRemoveFromList(arg0, arg2);
                     else
                         error(ErrorLogger.IS_EMPTY, arg2, false);
                 }
@@ -1970,21 +1962,21 @@
             {
                 string before = (beforeDot(arg2)), after = (afterDot(arg2));
 
-                if (containsBrackets(arg2) && (VExists(beforeBrackets(arg2)) || listExists(beforeBrackets(arg2))))
+                if (containsBrackets(arg2) && (VExists(beforeBrackets(arg2)) || LExists(beforeBrackets(arg2))))
                 {
                     string beforeBracket = (beforeBrackets(arg2)), afterBracket = (afterBrackets(arg2));
 
                     afterBracket = subtractString(afterBracket, "]");
 
-                    if (listExists(beforeBracket))
+                    if (LExists(beforeBracket))
                     {
-                        if (lists[indexOfList(beforeBracket)].size() >= stoi(afterBracket))
+                        if (GetLSize(beforeBracket) >= stoi(afterBracket))
                         {
-                            if (lists[indexOfList(beforeBracket)].at(stoi(afterBracket)) == "#!=no_line")
+                            if (GetLLine(beforeBracket, stoi(afterBracket)) == "#!=no_line")
                                 error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
                             else
                             {
-                                string listValue = (lists[indexOfList(beforeBracket)].at(stoi(afterBracket)));
+                                string listValue = GetLLine(beforeBracket, stoi(afterBracket));
 
                                 if (StringHelper.IsNumeric(listValue))
                                     CreateVNumber(arg0, stod(listValue));
@@ -2000,11 +1992,11 @@
                     else
                         error(ErrorLogger.LIST_UNDEFINED, beforeBracket, false);
                 }
-                else if (listExists(before) && after == "size")
-                    CreateVNumber(arg0, stod(itos(lists[indexOfList(before)].size())));
+                else if (LExists(before) && after == "size")
+                    CreateVNumber(arg0, stod(itos(GetLSize(before))));
                 else if (before == "self")
                 {
-                    if (objectExists(__CurrentMethodObject))
+                    if (OExists(__CurrentMethodObject))
                         twoSpace(arg0, arg1, (__CurrentMethodObject + "." + after), (arg0 + " " + arg1 + " " + (__CurrentMethodObject + "." + after)), command);
                     else
                         twoSpace(arg0, arg1, after, (arg0 + " " + arg1 + " " + after), command);
@@ -2067,9 +2059,9 @@
                     else
                         error(ErrorLogger.VAR_UNDEFINED, before, false);
                 }
-                else if (objectExists(before))
+                else if (OExists(before))
                 {
-                    if (objects[indexOfObject(before)].methodExists(after) && !containsParameters(after))
+                    if (OMExists(before, after) && !containsParameters(after))
                     {
                         parse(arg2);
 
@@ -2080,9 +2072,9 @@
                     }
                     else if (containsParameters(after))
                     {
-                        if (objects[indexOfObject(before)].methodExists(beforeParameters(after)))
+                        if (OMExists(before, beforeParameters(after)))
                         {
-                            executeTemplate(objects[indexOfObject(before)].getMethod(beforeParameters(after)), getParameters(after));
+                            executeTemplate(GetOM(before, beforeParameters(after)), getParameters(after));
 
                             if (StringHelper.IsNumeric(__LastValue))
                                 CreateVNumber(arg0, stod(__LastValue));
@@ -2092,14 +2084,14 @@
                         else
                             sysExec(s, command);
                     }
-                    else if (objects[indexOfObject(before)].variableExists(after))
+                    else if (OVExists(before, after))
                     {
-                        if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
-                            CreateVString(arg0, objects[indexOfObject(before)].getVariable(after).getString());
-                        else if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
-                            CreateVNumber(arg0, objects[indexOfObject(before)].getVariable(after).getNumber());
+                        if (GetOVString(before, after) != __Null)
+                            CreateVString(arg0, GetOVString(before, after));
+                        else if (GetOVNumber(before, after) != __NullNum)
+                            CreateVNumber(arg0, GetOVNumber(before, after));
                         else
-                            error(ErrorLogger.IS_NULL, objects[indexOfObject(before)].getVariable(after).name(), false);
+                            error(ErrorLogger.IS_NULL, GetOVName(before, after), false);
                     }
                 }
                 else if (VExists(before) && after == "read")
@@ -2132,7 +2124,7 @@
                         else if (__DefiningPublicCode)
                             newVariable.setPublic();
 
-                        objects[indexOfObject(__CurrentObject)].addVariable(newVariable);
+                        CreateOV(__CurrentObject, newVariable);
                     }
                     else
                     {
@@ -2143,7 +2135,7 @@
                         else if (__DefiningPublicCode)
                             newVariable.setPublic();
 
-                        objects[indexOfObject(__CurrentObject)].addVariable(newVariable);
+                        CreateOV(__CurrentObject, newVariable);
                     }
                 }
                 else if (arg2 == "null")
@@ -2157,12 +2149,12 @@
                     else
                         CreateVString(arg0, __LastValue);
                 }
-                else if (constantExists(arg2))
+                else if (CExists(arg2))
                 {
-                    if (constants[indexOfConstant(arg2)].ConstNumber())
-                        CreateVNumber(arg0, constants[indexOfConstant(arg2)].getNumber());
-                    else if (constants[indexOfConstant(arg2)].ConstString())
-                        CreateVString(arg0, constants[indexOfConstant(arg2)].getString());
+                    if (IsCNumber(arg2))
+                        CreateVNumber(arg0, GetCNumber(arg2));
+                    else if (IsCString(arg2))
+                        CreateVString(arg0, GetCString(arg2));
                     else
                         error(ErrorLogger.CONV_ERR, arg2, false);
                 }
@@ -2688,65 +2680,33 @@
             string before = beforeDot(arg2),
                    after = afterDot(arg2);
 
-            if (objectExists(before))
+            if (OExists(before))
             {
                 if (arg1 == "=")
                 {
-                    if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
-                        CreateVString(arg0, objects[indexOfObject(before)].getVariable(after).getString());
-                    else if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
-                        CreateVNumber(arg0, objects[indexOfObject(before)].getVariable(after).getNumber());
+                    if (GetOVString(before, after) != __Null)
+                        CreateVString(arg0, GetOVString(before, after));
+                    else if (GetOVNumber(before, after) != __NullNum)
+                        CreateVNumber(arg0, GetOVNumber(before, after));
                 }
             }
         }
 
-        void copyObject(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
-        {
-            if (arg1 == "=")
-            {
-                System.Collections.Generic.List<Method> objectMethods = objects[indexOfObject(arg2)].getMethods();
-                Object newObject = new(arg0);
-
-                for (int i = 0; i < (int)objectMethods.Count; i++)
-                    newObject.addMethod(objectMethods[i]);
-
-
-                System.Collections.Generic.List<Variable> objectVariables = objects[indexOfObject(arg2)].getVariables();
-
-                for (int i = 0; i < (int)objectVariables.Count; i++)
-                    newObject.addVariable(objectVariables[i]);
-
-                if (__ExecutedMethod)
-                    newObject.collect();
-                else
-                    newObject.dontCollect();
-
-                objects.Add(newObject);
-                __CurrentObject = arg1;
-                __DefiningObject = false;
-
-                newObject.clear();
-                objectMethods.Clear();
-            }
-            else
-                error(ErrorLogger.INVALID_OPERATOR, arg1, false);
-        }
-
         void createConstant(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
         {
-            if (!constantExists(arg0))
+            if (!CExists(arg0))
             {
                 if (arg1 == "=")
                 {
                     if (StringHelper.IsNumeric(arg2))
                     {
                         Constant newConstant = new(arg0, stod(arg2));
-                        constants.Add(newConstant);
+                        constants.Add(arg0, newConstant);
                     }
                     else
                     {
                         Constant newConstant = new(arg0, arg2);
-                        constants.Add(newConstant);
+                        constants.Add(arg0, newConstant);
                     }
                 }
                 else
@@ -2815,160 +2775,6 @@
             string text = VExists(arg1) ? (isString(arg1) ? GetVString(arg1) : dtos(GetVNumber(arg1))) : arg1;
             write(arg0 == "encrypt" ? c.e(text) : c.d(text));
         }
-
-        void InternalInspect(string arg0, string arg1, string before, string after)
-        {
-            if (before.Length != 0 && after.Length != 0)
-            {
-                if (objectExists(before))
-                {
-                    if (objects[indexOfObject(before)].methodExists(after))
-                    {
-                        for (int i = 0; i < objects[indexOfObject(before)].getMethod(after).GetMethodSize(); i++)
-                            write(objects[indexOfObject(before)].getMethod(after).GetLine(i));
-                    }
-                    else if (objects[indexOfObject(before)].variableExists(after))
-                    {
-                        if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
-                            write(objects[indexOfObject(before)].getVariable(after).getString());
-                        else if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
-                            write(dtos(objects[indexOfObject(before)].getVariable(after).getNumber()));
-                        else
-                            write(__Null);
-                    }
-                    else
-                        error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
-                }
-                else
-                    error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
-            }
-            else
-            {
-                if (objectExists(arg1))
-                {
-                    for (int i = 0; i < objects[indexOfObject(arg1)].methodSize(); i++)
-                        write(objects[indexOfObject(arg1)].getMethod(objects[indexOfObject(arg1)].getMethodName(i)).GetName());
-                    for (int i = 0; i < objects[indexOfObject(arg1)].variableSize(); i++)
-                        write(objects[indexOfObject(arg1)].getVariable(objects[indexOfObject(arg1)].getVariableName(i)).name());
-                }
-                else if (constantExists(arg1))
-                {
-                    if (constants[indexOfConstant(arg1)].ConstNumber())
-                        write(dtos(constants[indexOfConstant(arg1)].getNumber()));
-                    else if (constants[indexOfConstant(arg1)].ConstString())
-                        write(constants[indexOfConstant(arg1)].getString());
-                }
-                else if (MExists(arg1))
-                {
-                    for (int i = 0; i < GetMSize(arg1); i++)
-                        write(GetMLine(arg1, i));
-                }
-                else if (VExists(arg1))
-                {
-                    if (isString(arg1))
-                        write(GetVString(arg1));
-                    else if (isNumber(arg1))
-                        write(dtos(GetVNumber(arg1)));
-                }
-                else if (listExists(arg1))
-                {
-                    for (int i = 0; i < lists[indexOfList(arg1)].size(); i++)
-                        write(lists[indexOfList(arg1)].at(i));
-                }
-                else if (arg1 == "variables")
-                {
-                    foreach (var key in this.variables.Keys)
-                    {
-                        if (variables[key].getString() != __Null)
-                            write($"{variables[key].name()}:\t{variables[key].getString()}");
-                        else if (variables[key].getNumber() != __NullNum)
-                            write($"{variables[key].name()}:\t{dtos(variables[key].getNumber())}");
-                        else
-                            write($"{variables[key].name()}:\tis_null");
-                    }
-                }
-                else if (arg1 == "lists")
-                {
-                    for (int i = 0; i < (int)lists.Count; i++)
-                        write(lists[i].name());
-                }
-                else if (arg1 == "methods")
-                {
-                    foreach (var key in this.methods.Keys)
-                    {
-                        write(methods[key].GetName());
-                    }
-                }
-                else if (arg1 == "objects")
-                {
-                    for (int i = 0; i < (int)objects.Count; i++)
-                        write(objects[i].name());
-                }
-                else if (arg1 == "constants")
-                {
-                    for (int i = 0; i < (int)constants.Count; i++)
-                        write(constants[i].name());
-                }
-                else if (arg1 == "os?")
-                    write("windows?");
-                else if (arg1 == "last")
-                    write(__LastValue);
-                else
-                    error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
-            }
-        }
-
-        void InternalGlobalize(string arg0, string arg1)
-        {
-            if (contains(arg1, ".") && MExists(arg1) && !MExists(afterDot(arg1)))
-            {
-                Method method = new(afterDot(arg1));
-
-                System.Collections.Generic.List<string> lines = getObject(beforeDot(arg1)).getMethod(afterDot(arg1)).GetLines();
-
-                for (int i = 0; i < (int)lines.Count; i++)
-                    method.AddLine(lines[i]);
-
-                methods.Add(method.GetName(), method);
-            }
-            else
-                error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1, false);
-        }
-
-        void InternalCallMethod(string arg0, string arg1, string before, string after)
-        {
-            if (__DefiningObject)
-            {
-                if (objects[indexOfObject(__CurrentObject)].methodExists(arg1))
-                    executeMethod(objects[indexOfObject(__CurrentObject)].getMethod(arg1));
-                else
-                    error(ErrorLogger.METHOD_UNDEFINED, arg1, false);
-            }
-            else
-            {
-                if (before.Length != 0 && after.Length != 0)
-                {
-                    if (objectExists(before))
-                    {
-                        if (objects[indexOfObject(before)].methodExists(after))
-                            executeMethod(objects[indexOfObject(before)].getMethod(after));
-                        else
-                            error(ErrorLogger.METHOD_UNDEFINED, arg1, false);
-                    }
-                    else
-                        error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, true);
-                }
-                else
-                {
-                    if (MExists(arg1))
-                        executeMethod(GetM(arg1));
-                    else
-                        error(ErrorLogger.METHOD_UNDEFINED, arg1, true);
-                }
-            }
-        }
-
-
 
         void delay(int milliseconds)
         {

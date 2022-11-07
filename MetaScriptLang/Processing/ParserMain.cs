@@ -280,7 +280,7 @@
                             __CurrentModule = string.Empty;
                         }
                         else
-                            modules[indexOfModule(__CurrentModule)].add(s);
+                            ModAddLine(__CurrentModule, s);
                     }
                     else if (__DefiningScript)
                     {
@@ -330,7 +330,7 @@
                                         __DefiningLocalWhileLoop = false;
 
                                         if (__DefiningObject)
-                                            objects[indexOfObject(__CurrentObject)].addToCurrentMethod(s);
+                                            SetOMAddLineToCurrentMethod(__CurrentObject, s);
                                         else
                                             methods[CurrentMethodName].AddLine(s);
                                     }
@@ -339,7 +339,7 @@
                                         __DefiningLocalSwitchBlock = false;
 
                                         if (__DefiningObject)
-                                            objects[indexOfObject(__CurrentObject)].addToCurrentMethod(s);
+                                            SetOMAddLineToCurrentMethod(__CurrentObject, s);
                                         else
                                             methods[CurrentMethodName].AddLine(s);
                                     }
@@ -350,7 +350,7 @@
                                         if (__DefiningObject)
                                         {
                                             __DefiningObjectMethod = false;
-                                            objects[objects.Count - 1].setCurrentMethod(string.Empty);
+                                            objects[__CurrentObject].setCurrentMethod(string.Empty);
                                         }
                                     }
                                 }
@@ -358,7 +358,7 @@
                                 {
                                     int _len = s.Length;
                                     System.Collections.Generic.List<string> words = new();
-                                    string word = (string.Empty);
+                                    string word = string.Empty;
 
                                     for (int z = 0; z < _len; z++)
                                     {
@@ -373,7 +373,7 @@
 
                                     words.Add(word);
 
-                                    string freshLine = (string.Empty);
+                                    string freshLine = string.Empty;
 
                                     for (int z = 0; z < words.Count; z++)
                                     {
@@ -393,14 +393,14 @@
 
                                     if (__DefiningObject)
                                     {
-                                        objects[indexOfObject(__CurrentObject)].addToCurrentMethod(freshLine);
+                                        SetOMAddLineToCurrentMethod(__CurrentObject, freshLine);
 
                                         if (__DefiningPublicCode)
-                                            objects[indexOfObject(__CurrentObject)].setPublic();
+                                            SetOPublic(__CurrentObject);
                                         else if (__DefiningPrivateCode)
-                                            objects[indexOfObject(__CurrentObject)].setPrivate();
+                                            SetOPrivate(__CurrentObject);
                                         else
-                                            objects[indexOfObject(__CurrentObject)].setPublic();
+                                            SetOPublic(__CurrentObject);
                                     }
                                     else
                                         methods[CurrentMethodName].AddLine(freshLine);
@@ -417,7 +417,7 @@
                                         __DefiningLocalWhileLoop = false;
 
                                         if (__DefiningObject)
-                                            objects[objects.Count - 1].addToCurrentMethod(s);
+                                            objects[__CurrentObject].addToCurrentMethod(s);
                                         else
                                             methods[CurrentMethodName].AddLine(s);
                                     }
@@ -426,7 +426,7 @@
                                         __DefiningLocalSwitchBlock = false;
 
                                         if (__DefiningObject)
-                                            objects[objects.Count - 1].addToCurrentMethod(s);
+                                            objects[__CurrentObject].addToCurrentMethod(s);
                                         else
                                             methods[CurrentMethodName].AddLine(s);
                                     }
@@ -437,7 +437,7 @@
                                         if (__DefiningObject)
                                         {
                                             __DefiningObjectMethod = false;
-                                            objects[objects.Count - 1].setCurrentMethod(string.Empty);
+                                            objects[__CurrentObject].setCurrentMethod(string.Empty);
                                         }
                                     }
                                 }
@@ -445,27 +445,27 @@
                                 {
                                     if (__DefiningObject)
                                     {
-                                        objects[objects.Count - 1].addToCurrentMethod(s);
+                                        objects[__CurrentObject].addToCurrentMethod(s);
 
                                         if (__DefiningPublicCode)
-                                            objects[objects.Count - 1].setPublic();
+                                            objects[__CurrentObject].setPublic();
                                         else if (__DefiningPrivateCode)
-                                            objects[objects.Count - 1].setPrivate();
+                                            objects[__CurrentObject].setPrivate();
                                         else
-                                            objects[objects.Count - 1].setPublic();
+                                            objects[__CurrentObject].setPublic();
                                     }
                                     else
                                     {
                                         if (__DefiningObjectMethod)
                                         {
-                                            objects[objects.Count - 1].addToCurrentMethod(s);
+                                            objects[__CurrentObject].addToCurrentMethod(s);
 
                                             if (__DefiningPublicCode)
-                                                objects[objects.Count - 1].setPublic();
+                                                objects[__CurrentObject].setPublic();
                                             else if (__DefiningPrivateCode)
-                                                objects[objects.Count - 1].setPrivate();
+                                                objects[__CurrentObject].setPrivate();
                                             else
-                                                objects[objects.Count - 1].setPublic();
+                                                objects[__CurrentObject].setPublic();
                                         }
                                         else
                                             methods[CurrentMethodName].AddLine(s);
@@ -763,30 +763,30 @@
 
                                         if (before.Length != 0 && after.Length != 0)
                                         {
-                                            if (objectExists(before) && after.Length != 0)
+                                            if (OExists(before) && after.Length != 0)
                                             {
                                                 if (containsParameters(after))
                                                 {
                                                     s = subtractChar(s, "\"");
 
-                                                    if (objects[indexOfObject(before)].methodExists(beforeParameters(after)))
-                                                        executeTemplate(objects[indexOfObject(before)].getMethod(beforeParameters(after)), getParameters(after));
+                                                    if (OMExists(before, beforeParameters(after)))
+                                                        executeTemplate(GetOM(before, beforeParameters(after)), getParameters(after));
                                                     else
                                                         sysExec(s, command);
                                                 }
-                                                else if (objects[indexOfObject(before)].methodExists(after))
-                                                    executeMethod(objects[indexOfObject(before)].getMethod(after));
-                                                else if (objects[indexOfObject(before)].variableExists(after))
+                                                else if (OMExists(before, after))
+                                                    executeMethod(GetOM(before, after));
+                                                else if (OVExists(before, after))
                                                 {
-                                                    if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
-                                                        writeline(objects[indexOfObject(before)].getVariable(after).getString());
-                                                    else if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
-                                                        writeline(dtos(objects[indexOfObject(before)].getVariable(after).getNumber()));
+                                                    if (GetOVString(before, after) != __Null)
+                                                        writeline(GetOVString(before, after));
+                                                    else if (GetOVNumber(before, after) != __NullNum)
+                                                        writeline(dtos(GetOVNumber(before, after)));
                                                     else
                                                         error(ErrorLogger.IS_NULL, string.Empty, false);
                                                 }
                                                 else if (after == "clear")
-                                                    objects[indexOfObject(before)].clear();
+                                                    ClearO(before);
                                                 else
                                                     error(ErrorLogger.UNDEFINED, string.Empty, false);
                                             }
@@ -801,22 +801,22 @@
                                                     if (after == "clear")
                                                         parse(before + " = __Null");
                                                 }
-                                                else if (listExists(before))
+                                                else if (LExists(before))
                                                 {
                                                     // REFACTOR HERE
                                                     if (after == "clear")
-                                                        lists[indexOfList(before)].clear();
+                                                        LClear(before);
                                                     else if (after == "sort")
-                                                        lists[indexOfList(before)].listSort();
+                                                        LSort(before);
                                                     else if (after == "reverse")
-                                                        lists[indexOfList(before)].listReverse();
+                                                        LReverse(before);
                                                     else if (after == "revert")
-                                                        lists[indexOfList(before)].listRevert();
+                                                        LRevert(before);
                                                 }
                                                 else if (before == "self")
                                                 {
                                                     if (__ExecutedMethod)
-                                                        executeMethod(objects[indexOfObject(__CurrentMethodObject)].getMethod(after));
+                                                        executeMethod(GetOM(__CurrentMethodObject, after));
                                                 }
                                                 else
                                                     sysExec(s, command);
@@ -826,9 +826,8 @@
                                         {
                                             if (__CurrentScript != string.Empty)
                                             {
-                                                string newMark = (s);
-                                                newMark = subtractString(s, "::");
-                                                scripts[indexOfScript(__CurrentScript)].addMark(newMark);
+                                                string newMark = subtractString(s, "::");
+                                                SetSMark(__CurrentScript, newMark);
                                             }
                                         }
                                         else if (MExists(s))
@@ -870,7 +869,7 @@
                                         else if ((command[0] == "fwrite"))
                                             __fwrite(command[1], command[2]);
                                         else if (command[0] == "redefine")
-                                            redefine(command[1], command[2]);
+                                            MemRedefine(command[1], command[2]);
                                         else if (command[0] == "loop")
                                         {
                                             if (containsParameters(command[2]))
@@ -945,7 +944,7 @@
 
                         if (!broken)
                         {
-                            string commentString = (string.Empty);
+                            string commentString = string.Empty;
 
                             bool commentFound = false;
 
@@ -962,7 +961,7 @@
                         }
                         else
                         {
-                            string commentString = (string.Empty);
+                            string commentString = string.Empty;
 
                             bool commentFound = false;
 
@@ -1115,7 +1114,7 @@
             {
                 if (__CurrentScript != string.Empty)
                 {
-                    if (scripts[indexOfScript(__CurrentScript)].markExists(arg1))
+                    if (GetSMarkExists(__CurrentScript, arg1))
                     {
                         __GoTo = arg1;
                         __GoToLabel = true;
@@ -1131,8 +1130,8 @@
                     // can we can assume that arg1 belongs to an object?
                     if (!zeroDots(arg1))
                     {
-                        string objName = (beforeDot(arg1)), varName = (afterDot(arg1));
-                        Variable tmpVar = getObject(objName).getVariable(varName);
+                        string objName = beforeDot(arg1), varName = afterDot(arg1);
+                        Variable tmpVar = GetOV(objName, varName);
 
                         if (isString(tmpVar))
                         {
@@ -1171,7 +1170,7 @@
                     }
                     else
                     {
-                        string tmpCode = (string.Empty);
+                        string tmpCode = string.Empty;
 
                         if (startsWith(arg1, "(\"") && endsWith(arg1, "\")"))
                         {
@@ -1181,6 +1180,7 @@
                         {
                             tmpCode = arg1;
                         }
+
                         tmpValue = getParsedOutput(tmpCode);
                     }
                 }
@@ -1258,10 +1258,10 @@
                     {
                         if (VExists(parameters[i]))
                             DeleteV(parameters[i]);
-                        else if (listExists(parameters[i]))
-                            lists = removeList(lists, parameters[i]);
-                        else if (objectExists(parameters[i]))
-                            objects = removeObject(objects, parameters[i]);
+                        else if (LExists(parameters[i]))
+                            DeleteL(parameters[i]);
+                        else if (OExists(parameters[i]))
+                            DeleteO(parameters[i]);
                         else if (MExists(parameters[i]))
                             DeleteM(parameters[i]);
                         else
@@ -1270,10 +1270,10 @@
                 }
                 else if (VExists(arg1))
                     DeleteV(arg1);
-                else if (listExists(arg1))
-                    lists = removeList(lists, arg1);
-                else if (objectExists(arg1))
-                    objects = removeObject(objects, arg1);
+                else if (LExists(arg1))
+                    DeleteL(arg1);
+                else if (OExists(arg1))
+                    DeleteO(arg1);
                 else if (MExists(arg1))
                     DeleteM(arg1);
                 else
@@ -1346,9 +1346,9 @@
                     else
                         error(ErrorLogger.BAD_LOAD, arg1, true);
                 }
-                else if (moduleExists(arg1))
+                else if (ModExists(arg1))
                 {
-                    System.Collections.Generic.List<string> lines = modules[indexOfModule(arg1)].get();
+                    System.Collections.Generic.List<string> lines = ModGetLines(arg1);
 
                     for (int i = 0; i < lines.Count; i++)
                         parse(lines[i]);
@@ -1386,8 +1386,8 @@
             }
             else if (arg0 == "list")
             {
-                if (listExists(arg1))
-                    lists[indexOfList(arg1)].clear();
+                if (LExists(arg1))
+                    LClear(arg1);
                 else
                 {
                     List newList = new(arg1);
@@ -1397,7 +1397,7 @@
                     else
                         newList.dontCollect();
 
-                    lists.Add(newList);
+                    lists.Add(arg1, newList);
                 }
             }
             else if (arg0 == "!")
@@ -1462,7 +1462,7 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (objects[indexOfObject(before)].methodExists(after))
+                    if (OMExists(before, after))
                         __true();
                     else
                         __false();
@@ -1477,7 +1477,7 @@
             }
             else if (arg0 == "object?")
             {
-                if (objectExists(arg1))
+                if (OExists(arg1))
                     __true();
                 else
                     __false();
@@ -1486,7 +1486,7 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (objects[indexOfObject(before)].variableExists(after))
+                    if (OMExists(before, after))
                         __true();
                     else
                         __false();
@@ -1501,7 +1501,7 @@
             }
             else if (arg0 == "list?")
             {
-                if (listExists(arg1))
+                if (LExists(arg1))
                     __true();
                 else
                     __false();
@@ -1510,9 +1510,9 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (objects[indexOfObject(before)].variableExists(after))
+                    if (OMExists(before, after))
                     {
-                        if (System.IO.Directory.Exists(objects[indexOfObject(before)].getVariable(after).getString()))
+                        if (System.IO.Directory.Exists(GetOVString(before, after)))
                             __true();
                         else
                             __false();
@@ -1547,9 +1547,9 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (objects[indexOfObject(before)].variableExists(after))
+                    if (OMExists(before, after))
                     {
-                        if (System.IO.File.Exists(objects[indexOfObject(before)].getVariable(after).getString()))
+                        if (System.IO.File.Exists(GetOVString(before, after)))
                             __true();
                         else
                             __false();
@@ -1596,9 +1596,9 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (objects[indexOfObject(before)].variableExists(after))
+                    if (OMExists(before, after))
                     {
-                        if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
+                        if (GetOVNumber(before, after) != __NullNum)
                             __true();
                         else
                             __false();
@@ -1628,9 +1628,9 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (objects[indexOfObject(before)].variableExists(after))
+                    if (OMExists(before, after))
                     {
-                        if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
+                        if (GetOVString(before, after) != __Null)
                             __true();
                         else
                             __false();
@@ -1660,9 +1660,9 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (objects[indexOfObject(before)].variableExists(after))
+                    if (OMExists(before, after))
                     {
-                        if (isUpper(objects[indexOfObject(before)].getVariable(after).getString()))
+                        if (isUpper(GetOVString(before, after)))
                             __true();
                         else
                             __false();
@@ -1702,9 +1702,9 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (objects[indexOfObject(before)].variableExists(after))
+                    if (OMExists(before, after))
                     {
-                        if (isLower(objects[indexOfObject(before)].getVariable(after).getString()))
+                        if (isLower(GetOVString(before, after)))
                             __true();
                         else
                             __false();
@@ -1897,7 +1897,7 @@
             {
                 initializeVariable(arg0, arg1, arg2, s, command);
             }
-            else if (listExists(arg0) || listExists(beforeBrackets(arg0)))
+            else if (LExists(arg0) || LExists(beforeBrackets(arg0)))
             {
                 initializeListValues(arg0, arg1, arg2, s, command);
             }
@@ -1911,9 +1911,9 @@
                 {
                     createObjectVariable(arg0, arg1, arg2, s, command);
                 }
-                else if (!objectExists(arg0) && objectExists(arg2))
+                else if (!OExists(arg0) && OExists(arg2))
                 {
-                    copyObject(arg0, arg1, arg2, s, command);
+                    CopyObject(arg0, arg1, arg2, s, command);
                 }
                 else if (isUpperConstant(arg0))
                 {
@@ -1935,18 +1935,18 @@
 
             if (arg0 == "object")
             {
-                if (objectExists(arg1))
+                if (OExists(arg1))
                 {
                     __DefiningObject = true;
                     __CurrentObject = arg1;
                 }
                 else
                 {
-                    if (objectExists(arg3))
+                    if (OExists(arg3))
                     {
                         if (arg2 == "=")
                         {
-                            System.Collections.Generic.List<Method> objectMethods = objects[indexOfObject(arg3)].getMethods();
+                            System.Collections.Generic.List<Method> objectMethods = GetOMList(arg3);
                             Object newObject = new(arg1);
 
                             for (int i = 0; i < objectMethods.Count; i++)
@@ -1955,7 +1955,7 @@
                                     newObject.addMethod(objectMethods[i]);
                             }
 
-                            objects.Add(newObject);
+                            objects.Add(arg1, newObject);
                             __CurrentObject = arg1;
                             __DefiningObject = true;
 
@@ -1971,7 +1971,7 @@
             }
             else if (arg0 == "unless")
             {
-                if (listExists(arg3))
+                if (LExists(arg3))
                 {
                     if (arg2 == "in")
                     {
@@ -1992,9 +1992,9 @@
                         if (testString != "[none]")
                         {
                             bool elementFound = false;
-                            for (int i = 0; i < (int)lists[indexOfList(arg3)].size(); i++)
+                            for (int i = 0; i < GetLSize(arg3); i++)
                             {
-                                if (lists[indexOfList(arg3)].at(i) == testString)
+                                if (GetLLine(arg3, i) == testString)
                                 {
                                     elementFound = true;
                                     setFalseIf();
@@ -2463,7 +2463,7 @@
                 }
                 else if ((VExists(arg1) && !VExists(arg3)) && !MExists(arg3) && notObjectMethod(arg3) && containsParameters(arg3))
                 {
-                    string stackValue = (string.Empty);
+                    string stackValue = string.Empty;
 
                     if (isStringStack(arg3))
                         stackValue = getStringStack(arg3);
@@ -2905,7 +2905,7 @@
                 }
                 else if ((!VExists(arg1) && VExists(arg3)) && !MExists(arg1) && notObjectMethod(arg1) && containsParameters(arg1))
                 {
-                    string stackValue = (string.Empty);
+                    string stackValue = string.Empty;
 
                     if (isStringStack(arg1))
                         stackValue = getStringStack(arg1);
@@ -3032,17 +3032,17 @@
                             string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1)),
                            arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
 
-                            string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                            string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (objectExists(arg1before) && objectExists(arg3before))
+                            if (OExists(arg1before) && OExists(arg3before))
                             {
-                                if (objects[indexOfObject(arg1before)].methodExists(beforeParameters(arg1after)))
-                                    executeTemplate(objects[indexOfObject(arg1before)].getMethod(beforeParameters(arg1after)), getParameters(arg1after));
+                                if (OMExists(arg1before, beforeParameters(arg1after)))
+                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
 
                                 arg1Result = __LastValue;
-
-                                if (objects[indexOfObject(arg3before)].methodExists(beforeParameters(arg3after)))
-                                    executeTemplate(objects[indexOfObject(arg3before)].getMethod(beforeParameters(arg3after)), getParameters(arg3after));
+                                
+                                if (OMExists(arg3before, beforeParameters(arg3after)))
+                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
@@ -3121,10 +3121,10 @@
                             }
                             else
                             {
-                                if (!objectExists(arg1before))
+                                if (!OExists(arg1before))
                                     error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
 
-                                if (!objectExists(arg3before))
+                                if (!OExists(arg3before))
                                     error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
 
                                 setTrueIf();
@@ -3134,12 +3134,12 @@
                         {
                             string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1));
 
-                            string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                            string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (objectExists(arg1before))
+                            if (OExists(arg1before))
                             {
-                                if (objects[indexOfObject(arg1before)].methodExists(beforeParameters(arg1after)))
-                                    executeTemplate(objects[indexOfObject(arg1before)].getMethod(beforeParameters(arg1after)), getParameters(arg1after));
+                                if (OMExists(arg1before, beforeParameters(arg1after)))
+                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
 
                                 arg1Result = __LastValue;
 
@@ -3231,12 +3231,12 @@
                         {
                             string arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
 
-                            string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                            string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (objectExists(arg3before))
+                            if (OExists(arg3before))
                             {
-                                if (objects[indexOfObject(arg3before)].methodExists(beforeParameters(arg3after)))
-                                    executeTemplate(objects[indexOfObject(arg3before)].getMethod(beforeParameters(arg3after)), getParameters(arg3after));
+                                if (OMExists(arg3before, beforeParameters(arg3after)))
+                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
@@ -3326,7 +3326,7 @@
                         }
                         else
                         {
-                            string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                            string arg1Result = string.Empty, arg3Result = string.Empty;
 
                             if (MExists(beforeParameters(arg1)))
                                 executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
@@ -3414,7 +3414,7 @@
                     }
                     else if (containsParameters(arg1) && !containsParameters(arg3))
                     {
-                        string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                        string arg1Result = string.Empty, arg3Result = string.Empty;
 
                         bool pass = true;
 
@@ -3535,10 +3535,10 @@
                         {
                             string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1));
 
-                            if (objectExists(arg1before))
+                            if (OExists(arg1before))
                             {
-                                if (objects[indexOfObject(arg1before)].methodExists(beforeParameters(arg1after)))
-                                    executeTemplate(objects[indexOfObject(arg1before)].getMethod(beforeParameters(arg1after)), getParameters(arg1after));
+                                if (OMExists(arg1before, beforeParameters(arg1after)))
+                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
 
                                 arg1Result = __LastValue;
 
@@ -3649,7 +3649,7 @@
                     }
                     else if (!containsParameters(arg1) && containsParameters(arg3))
                     {
-                        string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                        string arg1Result = string.Empty, arg3Result = string.Empty;
 
                         bool pass = true;
 
@@ -3768,10 +3768,10 @@
                         {
                             string arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
 
-                            if (objectExists(arg3before))
+                            if (OExists(arg3before))
                             {
-                                if (objects[indexOfObject(arg3before)].methodExists(beforeParameters(arg3after)))
-                                    executeTemplate(objects[indexOfObject(arg3before)].getMethod(beforeParameters(arg3after)), getParameters(arg3after));
+                                if (OMExists(arg3before, beforeParameters(arg3after)))
+                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
@@ -3879,7 +3879,7 @@
                 }
                 else if ((MExists(arg1) && arg3 != "method?") || MExists(arg3))
                 {
-                    string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                    string arg1Result = string.Empty, arg3Result = string.Empty;
 
                     if (MExists(arg1))
                     {
@@ -3998,7 +3998,7 @@
                 {
                     if (arg3 == "object?")
                     {
-                        if (objectExists(arg1))
+                        if (OExists(arg1))
                         {
                             if (arg2 == "==")
                                 setFalseIf();
@@ -4079,7 +4079,7 @@
                     }
                     else if (arg3 == "list?")
                     {
-                        if (listExists(arg1))
+                        if (LExists(arg1))
                         {
                             if (arg2 == "==")
                                 setFalseIf();
@@ -4212,7 +4212,7 @@
             }
             else if (arg0 == "if")
             {
-                if (listExists(arg3))
+                if (LExists(arg3))
                 {
                     if (arg2 == "in")
                     {
@@ -4233,9 +4233,9 @@
                         if (testString != "[none]")
                         {
                             bool elementFound = false;
-                            for (int i = 0; i < (int)lists[indexOfList(arg3)].size(); i++)
+                            for (int i = 0; i < GetLSize(arg3); i++)
                             {
-                                if (lists[indexOfList(arg3)].at(i) == testString)
+                                if (GetLLine(arg3, i) == testString)
                                 {
                                     elementFound = true;
                                     setTrueIf();
@@ -4251,7 +4251,7 @@
                             setFalseIf();
                     }
                 }
-                else if (listExists(arg1) && arg3 != "list?")
+                else if (LExists(arg1) && arg3 != "list?")
                 {
                     if (arg2 == "contains")
                     {
@@ -4272,9 +4272,9 @@
                         if (testString != "[none]")
                         {
                             bool elementFound = false;
-                            for (int i = 0; i < (int)lists[indexOfList(arg1)].size(); i++)
+                            for (int i = 0; i < GetLSize(arg1); i++)
                             {
-                                if (lists[indexOfList(arg1)].at(i) == testString)
+                                if (GetLLine(arg1, i) == testString)
                                 {
                                     elementFound = true;
                                     setTrueIf();
@@ -4743,7 +4743,7 @@
                 }
                 else if ((VExists(arg1) && !VExists(arg3)) && !MExists(arg3) && notObjectMethod(arg3) && containsParameters(arg3))
                 {
-                    string stackValue = (string.Empty);
+                    string stackValue = string.Empty;
 
                     if (isStringStack(arg3))
                         stackValue = getStringStack(arg3);
@@ -5185,7 +5185,7 @@
                 }
                 else if ((!VExists(arg1) && VExists(arg3)) && !MExists(arg1) && notObjectMethod(arg1) && containsParameters(arg1))
                 {
-                    string stackValue = (string.Empty);
+                    string stackValue = string.Empty;
 
                     if (isStringStack(arg1))
                         stackValue = getStringStack(arg1);
@@ -5312,17 +5312,17 @@
                             string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1)),
                                 arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
 
-                            string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                            string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (objectExists(arg1before) && objectExists(arg3before))
+                            if (OExists(arg1before) && OExists(arg3before))
                             {
-                                if (objects[indexOfObject(arg1before)].methodExists(beforeParameters(arg1after)))
-                                    executeTemplate(objects[indexOfObject(arg1before)].getMethod(beforeParameters(arg1after)), getParameters(arg1after));
+                                if (OMExists(arg1before, beforeParameters(arg1after)))
+                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
 
                                 arg1Result = __LastValue;
 
-                                if (objects[indexOfObject(arg3before)].methodExists(beforeParameters(arg3after)))
-                                    executeTemplate(objects[indexOfObject(arg3before)].getMethod(beforeParameters(arg3after)), getParameters(arg3after));
+                                if (OMExists(arg3before, beforeParameters(arg3after)))
+                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
@@ -5401,10 +5401,10 @@
                             }
                             else
                             {
-                                if (!objectExists(arg1before))
+                                if (!OExists(arg1before))
                                     error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
 
-                                if (!objectExists(arg3before))
+                                if (!OExists(arg3before))
                                     error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
 
                                 setFalseIf();
@@ -5414,12 +5414,12 @@
                         {
                             string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1));
 
-                            string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                            string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (objectExists(arg1before))
+                            if (OExists(arg1before))
                             {
-                                if (objects[indexOfObject(arg1before)].methodExists(beforeParameters(arg1after)))
-                                    executeTemplate(objects[indexOfObject(arg1before)].getMethod(beforeParameters(arg1after)), getParameters(arg1after));
+                                if (OMExists(arg1before, beforeParameters(arg1after)))
+                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
 
                                 arg1Result = __LastValue;
 
@@ -5511,12 +5511,12 @@
                         {
                             string arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
 
-                            string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                            string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (objectExists(arg3before))
+                            if (OExists(arg3before))
                             {
-                                if (objects[indexOfObject(arg3before)].methodExists(beforeParameters(arg3after)))
-                                    executeTemplate(objects[indexOfObject(arg3before)].getMethod(beforeParameters(arg3after)), getParameters(arg3after));
+                                if (OMExists(arg3before, beforeParameters(arg3after)))
+                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
@@ -5606,7 +5606,7 @@
                         }
                         else
                         {
-                            string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                            string arg1Result = string.Empty, arg3Result = string.Empty;
 
                             if (MExists(beforeParameters(arg1)))
                                 executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
@@ -5694,7 +5694,7 @@
                     }
                     else if (containsParameters(arg1) && !containsParameters(arg3))
                     {
-                        string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                        string arg1Result = string.Empty, arg3Result = string.Empty;
 
                         bool pass = true;
 
@@ -5807,14 +5807,14 @@
                             }
                             else if (stackReady(arg1))
                             {
-                                string stackValue = (string.Empty);
+                                string stackValue = string.Empty;
 
                                 if (isStringStack(arg1))
                                     stackValue = getStringStack(arg1);
                                 else
                                     stackValue = dtos(getStack(arg1));
 
-                                string comp = (string.Empty);
+                                string comp = string.Empty;
 
                                 if (VExists(arg3))
                                 {
@@ -5921,10 +5921,10 @@
                         {
                             string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1));
 
-                            if (objectExists(arg1before))
+                            if (OExists(arg1before))
                             {
-                                if (objects[indexOfObject(arg1before)].methodExists(beforeParameters(arg1after)))
-                                    executeTemplate(objects[indexOfObject(arg1before)].getMethod(beforeParameters(arg1after)), getParameters(arg1after));
+                                if (OMExists(arg1before, beforeParameters(arg1after)))
+                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
 
                                 arg1Result = __LastValue;
 
@@ -6035,7 +6035,7 @@
                     }
                     else if (!containsParameters(arg1) && containsParameters(arg3))
                     {
-                        string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                        string arg1Result = string.Empty, arg3Result = string.Empty;
 
                         bool pass = true;
 
@@ -6154,10 +6154,10 @@
                         {
                             string arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
 
-                            if (objectExists(arg3before))
+                            if (OExists(arg3before))
                             {
-                                if (objects[indexOfObject(arg3before)].methodExists(beforeParameters(arg3after)))
-                                    executeTemplate(objects[indexOfObject(arg3before)].getMethod(beforeParameters(arg3after)), getParameters(arg3after));
+                                if (OMExists(arg3before, beforeParameters(arg3after)))
+                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
@@ -6265,7 +6265,7 @@
                 }
                 else if ((MExists(arg1) && arg3 != "method?") || MExists(arg3))
                 {
-                    string arg1Result = (string.Empty), arg3Result = (string.Empty);
+                    string arg1Result = string.Empty, arg3Result = string.Empty;
 
                     if (MExists(arg1))
                     {
@@ -6384,7 +6384,7 @@
                 {
                     if (arg3 == "object?")
                     {
-                        if (objectExists(arg1))
+                        if (OExists(arg1))
                         {
                             if (arg2 == "==")
                                 setTrueIf();
@@ -6465,7 +6465,7 @@
                     }
                     else if (arg3 == "list?")
                     {
-                        if (listExists(arg1))
+                        if (LExists(arg1))
                         {
                             if (arg2 == "==")
                                 setTrueIf();
@@ -6865,22 +6865,22 @@
 
                             successfulFor(newList);
                         }
-                        else if (objectExists(before) && after == "get_methods")
+                        else if (OExists(before) && after == "get_methods")
                         {
                             List newList = new();
 
-                            System.Collections.Generic.List<Method> objMethods = objects[indexOfObject(before)].getMethods();
+                            System.Collections.Generic.List<Method> objMethods = GetOMList(before);
 
                             for (int i = 0; i < objMethods.Count; i++)
                                 newList.add(objMethods[i].GetName());
 
                             successfulFor(newList);
                         }
-                        else if (objectExists(before) && after == "get_variables")
+                        else if (OExists(before) && after == "get_variables")
                         {
                             List newList = new();
 
-                            System.Collections.Generic.List<Variable> objVars = objects[indexOfObject(before)].getVariables();
+                            System.Collections.Generic.List<Variable> objVars = GetOVList(before);
 
                             for (int i = 0; i < objVars.Count; i++)
                                 newList.add(objVars[i].name());
@@ -6897,7 +6897,7 @@
 
                                 for (int i = 0; i < len; i++)
                                 {
-                                    string tempStr = (string.Empty);
+                                    string tempStr = string.Empty;
                                     tempStr += (tempVarStr[i]);
                                     newList.add(tempStr);
                                 }
@@ -6962,8 +6962,8 @@
                             }
                             else
                             {
-                                if (listExists(arg3))
-                                    successfulFor(lists[indexOfList(arg3)]);
+                                if (LExists(arg3))
+                                    successfulFor(GetL(arg3));
                                 else
                                 {
                                     error(ErrorLogger.LIST_UNDEFINED, arg3, false);
@@ -7043,7 +7043,7 @@
 
                                                     for (int i = stoi(rangeBegin); i <= stoi(rangeEnd); i++)
                                                     {
-                                                        string tempString = (string.Empty);
+                                                        string tempString = string.Empty;
                                                         tempString += (tempVarString[i]);
                                                         newList.add(tempString);
                                                     }
@@ -7052,7 +7052,7 @@
 
                                                     successfulFor(newList);
 
-                                                    lists = removeList(lists, "&l&i&s&t&");
+                                                    DeleteL("&l&i&s&t&");
                                                 }
                                                 else
                                                     error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
@@ -7065,7 +7065,7 @@
 
                                                     for (int i = stoi(rangeBegin); i >= stoi(rangeEnd); i--)
                                                     {
-                                                        string tempString = (string.Empty);
+                                                        string tempString = string.Empty;
                                                         tempString += (tempVarString[i]);
                                                         newList.add(tempString);
                                                     }
@@ -7074,7 +7074,7 @@
 
                                                     successfulFor(newList);
 
-                                                    lists = removeList(lists, "&l&i&s&t&");
+                                                    DeleteL("&l&i&s&t&");
                                                 }
                                                 else
                                                     error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
@@ -7098,11 +7098,10 @@
                             }
                         }
                     }
-                    else if (listExists(arg3))
+                    else if (LExists(arg3))
                     {
                         __DefaultLoopSymbol = arg1;
-
-                        successfulFor(lists[indexOfList(arg3)]);
+                        successfulFor(GetL(arg3));
                     }
                     else if (!zeroDots(arg3))
                     {
@@ -7151,11 +7150,11 @@
                             __DefaultLoopSymbol = arg1;
                             successfulFor(newList);
                         }
-                        else if (objectExists(_b) && _a == "get_methods")
+                        else if (OExists(_b) && _a == "get_methods")
                         {
                             List newList = new();
 
-                            System.Collections.Generic.List<Method> objMethods = objects[indexOfObject(_b)].getMethods();
+                            System.Collections.Generic.List<Method> objMethods = GetOMList(_b);
 
                             for (int i = 0; i < (int)objMethods.Count; i++)
                                 newList.add(objMethods[i].GetName());
@@ -7163,11 +7162,11 @@
                             __DefaultLoopSymbol = arg1;
                             successfulFor(newList);
                         }
-                        else if (objectExists(_b) && _a == "get_variables")
+                        else if (OExists(_b) && _a == "get_variables")
                         {
                             List newList = new();
 
-                            System.Collections.Generic.List<Variable> objVars = objects[indexOfObject(_b)].getVariables();
+                            System.Collections.Generic.List<Variable> objVars = GetOVList(_b);
 
                             for (int i = 0; i < (int)objVars.Count; i++)
                                 newList.add(objVars[i].name());
@@ -7186,7 +7185,7 @@
 
                                 for (int i = 0; i < _l; i++)
                                 {
-                                    string tmpStr = (string.Empty);
+                                    string tmpStr = string.Empty;
                                     tmpStr += (_t[i]);
                                     newList.add(tmpStr);
                                 }

@@ -49,11 +49,11 @@
                             {
                                 string before = (beforeDot(builder.ToString())), after = (afterDot(builder.ToString()));
 
-                                if (objectExists(before))
+                                if (OExists(before))
                                 {
-                                    if (objects[indexOfObject(before)].methodExists(beforeParameters(after)))
+                                    if (OMExists(before, beforeParameters(after)))
                                     {
-                                        executeTemplate(objects[indexOfObject(before)].getMethod(beforeParameters(after)), getParameters(after));
+                                        executeTemplate(GetOM(before, beforeParameters(after)), getParameters(after));
 
                                         cleaned.Append(__LastValue);
                                     }
@@ -138,7 +138,7 @@
                                     else error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
                                 }
                             }
-                            else if (listExists(_beforeBrackets))
+                            else if (LExists(_beforeBrackets))
                             {
                                 if (listRange.Count == 2)
                                 {
@@ -148,14 +148,14 @@
                                     {
                                         if (stoi(rangeBegin) < stoi(rangeEnd))
                                         {
-                                            if (lists[indexOfList(_beforeBrackets)].size() - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                            if (GetLSize(_beforeBrackets) - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
                                             {
                                                 System.Text.StringBuilder bigString = new();
                                                 bigString.Append("(");
 
                                                 for (int z = stoi(rangeBegin); z <= stoi(rangeEnd); z++)
                                                 {
-                                                    bigString.Append("\"" + lists[indexOfList(_beforeBrackets)].at(z) + "\"");
+                                                    bigString.Append("\"" + GetLLine(_beforeBrackets, z) + "\"");
 
                                                     if (z < stoi(rangeEnd))
                                                         bigString.Append(',');
@@ -170,14 +170,14 @@
                                         }
                                         else if (stoi(rangeBegin) > stoi(rangeEnd))
                                         {
-                                            if (lists[indexOfList(_beforeBrackets)].size() - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                            if (GetLSize(_beforeBrackets) - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
                                             {
                                                 System.Text.StringBuilder bigString = new();
                                                 bigString.Append('(');
 
                                                 for (int z = stoi(rangeBegin); z >= stoi(rangeEnd); z--)
                                                 {
-                                                    bigString.Append("\"" + lists[indexOfList(_beforeBrackets)].at(z) + "\"");
+                                                    bigString.Append("\"" + GetLLine(_beforeBrackets, z) + "\"");
 
                                                     if (z > stoi(rangeEnd))
                                                         bigString.Append(',');
@@ -202,8 +202,8 @@
 
                                     if (StringHelper.IsNumeric(rangeBegin))
                                     {
-                                        if (stoi(rangeBegin) <= (int)lists[indexOfList(_beforeBrackets)].size() - 1 && stoi(rangeBegin) >= 0)
-                                            cleaned.Append(lists[indexOfList(_beforeBrackets)].at(stoi(rangeBegin)));
+                                        if (stoi(rangeBegin) <= (int)GetLSize(_beforeBrackets) - 1 && stoi(rangeBegin) >= 0)
+                                            cleaned.Append(GetLLine(_beforeBrackets, stoi(rangeBegin)));
                                         else
                                             error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
                                     }
@@ -218,21 +218,21 @@
                         }
                         else if (!zeroDots(builder.ToString()))
                         {
-                            string before = (beforeDot(builder.ToString())), after = (afterDot(builder.ToString()));
+                            string before = beforeDot(builder.ToString()), after = afterDot(builder.ToString());
 
-                            if (objectExists(before))
+                            if (OExists(before))
                             {
-                                if (objects[indexOfObject(before)].methodExists(after))
+                                if (OMExists(before, after))
                                 {
                                     parse(before + "." + after);
                                     cleaned.Append(__LastValue);
                                 }
-                                else if (objects[indexOfObject(before)].variableExists(after))
+                                else if (OVExists(before, after))
                                 {
-                                    if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
-                                        cleaned.Append(objects[indexOfObject(before)].getVariable(after).getString());
-                                    else if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
-                                        cleaned.Append(dtos(objects[indexOfObject(before)].getVariable(after).getNumber()));
+                                    if (GetOVString(before, after) != __Null)
+                                        cleaned.Append(GetOVString(before, after));
+                                    else if (GetOVNumber(before, after) != __NullNum)
+                                        cleaned.Append(dtos(GetOVNumber(before, after)));
                                     else
                                         cleaned.Append("null");
                                 }

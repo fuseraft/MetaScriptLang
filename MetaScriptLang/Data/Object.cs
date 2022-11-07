@@ -48,11 +48,6 @@ namespace MetaScriptLang.Data
             return collectable;
         }
 
-        public Method getCurrentMethod()
-        {
-            return getMethod(currentMethod);
-        }
-
         public void setCurrentMethod(string methodName)
         {
             currentMethod = methodName;

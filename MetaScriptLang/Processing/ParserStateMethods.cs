@@ -22,15 +22,9 @@ namespace MetaScriptLang.Processing
                         return true;
                 }
             }
-            else
+            else if (OExists(beforeDot(s)) && OMExists(beforeDot(s), afterDot(s)))
             {
-                if (objectExists(beforeDot(s)))
-                {
-                    if (objects[indexOfObject(beforeDot(s))].methodExists(afterDot(s)))
-                        return true;
-                    else
-                        return false;
-                }
+                return true;
             }
 
             return false;

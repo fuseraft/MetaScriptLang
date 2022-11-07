@@ -66,9 +66,9 @@
                     else
                         lastValue = "";
                 }
-                else if (objectExists(_beforeDot))
+                else if (OExists(_beforeDot))
                 {
-                    executeTemplate(objects[indexOfObject(_beforeDot)].getMethod(_afterDot), getParameters(_afterDot));
+                    executeTemplate(GetOM(_beforeDot, _afterDot), getParameters(_afterDot));
 
                     lastValue = lastValue;
                 }
@@ -98,14 +98,14 @@
                     else
                         lastValue = "";
                 }
-                else if (listExists(_beforeBrackets))
+                else if (LExists(_beforeBrackets))
                 {
                     _afterBrackets = subtractString(_afterBrackets, "]");
 
-                    if (lists[indexOfList(_beforeBrackets)].size() >= stoi(_afterBrackets))
+                    if (GetLSize(_beforeBrackets) >= stoi(_afterBrackets))
                     {
                         if (stoi(_afterBrackets) >= 0)
-                            lastValue = lists[indexOfList(_beforeBrackets)].at(stoi(_afterBrackets));
+                            lastValue = GetLLine(_beforeBrackets, stoi(_afterBrackets));
                         else
                             lastValue = "";
                     }
@@ -201,9 +201,9 @@
                     else
                         lastValue = 0;
                 }
-                else if (objectExists(_beforeDot))
+                else if (OExists(_beforeDot))
                 {
-                    executeTemplate(objects[indexOfObject(_beforeDot)].getMethod(_afterDot), getParameters(_afterDot));
+                    executeTemplate(GetOM(_beforeDot, _afterDot), getParameters(_afterDot));
 
                     if (StringHelper.IsNumeric(__LastValue))
                         lastValue = stod(__LastValue);
@@ -222,16 +222,16 @@
             {
                 string _beforeBrackets = (beforeBrackets(arg2)), _afterBrackets = (afterBrackets(arg2));
 
-                if (listExists(_beforeBrackets))
+                if (LExists(_beforeBrackets))
                 {
                     _afterBrackets = subtractString(_afterBrackets, "]");
 
-                    if (lists[indexOfList(_beforeBrackets)].size() >= stoi(_afterBrackets))
+                    if (GetLSize(_beforeBrackets) >= stoi(_afterBrackets))
                     {
                         if (stoi(_afterBrackets) >= 0)
                         {
-                            if (StringHelper.IsNumeric(lists[indexOfList(_beforeBrackets)].at(stoi(_afterBrackets))))
-                                lastValue = stod(lists[indexOfList(_beforeBrackets)].at(stoi(_afterBrackets)));
+                            if (StringHelper.IsNumeric(GetLLine(_beforeBrackets, stoi(_afterBrackets))))
+                                lastValue = stod(GetLLine(_beforeBrackets, stoi(_afterBrackets)));
                             else
                                 lastValue = 0;
                         }

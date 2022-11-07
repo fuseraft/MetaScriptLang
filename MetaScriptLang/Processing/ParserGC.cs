@@ -20,19 +20,23 @@ namespace MetaScriptLang.Processing
             for (int i = 0; i < (int)garbageVars.Count; i++)
                 DeleteV(garbageVars[i]);
 
-            for (int i = 0; i < (int)lists.Count; i++)
-                if (lists[i].garbage() && !__ExecutedIfStatement)
-                    garbageLists.Add(lists[i].name());
+            foreach (var key in this.lists.Keys)
+            {
+                if (lists[key].garbage() && !__ExecutedIfStatement)
+                    garbageLists.Add(lists[key].name());
+            }
+                
+            for (int i = 0; i < garbageLists.Count; i++)
+                DeleteL(garbageLists[i]);
 
-            for (int i = 0; i < (int)garbageLists.Count; i++)
-                lists = removeList(lists, garbageLists[i]);
-
-            for (int i = 0; i < (int)objects.Count; i++)
-                if (objects[i].garbage() && !__ExecutedIfStatement)
-                    garbageObjects.Add(objects[i].name());
+            foreach (var key in this.objects.Keys)
+            {
+                if (objects[key].garbage() && !__ExecutedIfStatement)
+                    garbageObjects.Add(objects[key].name());
+            }
 
             for (int i = 0; i < (int)garbageObjects.Count; i++)
-                objects = removeObject(objects, garbageObjects[i]);
+                DeleteO(garbageObjects[i]);
         }
 
         void clearAll()

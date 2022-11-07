@@ -1,8 +1,6 @@
 ﻿namespace MetaScriptLang.Processing
 {
-    using MetaScriptLang.Data;
     using MetaScriptLang.Logging;
-    using System.Xml.Linq;
 
     public partial class Parser
     {
@@ -24,24 +22,24 @@
                     System.Collections.Generic.List<string> last_parameters = getParameters(__LastValue);
 
                     for (int i = 0; i < last_parameters.Count; i++)
-                        lists[indexOfList(arg1)].add(last_parameters[i]);
+                        LAddToList(arg1, last_parameters[i]);
                 }
                 else
-                    lists[indexOfList(arg1)].add(__LastValue);
+                    LAddToList(arg1, __LastValue);
             }
-            else if (objectExists(beforeDot(beforeParameters(arg2))))
+            else if (OExists(beforeDot(beforeParameters(arg2))))
             {
-                executeTemplate(objects[indexOfObject(beforeDot(beforeParameters(arg2)))].getMethod(afterDot(beforeParameters(arg2))), parameters);
+                executeTemplate(GetOM(beforeDot(beforeParameters(arg2)), afterDot(beforeParameters(arg2))), parameters);
 
                 if (containsParameters(__LastValue))
                 {
                     System.Collections.Generic.List<string> last_parameters = getParameters(__LastValue);
 
                     for (int i = 0; i < (int)last_parameters.Count; i++)
-                        lists[indexOfList(arg1)].add(last_parameters[i]);
+                        LAddToList(arg1, last_parameters[i]);
                 }
                 else
-                    lists[indexOfList(arg1)].add(__LastValue);
+                    LAddToList(arg1, __LastValue);
             }
             else
             {
@@ -50,113 +48,17 @@
                     if (VExists(parameters[i]))
                     {
                         if (isString(parameters[i]))
-                            lists[indexOfList(arg1)].add(GetVString(parameters[i]));
+                            LAddToList(arg1, GetVString(parameters[i]));
                         else if (isNumber(parameters[i]))
-                            lists[indexOfList(arg1)].add(dtos(GetVNumber(parameters[i])));
+                            LAddToList(arg1, dtos(GetVNumber(parameters[i])));
                         else
                             error(ErrorLogger.IS_NULL, parameters[i], false);
                     }
                     else
-                        lists[indexOfList(arg1)].add(parameters[i]);
+                        LAddToList(arg1, parameters[i]);
                 }
             }
         }
-        #endregion
-
-        #region Indexing
-        int indexOfObject(string s)
-        {
-            for (int i = 0; i < (int)objects.Count; i++)
-            {
-                if (objects[i].name() == s)
-                    return (i);
-            }
-
-            return (-1);
-        }
-
-        int indexOfList(string s)
-        {
-            for (int i = 0; i < (int)lists.Count; i++)
-            {
-                if (lists[i].name() == s)
-                    return (i);
-            }
-
-            return (-1);
-        }
-
-        int indexOfModule(string s)
-        {
-            for (int i = 0; i < (int)modules.Count; i++)
-            {
-                if (modules[i].name() == s)
-                    return (i);
-            }
-
-            return (-1);
-        }
-
-        int indexOfScript(string s)
-        {
-            for (int i = 0; i < (int)scripts.Count; i++)
-            {
-                if (scripts[i].name() == s)
-                    return (i);
-            }
-
-            return (-1);
-        }
-
-        int indexOfConstant(string s)
-        {
-            for (int i = 0; i < (int)constants.Count; i++)
-            {
-                if (constants[i].name() == s)
-                    return (i);
-            }
-
-            return (-1);
-        }
-        #endregion
-
-        #region Existence Checking
-        bool listExists(string s)
-        {
-            for (int i = 0; i < (int)lists.Count; i++)
-                if (lists[i].name() == s)
-                    return (true);
-
-            return (false);
-        }
-
-        bool objectExists(string s)
-        {
-            for (int i = 0; i < (int)objects.Count; i++)
-                if (objects[i].name() == s)
-                    return (true);
-
-            return (false);
-        }
-
-        bool moduleExists(string s)
-        {
-            for (int i = 0; i < (int)modules.Count; i++)
-                if (modules[i].name() == s)
-                    return (true);
-
-            return (false);
-        }
-
-        bool constantExists(string s)
-        {
-            for (int i = 0; i < (int)constants.Count; i++)
-                if (constants[i].name() == s)
-                    return (true);
-
-            return (false);
-        }
-
         #endregion
 
         #region Existence Checking Pt 2
@@ -188,7 +90,7 @@
             {
                 string before = beforeDot(s);
 
-                if (objectExists(before))
+                if (OExists(before))
                     return (false);
                 else
                     return (true);
@@ -196,83 +98,30 @@
         }
         #endregion
 
-        #region Retrieval
-        Object getObject(string s)
-        {
-            Object bad_obj = new("[bad_obj#" + itos(__BadObjectCount) + "]");
-
-            if (objectExists(s))
-            {
-                for (int i = 0; i < (int)objects.Count; i++)
-                {
-                    if (objects[i].name() == s)
-                    {
-                        return (objects[i]);
-                    }
-                }
-            }
-            __BadObjectCount++;
-
-            return (bad_obj);
-        }
-        #endregion
-
         #region Removal
-        System.Collections.Generic.List<MetaScriptLang.Data.Object> removeObject(System.Collections.Generic.List<MetaScriptLang.Data.Object> v, string target)
-        {
-            System.Collections.Generic.List<MetaScriptLang.Data.Object> cleanedVector = new();
-
-            for (int i = 0; i < (int)v.Count; i++)
-                if (v[i].name() != target)
-                    cleanedVector.Add(v[i]);
-
-            return (cleanedVector);
-        }
-
-        System.Collections.Generic.List<List> removeList(System.Collections.Generic.List<List> v, string target)
-        {
-            System.Collections.Generic.List<List> cleanedVector = new();
-
-            for (int i = 0; i < (int)v.Count; i++)
-                if (v[i].name() != target)
-                    cleanedVector.Add(v[i]);
-
-            return (cleanedVector);
-        }
-
-        System.Collections.Generic.List<Module> removeModule(System.Collections.Generic.List<Module> v, string target)
-        {
-            System.Collections.Generic.List<Module> cleanedVector = new();
-
-            for (int i = 0; i < (int)v.Count; i++)
-                if (v[i].name() != target)
-                    cleanedVector.Add(v[i]);
-
-            return (cleanedVector);
-        }
-
-        System.Collections.Generic.List<Constant> removeConstant(System.Collections.Generic.List<Constant> v, string target)
-        {
-            System.Collections.Generic.List<Constant> cleanedVector = new();
-
-            for (int i = 0; i < (int)v.Count; i++)
-                if (v[i].name() != target)
-                    cleanedVector.Add(v[i]);
-
-            return (cleanedVector);
-        }
+        //System.Collections.Generic.List<Module> removeModule(System.Collections.Generic.List<Module> v, string target)
+        //System.Collections.Generic.List<Constant> removeConstant(System.Collections.Generic.List<Constant> v, string target)
         #endregion
 
         #region Redefinition
         void rename(string first, string second)
         {
             // rename file or directory.
+            if (System.IO.Directory.Exists(first) && !System.IO.Directory.Exists(second))
+            {
+            }
+            else if (System.IO.File.Exists(first) && !System.IO.File.Exists(second))
+            {
+            }
+            else
+            {
+            }
         }
 
         /**
             Give a new name to anything.
         **/
-        void redefine(string target, string name)
+        void MemRedefine(string target, string name)
         {
             if (VExists(target))
             {
@@ -349,17 +198,17 @@
                         error(ErrorLogger.INVALID_VAR_DECL, name, false);
                 }
             }
-            else if (listExists(target))
+            else if (LExists(target))
             {
-                if (!listExists(name))
-                    lists[indexOfList(target)].setName(name);
+                if (!LExists(name))
+                    SetLName(target, name);
                 else
                     error(ErrorLogger.LIST_UNDEFINED, name, false);
             }
-            else if (objectExists(target))
+            else if (OExists(target))
             {
-                if (!objectExists(name))
-                    objects[indexOfObject(target)].setName(name);
+                if (!OExists(name))
+                    SetOName(target, name);
                 else
                     error(ErrorLogger.OBJ_METHOD_UNDEFINED, name, false);
             }

@@ -58,9 +58,9 @@
             {
                 string before = beforeDot(s), after = afterDot(s);
 
-                if (objectExists(before))
+                if (OExists(before))
                 {
-                    if (objects[indexOfObject(before)].variableExists(after))
+                    if (OMExists(before, after))
                         return true;
                     else
                         return false;
