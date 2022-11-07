@@ -121,11 +121,11 @@ namespace MetaScriptLang.Processing
                 case 1:
                     if (sValue != defaultValue)
                     {
-                        setVariable(arg0, sValue);
+                        SetVString(arg0, sValue);
                     }
                     else
                     {
-                        setVariable(arg0, dValue);
+                        SetVNumber(arg0, dValue);
                     }
                     break;
                 case 2:

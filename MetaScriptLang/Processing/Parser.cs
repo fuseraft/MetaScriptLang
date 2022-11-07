@@ -1,6 +1,7 @@
 ﻿namespace MetaScriptLang.Processing
 {
     using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
     using MetaScriptLang.Logging;
 
     public partial class Parser
@@ -32,10 +33,10 @@
 
                         twoSpace(tempObjectVariableName, arg1, arg2, "", command);
 
-                        variables[indexOfVariable(tempObjectVariableName)].setName(tmpVarName);
+                        SetVName(tempObjectVariableName, tmpVarName);
 
                         objects[indexOfObject(tmpObjName)].removeVariable(tmpVarName);
-                        objects[indexOfObject(tmpObjName)].addVariable(variables[indexOfVariable(tmpVarName)]);
+                        objects[indexOfObject(tmpObjName)].addVariable(GetV(tmpVarName));
                         variables = removeVariable(variables, tmpVarName);
                     }
                     else if (objects[indexOfObject(tmpObjName)].getVariable(tmpVarName).getNumber() != __NullNum)
@@ -46,10 +47,10 @@
 
                         twoSpace(tempObjectVariableName, arg1, arg2, tempObjectVariableName + " " + arg1 + " " + arg2, command);
 
-                        variables[indexOfVariable(tempObjectVariableName)].setName(afterDot(arg0));
+                        SetVName(tempObjectVariableName, afterDot(arg0));
 
                         objects[indexOfObject(beforeDot(arg0))].removeVariable(afterDot(arg0));
-                        objects[indexOfObject(beforeDot(arg0))].addVariable(variables[indexOfVariable(afterDot(arg0))]);
+                        objects[indexOfObject(beforeDot(arg0))].addVariable(GetV(afterDot(arg0)));
                         variables = removeVariable(variables, afterDot(arg0));
                     }
                 }
@@ -73,17 +74,17 @@
                                 {
                                     string listValue = (lists[indexOfList(beforeBracket)].at(stoi(afterBracket)));
 
-                                    if (isNumeric(listValue))
+                                    if (StringHelper.IsNumeric(listValue))
                                     {
                                         if (isNumber(arg0))
-                                            setVariable(arg0, stod(listValue));
+                                            SetVNumber(arg0, stod(listValue));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
                                     else
                                     {
                                         if (isString(arg0))
-                                            setVariable(arg0, listValue);
+                                            SetVString(arg0, listValue);
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -106,29 +107,29 @@
                                     System.Collections.Generic.List<string> range = getRange(arg2);
                                     string s0 = (range[0]), s2 = (range[1]);
 
-                                    if (isNumeric(s0) && isNumeric(s2))
+                                    if (StringHelper.IsNumeric(s0) && StringHelper.IsNumeric(s2))
                                     {
                                         if (isNumber(arg0))
                                         {
                                             double n0 = stod(s0), n2 = stod(s2);
 
                                             if (n0 < n2)
-                                                setVariable(arg0, (int)random(n0, n2));
+                                                SetVNumber(arg0, (int)random(n0, n2));
                                             else if (n0 > n2)
-                                                setVariable(arg0, (int)random(n2, n0));
+                                                SetVNumber(arg0, (int)random(n2, n0));
                                             else
-                                                setVariable(arg0, (int)random(n0, n2));
+                                                SetVNumber(arg0, (int)random(n0, n2));
                                         }
                                         else if (isString(arg0))
                                         {
                                             double n0 = stod(s0), n2 = stod(s2);
 
                                             if (n0 < n2)
-                                                setVariable(arg0, itos((int)random(n0, n2)));
+                                                SetVString(arg0, itos((int)random(n0, n2)));
                                             else if (n0 > n2)
-                                                setVariable(arg0, itos((int)random(n2, n0)));
+                                                SetVString(arg0, itos((int)random(n2, n0)));
                                             else
-                                                setVariable(arg0, itos((int)random(n0, n2)));
+                                                SetVString(arg0, itos((int)random(n0, n2)));
                                         }
                                     }
                                     else if (isAlpha(s0) && isAlpha(s2))
@@ -136,11 +137,11 @@
                                         if (isString(arg0))
                                         {
                                             if (get_alpha_num(s0[0]) < get_alpha_num(s2[0]))
-                                                setVariable(arg0, random(s0, s2));
+                                                SetVString(arg0, random(s0, s2));
                                             else if (get_alpha_num(s0[0]) > get_alpha_num(s2[0]))
-                                                setVariable(arg0, random(s2, s0));
+                                                SetVString(arg0, random(s2, s0));
                                             else
-                                                setVariable(arg0, random(s2, s0));
+                                                SetVString(arg0, random(s2, s0));
                                         }
                                         else
                                             error(ErrorLogger.NULL_STRING, arg0, false);
@@ -150,42 +151,42 @@
                                         if (variableExists(s0))
                                         {
                                             if (isNumber(s0))
-                                                s0 = dtos(variables[indexOfVariable(s0)].getNumber());
+                                                s0 = dtos(GetVNumber(s0));
                                             else if (isString(s0))
-                                                s0 = variables[indexOfVariable(s0)].getString();
+                                                s0 = GetVString(s0);
                                         }
 
                                         if (variableExists(s2))
                                         {
                                             if (isNumber(s2))
-                                                s2 = dtos(variables[indexOfVariable(s2)].getNumber());
+                                                s2 = dtos(GetVNumber(s2));
                                             else if (isString(s2))
-                                                s2 = variables[indexOfVariable(s2)].getString();
+                                                s2 = GetVString(s2);
                                         }
 
-                                        if (isNumeric(s0) && isNumeric(s2))
+                                        if (StringHelper.IsNumeric(s0) && StringHelper.IsNumeric(s2))
                                         {
                                             if (isNumber(arg0))
                                             {
                                                 double n0 = stod(s0), n2 = stod(s2);
 
                                                 if (n0 < n2)
-                                                    setVariable(arg0, (int)random(n0, n2));
+                                                    SetVNumber(arg0, (int)random(n0, n2));
                                                 else if (n0 > n2)
-                                                    setVariable(arg0, (int)random(n2, n0));
+                                                    SetVNumber(arg0, (int)random(n2, n0));
                                                 else
-                                                    setVariable(arg0, (int)random(n0, n2));
+                                                    SetVNumber(arg0, (int)random(n0, n2));
                                             }
                                             else if (isString(arg0))
                                             {
                                                 double n0 = stod(s0), n2 = stod(s2);
 
                                                 if (n0 < n2)
-                                                    setVariable(arg0, itos((int)random(n0, n2)));
+                                                    SetVString(arg0, itos((int)random(n0, n2)));
                                                 else if (n0 > n2)
-                                                    setVariable(arg0, itos((int)random(n2, n0)));
+                                                    SetVString(arg0, itos((int)random(n2, n0)));
                                                 else
-                                                    setVariable(arg0, itos((int)random(n0, n2)));
+                                                    SetVString(arg0, itos((int)random(n0, n2)));
                                             }
                                         }
                                         else if (isAlpha(s0) && isAlpha(s2))
@@ -193,11 +194,11 @@
                                             if (isString(arg0))
                                             {
                                                 if (get_alpha_num(s0[0]) < get_alpha_num(s2[0]))
-                                                    setVariable(arg0, random(s0, s2));
+                                                    SetVString(arg0, random(s0, s2));
                                                 else if (get_alpha_num(s0[0]) > get_alpha_num(s2[0]))
-                                                    setVariable(arg0, random(s2, s0));
+                                                    SetVString(arg0, random(s2, s0));
                                                 else
-                                                    setVariable(arg0, random(s2, s0));
+                                                    SetVString(arg0, random(s2, s0));
                                             }
                                             else
                                                 error(ErrorLogger.NULL_STRING, arg0, false);
@@ -213,9 +214,9 @@
                         else if (listExists(before) && after == "size")
                         {
                             if (isNumber(arg0))
-                                setVariable(arg0, stod(itos(lists[indexOfList(before)].size())));
+                                SetVNumber(arg0, stod(itos(lists[indexOfList(before)].size())));
                             else if (isString(arg0))
-                                setVariable(arg0, itos(lists[indexOfList(before)].size()));
+                                SetVString(arg0, itos(lists[indexOfList(before)].size()));
                             else
                                 error(ErrorLogger.IS_NULL, arg0, false);
                         }
@@ -231,9 +232,9 @@
                             if (objects[indexOfObject(before)].variableExists(after))
                             {
                                 if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
-                                    setVariable(arg0, objects[indexOfObject(before)].getVariable(after).getString());
+                                    SetVString(arg0, objects[indexOfObject(before)].getVariable(after).getString());
                                 else if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
-                                    setVariable(arg0, objects[indexOfObject(before)].getVariable(after).getNumber());
+                                    SetVNumber(arg0, objects[indexOfObject(before)].getVariable(after).getNumber());
                                 else
                                     error(ErrorLogger.IS_NULL, arg2, false);
                             }
@@ -242,9 +243,9 @@
                                 parse(arg2);
 
                                 if (isString(arg0))
-                                    setVariable(arg0, __LastValue);
+                                    SetVString(arg0, __LastValue);
                                 else if (isNumber(arg0))
-                                    setVariable(arg0, stod(__LastValue));
+                                    SetVNumber(arg0, stod(__LastValue));
                             }
                             else if (containsParameters(after))
                             {
@@ -252,19 +253,19 @@
                                 {
                                     executeTemplate(objects[indexOfObject(before)].getMethod(beforeParameters(after)), getParameters(after));
 
-                                    if (isNumeric(__LastValue))
+                                    if (StringHelper.IsNumeric(__LastValue))
                                     {
                                         if (isString(arg0))
-                                            setVariable(arg0, __LastValue);
+                                            SetVString(arg0, __LastValue);
                                         else if (isNumber(arg0))
-                                            setVariable(arg0, stod(__LastValue));
+                                            SetVNumber(arg0, stod(__LastValue));
                                         else
                                             error(ErrorLogger.IS_NULL, arg0, false);
                                     }
                                     else
                                     {
                                         if (isString(arg0))
-                                            setVariable(arg0, __LastValue);
+                                            SetVString(arg0, __LastValue);
                                         else if (isNumber(arg0))
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                         else
@@ -286,11 +287,11 @@
                             if (variableExists(before))
                             {
                                 if (isString(before))
-                                    setVariable(arg0, (int)variables[indexOfVariable(before)].getString()[0]);
+                                    SetVNumber(arg0, (int)GetVString(before)[0]);
                                 else if (isNumber(before))
                                 {
-                                    int i = (int)variables[indexOfVariable(before)].getNumber();
-                                    setVariable(arg0, (double)i);
+                                    int i = (int)GetVNumber(before);
+                                    SetVNumber(arg0, (double)i);
                                 }
                                 else
                                     error(ErrorLogger.IS_NULL, before, false);
@@ -303,11 +304,11 @@
                             if (variableExists(before))
                             {
                                 if (isString(before))
-                                    setVariable(arg0, (double)variables[indexOfVariable(before)].getString()[0]);
+                                    SetVNumber(arg0, (double)GetVString(before)[0]);
                                 else if (isNumber(before))
                                 {
-                                    double i = variables[indexOfVariable(before)].getNumber();
-                                    setVariable(arg0, (double)i);
+                                    double i = GetVNumber(before);
+                                    SetVNumber(arg0, (double)i);
                                 }
                                 else
                                     error(ErrorLogger.IS_NULL, before, false);
@@ -320,7 +321,7 @@
                             if (variableExists(before))
                             {
                                 if (isNumber(before))
-                                    setVariable(arg0, dtos(variables[indexOfVariable(before)].getNumber()));
+                                    SetVString(arg0, dtos(GetVNumber(before)));
                                 else
                                     error(ErrorLogger.IS_NULL, before, false);
                             }
@@ -332,7 +333,7 @@
                             if (variableExists(before))
                             {
                                 if (isString(before))
-                                    setVariable(arg0, stod(variables[indexOfVariable(before)].getString()));
+                                    SetVNumber(arg0, stod(GetVString(before)));
                                 else
                                     error(ErrorLogger.IS_NULL, before, false);
                             }
@@ -346,18 +347,18 @@
                                 if (isString(after))
                                 {
                                     string line = "";
-                                    write(cleanString(variables[indexOfVariable(after)].getString()));
+                                    write(cleanString(GetVString(after)));
                                     line = Console.ReadLine();
 
                                     if (isNumber(arg0))
                                     {
-                                        if (isNumeric(line))
-                                            setVariable(arg0, stod(line));
+                                        if (StringHelper.IsNumeric(line))
+                                            SetVNumber(arg0, stod(line));
                                         else
                                             error(ErrorLogger.CONV_ERR, line, false);
                                     }
                                     else if (isString(arg0))
-                                        setVariable(arg0, line);
+                                        SetVString(arg0, line);
                                     else
                                         error(ErrorLogger.IS_NULL, arg0, false);
                                 }
@@ -369,13 +370,13 @@
 
                                     if (isNumber(arg0))
                                     {
-                                        if (isNumeric(line))
-                                            setVariable(arg0, stod(line));
+                                        if (StringHelper.IsNumeric(line))
+                                            SetVNumber(arg0, stod(line));
                                         else
                                             error(ErrorLogger.CONV_ERR, line, false);
                                     }
                                     else if (isString(arg0))
-                                        setVariable(arg0, line);
+                                        SetVString(arg0, line);
                                     else
                                         error(ErrorLogger.IS_NULL, arg0, false);
                                 }
@@ -386,10 +387,10 @@
                                 cout = cleanString(after);
                                 line = Console.ReadLine();
 
-                                if (isNumeric(line))
-                                    setVariable(arg0, stod(line));
+                                if (StringHelper.IsNumeric(line))
+                                    SetVNumber(arg0, stod(line));
                                 else
-                                    setVariable(arg0, line);
+                                    SetVString(arg0, line);
                             }
                         }
                         else if (before == "password")
@@ -399,17 +400,17 @@
                                 if (isString(after))
                                 {
                                     string line = "";
-                                    line = getSilentOutput(variables[indexOfVariable(after)].getString());
+                                    line = getSilentOutput(GetVString(after));
 
                                     if (isNumber(arg0))
                                     {
-                                        if (isNumeric(line))
-                                            setVariable(arg0, stod(line));
+                                        if (StringHelper.IsNumeric(line))
+                                            SetVNumber(arg0, stod(line));
                                         else
                                             error(ErrorLogger.CONV_ERR, line, false);
                                     }
                                     else if (isString(arg0))
-                                        setVariable(arg0, line);
+                                        SetVString(arg0, line);
                                     else
                                         error(ErrorLogger.IS_NULL, arg0, false);
 
@@ -422,13 +423,13 @@
 
                                     if (isNumber(arg0))
                                     {
-                                        if (isNumeric(line))
-                                            setVariable(arg0, stod(line));
+                                        if (StringHelper.IsNumeric(line))
+                                            SetVNumber(arg0, stod(line));
                                         else
                                             error(ErrorLogger.CONV_ERR, line, false);
                                     }
                                     else if (isString(arg0))
-                                        setVariable(arg0, line);
+                                        SetVString(arg0, line);
                                     else
                                         error(ErrorLogger.IS_NULL, arg0, false);
 
@@ -440,10 +441,10 @@
                                 string line = ("");
                                 line = getSilentOutput(cleanString(after));
 
-                                if (isNumeric(line))
-                                    setVariable(arg0, stod(line));
+                                if (StringHelper.IsNumeric(line))
+                                    SetVNumber(arg0, stod(line));
                                 else
-                                    setVariable(arg0, line);
+                                    SetVString(arg0, line);
 
                                 cout = System.Environment.NewLine;
                             }
@@ -455,14 +456,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Cos(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Cos(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Cos(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Cos(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -477,14 +478,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Acos(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Acos(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Acos(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Acos(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -499,14 +500,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Cosh(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Cosh(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Cosh(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Cosh(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -521,14 +522,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Log(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Log(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Log(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Log(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -543,14 +544,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Sqrt(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Sqrt(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Sqrt(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Sqrt(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -565,14 +566,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Abs(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Abs(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Abs(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Abs(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -587,14 +588,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Floor(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Floor(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Floor(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Floor(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -609,14 +610,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Ceiling(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Ceiling(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Ceiling(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Ceiling(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -631,14 +632,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Exp(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Exp(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Exp(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Exp(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -653,14 +654,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Sin(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Sin(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Sin(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Sin(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -675,14 +676,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Sinh(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Sinh(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Sinh(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Sinh(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -697,14 +698,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Asin(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Asin(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Asin(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Asin(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -719,14 +720,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Tan(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Tan(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Tan(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Tan(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -741,14 +742,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Tanh(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Tanh(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Tanh(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Tanh(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -763,14 +764,14 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, System.Math.Atan(variables[indexOfVariable(before)].getNumber()));
+                                        SetVNumber(arg0, System.Math.Atan(GetVNumber(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
                                 else if (isString(arg0))
                                 {
                                     if (isNumber(before))
-                                        setVariable(arg0, dtos(System.Math.Atan(variables[indexOfVariable(before)].getNumber())));
+                                        SetVString(arg0, dtos(System.Math.Atan(GetVNumber(before))));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -785,7 +786,7 @@
                                 if (isString(arg0))
                                 {
                                     if (isString(before))
-                                        setVariable(arg0, getLower(variables[indexOfVariable(before)].getString()));
+                                        SetVString(arg0, getLower(GetVString(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -801,17 +802,17 @@
                                 {
                                     if (isString(before))
                                     {
-                                        if (System.IO.File.Exists(variables[indexOfVariable(before)].getString()))
+                                        if (System.IO.File.Exists(GetVString(before)))
                                         {
                                             string bigString = "";
-                                            foreach (var line in System.IO.File.ReadAllLines(variables[indexOfVariable(before)].getString()))
+                                            foreach (var line in System.IO.File.ReadAllLines(GetVString(before)))
                                             {
                                                 bigString += line + System.Environment.NewLine;
                                             }
-                                            setVariable(arg0, bigString);
+                                            SetVString(arg0, bigString);
                                         }
                                         else
-                                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(before)].getString(), false);
+                                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
                                     }
                                     else
                                         error(ErrorLogger.NULL_STRING, before, false);
@@ -825,7 +826,7 @@
                                         {
                                             bigString += (line + "\r\n");
                                         }
-                                        setVariable(arg0, bigString);
+                                        SetVString(arg0, bigString);
                                     }
                                     else
                                         error(ErrorLogger.READ_FAIL, before, false);
@@ -841,7 +842,7 @@
                                 if (isString(arg0))
                                 {
                                     if (isString(before))
-                                        setVariable(arg0, getUpper(variables[indexOfVariable(before)].getString()));
+                                        SetVString(arg0, getUpper(GetVString(before)));
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -856,7 +857,7 @@
                                 if (isNumber(arg0))
                                 {
                                     if (isString(before))
-                                        setVariable(arg0, (double)variables[indexOfVariable(before)].getString().Length);
+                                        SetVNumber(arg0, (double)GetVString(before).Length);
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
                                 }
@@ -866,7 +867,7 @@
                             else
                             {
                                 if (isNumber(arg0))
-                                    setVariable(arg0, (double)before.Length);
+                                    SetVNumber(arg0, (double)before.Length);
                                 else
                                     error(ErrorLogger.CONV_ERR, arg0, false);
                             }
@@ -879,10 +880,10 @@
                                 {
                                     if (isString(before))
                                     {
-                                        if (System.IO.File.Exists(variables[indexOfVariable(before)].getString()))
-                                            setVariable(arg0, getBytes(variables[indexOfVariable(before)].getString()));
+                                        if (System.IO.File.Exists(GetVString(before)))
+                                            SetVNumber(arg0, getBytes(GetVString(before)));
                                         else
-                                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(before)].getString(), false);
+                                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
                                     }
                                     else
                                         error(ErrorLogger.CONV_ERR, before, false);
@@ -890,7 +891,7 @@
                                 else
                                 {
                                     if (System.IO.File.Exists(before))
-                                        setVariable(arg0, getBytes(before));
+                                        SetVNumber(arg0, getBytes(before));
                                     else
                                         error(ErrorLogger.READ_FAIL, before, false);
                                 }
@@ -902,19 +903,19 @@
                         {
                             if (isNumber(arg0))
                             {
-                                if (isNumeric(arg2))
-                                    setVariable(arg0, stod(arg2));
+                                if (StringHelper.IsNumeric(arg2))
+                                    SetVNumber(arg0, stod(arg2));
                                 else
                                     error(ErrorLogger.CONV_ERR, arg0, false);
                             }
                             else if (isString(arg0))
-                                setVariable(arg0, arg2);
-                            else if (variables[indexOfVariable(arg0)].waiting())
+                                SetVString(arg0, arg2);
+                            else if (GetVWaiting(arg0))
                             {
-                                if (isNumeric(arg2))
-                                    setVariable(arg0, stod(before + "." + after));
+                                if (StringHelper.IsNumeric(arg2))
+                                    SetVNumber(arg0, stod(before + "." + after));
                                 else
-                                    setVariable(arg0, arg2);
+                                    SetVString(arg0, arg2);
                             }
                             else
                                 error(ErrorLogger.IS_NULL, arg0, false);
@@ -922,19 +923,17 @@
                     }
                     else
                     {
-                        if (variables[indexOfVariable(arg0)].waiting())
+                        if (GetVWaiting(arg0))
                         {
-                            if (isNumeric(arg2))
-                                setVariable(arg0, stod(arg2));
+                            if (StringHelper.IsNumeric(arg2))
+                                SetVNumber(arg0, stod(arg2));
                             else
-                                setVariable(arg0, arg2);
+                                SetVString(arg0, arg2);
                         }
                         else if (arg2 == "null")
                         {
-                            if (isString(arg0))
-                                variables[indexOfVariable(arg0)].setNull();
-                            else if (isNumber(arg0))
-                                variables[indexOfVariable(arg0)].setNull();
+                            if (isString(arg0) || isNumber(arg0))
+                                SetVNull(arg0);
                             else
                                 error(ErrorLogger.IS_NULL, arg0, false);
                         }
@@ -943,14 +942,14 @@
                             if (isString(arg0))
                             {
                                 if (constants[indexOfConstant(arg2)].ConstNumber())
-                                    setVariable(arg0, dtos(constants[indexOfConstant(arg2)].getNumber()));
+                                    SetVString(arg0, dtos(constants[indexOfConstant(arg2)].getNumber()));
                                 else if (constants[indexOfConstant(arg2)].ConstString())
-                                    setVariable(arg0, constants[indexOfConstant(arg2)].getString());
+                                    SetVString(arg0, constants[indexOfConstant(arg2)].getString());
                             }
                             else if (isNumber(arg0))
                             {
                                 if (constants[indexOfConstant(arg2)].ConstNumber())
-                                    setVariable(arg0, constants[indexOfConstant(arg2)].getNumber());
+                                    SetVNumber(arg0, constants[indexOfConstant(arg2)].getNumber());
                                 else
                                     error(ErrorLogger.CONV_ERR, arg2, false);
                             }
@@ -962,16 +961,16 @@
                             parse(arg2);
 
                             if (isString(arg0))
-                                setVariable(arg0, __LastValue);
+                                SetVString(arg0, __LastValue);
                             else if (isNumber(arg0))
-                                setVariable(arg0, stod(__LastValue));
+                                SetVNumber(arg0, stod(__LastValue));
                         }
                         else if (variableExists(arg2))
                         {
                             if (isString(arg2))
                             {
                                 if (isString(arg0))
-                                    setVariable(arg0, variables[indexOfVariable(arg2)].getString());
+                                    SetVString(arg0, GetVString(arg2));
                                 else if (isNumber(arg0))
                                     error(ErrorLogger.CONV_ERR, arg2, false);
                                 else
@@ -980,9 +979,9 @@
                             else if (isNumber(arg2))
                             {
                                 if (isString(arg0))
-                                    setVariable(arg0, dtos(variables[indexOfVariable(arg2)].getNumber()));
+                                    SetVString(arg0, dtos(GetVNumber(arg2)));
                                 else if (isNumber(arg0))
-                                    setVariable(arg0, variables[indexOfVariable(arg2)].getNumber());
+                                    SetVNumber(arg0, GetVNumber(arg2));
                                 else
                                     error(ErrorLogger.IS_NULL, arg0, false);
                             }
@@ -998,15 +997,15 @@
 
                                 if (isNumber(arg0))
                                 {
-                                    if (isNumeric(passworder))
-                                        setVariable(arg0, stod(passworder));
+                                    if (StringHelper.IsNumeric(passworder))
+                                        SetVNumber(arg0, stod(passworder));
                                     else
                                         error(ErrorLogger.CONV_ERR, passworder, false);
                                 }
                                 else if (isString(arg0))
-                                    setVariable(arg0, passworder);
+                                    SetVString(arg0, passworder);
                                 else
-                                    setVariable(arg0, passworder);
+                                    SetVString(arg0, passworder);
                             }
                             else
                             {
@@ -1014,7 +1013,7 @@
                                 cout = "readline: ";
                                 line = Console.ReadLine();
 
-                                if (isNumeric(line))
+                                if (StringHelper.IsNumeric(line))
                                     createVariable(arg0, stod(line));
                                 else
                                     createVariable(arg0, line);
@@ -1029,45 +1028,45 @@
                                 // set the variable = last value
                                 if (isString(arg0))
                                 {
-                                    setVariable(arg0, __LastValue);
+                                    SetVString(arg0, __LastValue);
                                 }
                                 else if (isNumber(arg0))
                                 {
-                                    setVariable(arg0, stod(__LastValue));
+                                    SetVNumber(arg0, stod(__LastValue));
                                 }
                             }
                             else if (isStringStack(arg2))
                             {
                                 if (isString(arg0))
-                                    setVariable(arg0, getStringStack(arg2));
+                                    SetVString(arg0, getStringStack(arg2));
                                 else
                                     error(ErrorLogger.CONV_ERR, arg0, false);
                             }
                             else if (stackReady(arg2))
                             {
                                 if (isString(arg0))
-                                    setVariable(arg0, dtos(getStack(arg2)));
+                                    SetVString(arg0, dtos(getStack(arg2)));
                                 else if (isNumber(arg0))
-                                    setVariable(arg0, getStack(arg2));
+                                    SetVNumber(arg0, getStack(arg2));
                                 else
                                     error(ErrorLogger.IS_NULL, arg0, false);
                             }
                         }
                         else
                         {
-                            if (isNumeric(arg2))
+                            if (StringHelper.IsNumeric(arg2))
                             {
                                 if (isNumber(arg0))
-                                    setVariable(arg0, stod(arg2));
+                                    SetVNumber(arg0, stod(arg2));
                                 else if (isString(arg0))
-                                    setVariable(arg0, arg2);
+                                    SetVString(arg0, arg2);
                             }
                             else
                             {
                                 if (isNumber(arg0))
                                     error(ErrorLogger.CONV_ERR, arg0, false);
                                 else if (isString(arg0))
-                                    setVariable(arg0, cleanString(arg2));
+                                    SetVString(arg0, cleanString(arg2));
                             }
                         }
                     }
@@ -1081,9 +1080,9 @@
                             if (isString(arg0))
                             {
                                 if (isString(arg2))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getString() + variables[indexOfVariable(arg2)].getString());
+                                    SetVString(arg0, GetVString(arg0) + GetVString(arg2));
                                 else if (isNumber(arg2))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getString() + dtos(variables[indexOfVariable(arg2)].getNumber()));
+                                    SetVString(arg0, GetVString(arg0) + dtos(GetVNumber(arg2)));
                                 else
                                     error(ErrorLogger.IS_NULL, arg2, false);
                             }
@@ -1092,7 +1091,7 @@
                                 if (isString(arg2))
                                     error(ErrorLogger.CONV_ERR, arg2, false);
                                 else if (isNumber(arg2))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() + variables[indexOfVariable(arg2)].getNumber());
+                                    SetVNumber(arg0, GetVNumber(arg0) + GetVNumber(arg2));
                                 else
                                     error(ErrorLogger.IS_NULL, arg2, false);
                             }
@@ -1106,25 +1105,25 @@
                                 if (isStringStack(arg2))
                                 {
                                     if (isString(arg0))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getString() + getStringStack(arg2));
+                                        SetVString(arg0, GetVString(arg0) + getStringStack(arg2));
                                     else
                                         error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else if (stackReady(arg2))
                                 {
                                     if (isNumber(arg0))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() + getStack(arg2));
+                                        SetVNumber(arg0, GetVNumber(arg0) + getStack(arg2));
                                 }
                                 else if (methodExists(beforeParameters(arg2)))
                                 {
                                     executeTemplate(getMethod(beforeParameters(arg2)), getParameters(arg2));
 
                                     if (isString(arg0))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getString() + __LastValue);
+                                        SetVString(arg0, GetVString(arg0) + __LastValue);
                                     else if (isNumber(arg0))
                                     {
-                                        if (isNumeric(__LastValue))
-                                            setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() + stod(__LastValue));
+                                        if (StringHelper.IsNumeric(__LastValue))
+                                            SetVNumber(arg0, GetVNumber(arg0) + stod(__LastValue));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -1136,11 +1135,11 @@
                                     executeTemplate(getMethod(beforeParameters(arg2)), getParameters(arg2));
 
                                     if (isString(arg0))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getString() + __LastValue);
+                                        SetVString(arg0, GetVString(arg0) + __LastValue);
                                     else if (isNumber(arg0))
                                     {
-                                        if (isNumeric(__LastValue))
-                                            setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() + stod(__LastValue));
+                                        if (StringHelper.IsNumeric(__LastValue))
+                                            SetVNumber(arg0, GetVNumber(arg0) + stod(__LastValue));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -1153,30 +1152,30 @@
                                 parse(arg2);
 
                                 if (isString(arg0))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getString() + __LastValue);
+                                    SetVString(arg0, GetVString(arg0) + __LastValue);
                                 else if (isNumber(arg0))
                                 {
-                                    if (isNumeric(__LastValue))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() + stod(__LastValue));
+                                    if (StringHelper.IsNumeric(__LastValue))
+                                        SetVNumber(arg0, GetVNumber(arg0) + stod(__LastValue));
                                     else
                                         error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else
                                     error(ErrorLogger.IS_NULL, arg0, false);
                             }
-                            else if (isNumeric(arg2))
+                            else if (StringHelper.IsNumeric(arg2))
                             {
                                 if (isString(arg0))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getString() + arg2);
+                                    SetVString(arg0, GetVString(arg0) + arg2);
                                 else if (isNumber(arg0))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() + stod(arg2));
+                                    SetVNumber(arg0, GetVNumber(arg0) + stod(arg2));
                                 else
                                     error(ErrorLogger.IS_NULL, arg0, false);
                             }
                             else
                             {
                                 if (isString(arg0))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getString() + cleanString(arg2));
+                                    SetVString(arg0, GetVString(arg0) + cleanString(arg2));
                                 else if (isNumber(arg0))
                                     error(ErrorLogger.CONV_ERR, arg0, false);
                                 else
@@ -1192,13 +1191,13 @@
                             {
                                 if (isString(arg2))
                                 {
-                                    if (variables[indexOfVariable(arg2)].getString().Length == 1)
-                                        setVariable(arg0, subtractChar(variables[indexOfVariable(arg0)].getString(), variables[indexOfVariable(arg2)].getString()));
+                                    if (GetVString(arg2).Length == 1)
+                                        SetVString(arg0, subtractChar(GetVString(arg0), GetVString(arg2)));
                                     else
-                                        setVariable(arg0, subtractString(variables[indexOfVariable(arg0)].getString(), variables[indexOfVariable(arg2)].getString()));
+                                        SetVString(arg0, subtractString(GetVString(arg0), GetVString(arg2)));
                                 }
                                 else if (isNumber(arg2))
-                                    setVariable(arg0, subtractString(variables[indexOfVariable(arg0)].getString(), dtos(variables[indexOfVariable(arg2)].getNumber())));
+                                    SetVString(arg0, subtractString(GetVString(arg0), dtos(GetVNumber(arg2))));
                                 else
                                     error(ErrorLogger.IS_NULL, arg2, false);
                             }
@@ -1207,7 +1206,7 @@
                                 if (isString(arg2))
                                     error(ErrorLogger.CONV_ERR, arg2, false);
                                 else if (isNumber(arg2))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() - variables[indexOfVariable(arg2)].getNumber());
+                                    SetVNumber(arg0, GetVNumber(arg0) - GetVNumber(arg2));
                                 else
                                     error(ErrorLogger.IS_NULL, arg2, false);
                             }
@@ -1221,25 +1220,25 @@
                                 if (isStringStack(arg2))
                                 {
                                     if (isString(arg0))
-                                        setVariable(arg0, subtractString(variables[indexOfVariable(arg0)].getString(), getStringStack(arg2)));
+                                        SetVString(arg0, subtractString(GetVString(arg0), getStringStack(arg2)));
                                     else
                                         error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else if (stackReady(arg2))
                                 {
                                     if (isNumber(arg0))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() - getStack(arg2));
+                                        SetVNumber(arg0, GetVNumber(arg0) - getStack(arg2));
                                 }
                                 else if (methodExists(beforeParameters(arg2)))
                                 {
                                     executeTemplate(getMethod(beforeParameters(arg2)), getParameters(arg2));
 
                                     if (isString(arg0))
-                                        setVariable(arg0, subtractString(variables[indexOfVariable(arg0)].getString(), __LastValue));
+                                        SetVString(arg0, subtractString(GetVString(arg0), __LastValue));
                                     else if (isNumber(arg0))
                                     {
-                                        if (isNumeric(__LastValue))
-                                            setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() - stod(__LastValue));
+                                        if (StringHelper.IsNumeric(__LastValue))
+                                            SetVNumber(arg0, GetVNumber(arg0) - stod(__LastValue));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -1251,11 +1250,11 @@
                                     executeTemplate(getMethod(beforeParameters(arg2)), getParameters(arg2));
 
                                     if (isString(arg0))
-                                        setVariable(arg0, subtractString(variables[indexOfVariable(arg0)].getString(), __LastValue));
+                                        SetVString(arg0, subtractString(GetVString(arg0), __LastValue));
                                     else if (isNumber(arg0))
                                     {
-                                        if (isNumeric(__LastValue))
-                                            setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() - stod(__LastValue));
+                                        if (StringHelper.IsNumeric(__LastValue))
+                                            SetVNumber(arg0, GetVNumber(arg0) - stod(__LastValue));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -1268,28 +1267,28 @@
                                 parse(arg2);
 
                                 if (isString(arg0))
-                                    setVariable(arg0, subtractString(variables[indexOfVariable(arg0)].getString(), __LastValue));
+                                    SetVString(arg0, subtractString(GetVString(arg0), __LastValue));
                                 else if (isNumber(arg0))
                                 {
-                                    if (isNumeric(__LastValue))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() - stod(__LastValue));
+                                    if (StringHelper.IsNumeric(__LastValue))
+                                        SetVNumber(arg0, GetVNumber(arg0) - stod(__LastValue));
                                     else
                                         error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else
                                     error(ErrorLogger.IS_NULL, arg0, false);
                             }
-                            else if (isNumeric(arg2))
+                            else if (StringHelper.IsNumeric(arg2))
                             {
                                 if (isString(arg0))
                                 {
                                     if (arg2.Length == 1)
-                                        setVariable(arg0, subtractChar(variables[indexOfVariable(arg0)].getString(), arg2));
+                                        SetVString(arg0, subtractChar(GetVString(arg0), arg2));
                                     else
-                                        setVariable(arg0, subtractString(variables[indexOfVariable(arg0)].getString(), arg2));
+                                        SetVString(arg0, subtractString(GetVString(arg0), arg2));
                                 }
                                 else if (isNumber(arg0))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() - stod(arg2));
+                                    SetVNumber(arg0, GetVNumber(arg0) - stod(arg2));
                                 else
                                     error(ErrorLogger.IS_NULL, arg0, false);
                             }
@@ -1298,9 +1297,9 @@
                                 if (isString(arg0))
                                 {
                                     if (arg2.Length == 1)
-                                        setVariable(arg0, subtractChar(variables[indexOfVariable(arg0)].getString(), arg2));
+                                        SetVString(arg0, subtractChar(GetVString(arg0), arg2));
                                     else
-                                        setVariable(arg0, subtractString(variables[indexOfVariable(arg0)].getString(), cleanString(arg2)));
+                                        SetVString(arg0, subtractString(GetVString(arg0), cleanString(arg2)));
                                 }
                                 else if (isNumber(arg0))
                                     error(ErrorLogger.CONV_ERR, arg0, false);
@@ -1314,7 +1313,7 @@
                         if (variableExists(arg2))
                         {
                             if (isNumber(arg2))
-                                setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() * variables[indexOfVariable(arg2)].getNumber());
+                                SetVNumber(arg0, GetVNumber(arg0) * GetVNumber(arg2));
                             else if (isString(arg2))
                                 error(ErrorLogger.CONV_ERR, arg2, false);
                             else
@@ -1327,7 +1326,7 @@
                                 if (stackReady(arg2))
                                 {
                                     if (isNumber(arg0))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() * getStack(arg2));
+                                        SetVNumber(arg0, GetVNumber(arg0) * getStack(arg2));
                                 }
                                 else if (methodExists(beforeParameters(arg2)))
                                 {
@@ -1335,8 +1334,8 @@
 
                                     if (isNumber(arg0))
                                     {
-                                        if (isNumeric(__LastValue))
-                                            setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() * stod(__LastValue));
+                                        if (StringHelper.IsNumeric(__LastValue))
+                                            SetVNumber(arg0, GetVNumber(arg0) * stod(__LastValue));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -1349,8 +1348,8 @@
 
                                     if (isNumber(arg0))
                                     {
-                                        if (isNumeric(__LastValue))
-                                            setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() * stod(__LastValue));
+                                        if (StringHelper.IsNumeric(__LastValue))
+                                            SetVNumber(arg0, GetVNumber(arg0) * stod(__LastValue));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -1364,21 +1363,21 @@
 
                                 if (isNumber(arg0))
                                 {
-                                    if (isNumeric(__LastValue))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() * stod(__LastValue));
+                                    if (StringHelper.IsNumeric(__LastValue))
+                                        SetVNumber(arg0, GetVNumber(arg0) * stod(__LastValue));
                                     else
                                         error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else
                                     error(ErrorLogger.NULL_NUMBER, arg0, false);
                             }
-                            else if (isNumeric(arg2))
+                            else if (StringHelper.IsNumeric(arg2))
                             {
                                 if (isNumber(arg0))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() * stod(arg2));
+                                    SetVNumber(arg0, GetVNumber(arg0) * stod(arg2));
                             }
                             else
-                                setVariable(arg0, cleanString(arg2));
+                                SetVString(arg0, cleanString(arg2));
                         }
                     }
                     else if (arg1 == "%=")
@@ -1386,7 +1385,7 @@
                         if (variableExists(arg2))
                         {
                             if (isNumber(arg2))
-                                setVariable(arg0, (int)variables[indexOfVariable(arg0)].getNumber() % (int)variables[indexOfVariable(arg2)].getNumber());
+                                SetVNumber(arg0, (int)GetVNumber(arg0) % (int)GetVNumber(arg2));
                             else if (isString(arg2))
                                 error(ErrorLogger.CONV_ERR, arg2, false);
                             else
@@ -1398,8 +1397,8 @@
 
                             if (isNumber(arg0))
                             {
-                                if (isNumeric(__LastValue))
-                                    setVariable(arg0, (int)variables[indexOfVariable(arg0)].getNumber() % (int)stod(__LastValue));
+                                if (StringHelper.IsNumeric(__LastValue))
+                                    SetVNumber(arg0, (int)GetVNumber(arg0) % (int)stod(__LastValue));
                                 else
                                     error(ErrorLogger.CONV_ERR, arg0, false);
                             }
@@ -1408,13 +1407,13 @@
                         }
                         else
                         {
-                            if (isNumeric(arg2))
+                            if (StringHelper.IsNumeric(arg2))
                             {
                                 if (isNumber(arg0))
-                                    setVariable(arg0, (int)variables[indexOfVariable(arg0)].getNumber() % (int)stod(arg2));
+                                    SetVNumber(arg0, (int)GetVNumber(arg0) % (int)stod(arg2));
                             }
                             else
-                                setVariable(arg0, cleanString(arg2));
+                                SetVString(arg0, cleanString(arg2));
                         }
                     }
                     else if (arg1 == "**=")
@@ -1422,7 +1421,7 @@
                         if (variableExists(arg2))
                         {
                             if (isNumber(arg2))
-                                setVariable(arg0, System.Math.Pow(variables[indexOfVariable(arg0)].getNumber(), variables[indexOfVariable(arg2)].getNumber()));
+                                SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), GetVNumber(arg2)));
                             else if (isString(arg2))
                                 error(ErrorLogger.CONV_ERR, arg2, false);
                             else
@@ -1435,7 +1434,7 @@
                                 if (stackReady(arg2))
                                 {
                                     if (isNumber(arg0))
-                                        setVariable(arg0, System.Math.Pow(variables[indexOfVariable(arg0)].getNumber(), (int)getStack(arg2)));
+                                        SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), (int)getStack(arg2)));
                                 }
                                 else if (methodExists(beforeParameters(arg2)))
                                 {
@@ -1443,8 +1442,8 @@
 
                                     if (isNumber(arg0))
                                     {
-                                        if (isNumeric(__LastValue))
-                                            setVariable(arg0, System.Math.Pow(variables[indexOfVariable(arg0)].getNumber(), (int)stod(__LastValue)));
+                                        if (StringHelper.IsNumeric(__LastValue))
+                                            SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), (int)stod(__LastValue)));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -1457,8 +1456,8 @@
 
                                     if (isNumber(arg0))
                                     {
-                                        if (isNumeric(__LastValue))
-                                            setVariable(arg0, System.Math.Pow(variables[indexOfVariable(arg0)].getNumber(), (int)stod(__LastValue)));
+                                        if (StringHelper.IsNumeric(__LastValue))
+                                            SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), (int)stod(__LastValue)));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -1472,21 +1471,21 @@
 
                                 if (isNumber(arg0))
                                 {
-                                    if (isNumeric(__LastValue))
-                                        setVariable(arg0, System.Math.Pow(variables[indexOfVariable(arg0)].getNumber(), (int)stod(__LastValue)));
+                                    if (StringHelper.IsNumeric(__LastValue))
+                                        SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), (int)stod(__LastValue)));
                                     else
                                         error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else
                                     error(ErrorLogger.NULL_NUMBER, arg0, false);
                             }
-                            else if (isNumeric(arg2))
+                            else if (StringHelper.IsNumeric(arg2))
                             {
                                 if (isNumber(arg0))
-                                    setVariable(arg0, System.Math.Pow(variables[indexOfVariable(arg0)].getNumber(), stod(arg2)));
+                                    SetVNumber(arg0, System.Math.Pow(GetVNumber(arg0), stod(arg2)));
                             }
                             else
-                                setVariable(arg0, cleanString(arg2));
+                                SetVString(arg0, cleanString(arg2));
                         }
                     }
                     else if (arg1 == "/=")
@@ -1494,7 +1493,7 @@
                         if (variableExists(arg2))
                         {
                             if (isNumber(arg2))
-                                setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() / variables[indexOfVariable(arg2)].getNumber());
+                                SetVNumber(arg0, GetVNumber(arg0) / GetVNumber(arg2));
                             else if (isString(arg2))
                                 error(ErrorLogger.CONV_ERR, arg2, false);
                             else
@@ -1507,7 +1506,7 @@
                                 if (stackReady(arg2))
                                 {
                                     if (isNumber(arg0))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() / getStack(arg2));
+                                        SetVNumber(arg0, GetVNumber(arg0) / getStack(arg2));
                                 }
                                 else if (methodExists(beforeParameters(arg2)))
                                 {
@@ -1515,8 +1514,8 @@
 
                                     if (isNumber(arg0))
                                     {
-                                        if (isNumeric(__LastValue))
-                                            setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() / stod(__LastValue));
+                                        if (StringHelper.IsNumeric(__LastValue))
+                                            SetVNumber(arg0, GetVNumber(arg0) / stod(__LastValue));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -1529,8 +1528,8 @@
 
                                     if (isNumber(arg0))
                                     {
-                                        if (isNumeric(__LastValue))
-                                            setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() / stod(__LastValue));
+                                        if (StringHelper.IsNumeric(__LastValue))
+                                            SetVNumber(arg0, GetVNumber(arg0) / stod(__LastValue));
                                         else
                                             error(ErrorLogger.CONV_ERR, arg0, false);
                                     }
@@ -1544,21 +1543,21 @@
 
                                 if (isNumber(arg0))
                                 {
-                                    if (isNumeric(__LastValue))
-                                        setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() / stod(__LastValue));
+                                    if (StringHelper.IsNumeric(__LastValue))
+                                        SetVNumber(arg0, GetVNumber(arg0) / stod(__LastValue));
                                     else
                                         error(ErrorLogger.CONV_ERR, arg0, false);
                                 }
                                 else
                                     error(ErrorLogger.NULL_NUMBER, arg0, false);
                             }
-                            else if (isNumeric(arg2))
+                            else if (StringHelper.IsNumeric(arg2))
                             {
                                 if (isNumber(arg0))
-                                    setVariable(arg0, variables[indexOfVariable(arg0)].getNumber() / stod(arg2));
+                                    SetVNumber(arg0, GetVNumber(arg0) / stod(arg2));
                             }
                             else
-                                setVariable(arg0, cleanString(arg2));
+                                SetVString(arg0, cleanString(arg2));
                         }
                     }
                     else if (arg1 == "++=")
@@ -1569,15 +1568,15 @@
                             {
                                 if (isString(arg0))
                                 {
-                                    int tempVarNumber = ((int)variables[indexOfVariable(arg2)].getNumber());
-                                    string tempVarString = (variables[indexOfVariable(arg0)].getString());
+                                    int tempVarNumber = ((int)GetVNumber(arg2));
+                                    string tempVarString = (GetVString(arg0));
                                     int len = (tempVarString.Length);
                                     string cleaned = ("");
 
                                     for (int i = 0; i < len; i++)
                                         cleaned += ((char)(((int)tempVarString[i]) + tempVarNumber));
 
-                                    setVariable(arg0, cleaned);
+                                    SetVString(arg0, cleaned);
                                 }
                                 else
                                     error(ErrorLogger.IS_NULL, arg0, false);
@@ -1587,10 +1586,10 @@
                         }
                         else
                         {
-                            if (isNumeric(arg2))
+                            if (StringHelper.IsNumeric(arg2))
                             {
                                 int tempVarNumber = (stoi(arg2));
-                                string tempVarString = (variables[indexOfVariable(arg0)].getString());
+                                string tempVarString = (GetVString(arg0));
 
                                 if (tempVarString != __Null)
                                 {
@@ -1600,7 +1599,7 @@
                                     for (int i = 0; i < len; i++)
                                         cleaned += ((char)(((int)tempVarString[i]) + tempVarNumber));
 
-                                    setVariable(arg0, cleaned);
+                                    SetVString(arg0, cleaned);
                                 }
                                 else
                                     error(ErrorLogger.IS_NULL, tempVarString, false);
@@ -1617,15 +1616,15 @@
                             {
                                 if (isString(arg0))
                                 {
-                                    int tempVarNumber = ((int)variables[indexOfVariable(arg2)].getNumber());
-                                    string tempVarString = (variables[indexOfVariable(arg0)].getString());
+                                    int tempVarNumber = ((int)GetVNumber(arg2));
+                                    string tempVarString = (GetVString(arg0));
                                     int len = (tempVarString.Length);
                                     string cleaned = ("");
 
                                     for (int i = 0; i < len; i++)
                                         cleaned += ((char)(((int)tempVarString[i]) - tempVarNumber));
 
-                                    setVariable(arg0, cleaned);
+                                    SetVString(arg0, cleaned);
                                 }
                                 else
                                     error(ErrorLogger.IS_NULL, arg0, false);
@@ -1635,10 +1634,10 @@
                         }
                         else
                         {
-                            if (isNumeric(arg2))
+                            if (StringHelper.IsNumeric(arg2))
                             {
                                 int tempVarNumber = (stoi(arg2));
-                                string tempVarString = (variables[indexOfVariable(arg0)].getString());
+                                string tempVarString = (GetVString(arg0));
 
                                 if (tempVarString != __Null)
                                 {
@@ -1648,7 +1647,7 @@
                                     for (int i = 0; i < len; i++)
                                         cleaned += ((char)(((int)tempVarString[i]) - tempVarNumber));
 
-                                    setVariable(arg0, cleaned);
+                                    SetVString(arg0, cleaned);
                                 }
                                 else
                                     error(ErrorLogger.IS_NULL, tempVarString, false);
@@ -1664,7 +1663,7 @@
                             if (isString(arg2))
                             {
                                 if (isString(arg0))
-                                    setVariable(arg0, getStdout(variables[indexOfVariable(arg2)].getString()));
+                                    SetVString(arg0, getStdout(GetVString(arg2)));
                                 else
                                     error(ErrorLogger.CONV_ERR, arg0, false);
                             }
@@ -1674,7 +1673,7 @@
                         else
                         {
                             if (isString(arg0))
-                                setVariable(arg0, getStdout(cleanString(arg2)));
+                                SetVString(arg0, getStdout(cleanString(arg2)));
                             else
                                 error(ErrorLogger.CONV_ERR, arg0, false);
                         }
@@ -1686,7 +1685,7 @@
                             if (isString(arg2))
                             {
                                 if (isString(arg0))
-                                    setVariable(arg0, getParsedOutput(variables[indexOfVariable(arg2)].getString()));
+                                    SetVString(arg0, getParsedOutput(GetVString(arg2)));
                                 else
                                     error(ErrorLogger.CONV_ERR, arg0, false);
                             }
@@ -1696,7 +1695,7 @@
                         else
                         {
                             if (isString(arg0))
-                                setVariable(arg0, getParsedOutput(cleanString(arg2)));
+                                SetVString(arg0, getParsedOutput(cleanString(arg2)));
                             else
                                 error(ErrorLogger.CONV_ERR, arg0, false);
                         }
@@ -1727,9 +1726,9 @@
                             if (variableExists(arg2))
                             {
                                 if (isString(arg2))
-                                    replaceElement(before, after, variables[indexOfVariable(arg2)].getString());
+                                    replaceElement(before, after, GetVString(arg2));
                                 else if (isNumber(arg2))
-                                    replaceElement(before, after, dtos(variables[indexOfVariable(arg2)].getNumber()));
+                                    replaceElement(before, after, dtos(GetVNumber(arg2)));
                                 else
                                     error(ErrorLogger.IS_NULL, arg2, false);
                             }
@@ -1746,9 +1745,9 @@
                             if (variableExists(arg2))
                             {
                                 if (isString(arg2))
-                                    replaceElement(before, after, variables[indexOfVariable(arg2)].getString());
+                                    replaceElement(before, after, GetVString(arg2));
                                 else if (isNumber(arg2))
-                                    replaceElement(before, after, dtos(variables[indexOfVariable(arg2)].getNumber()));
+                                    replaceElement(before, after, dtos(GetVNumber(arg2)));
                                 else
                                     error(ErrorLogger.IS_NULL, arg2, false);
                             }
@@ -1774,7 +1773,7 @@
 
                         if (rangeBegin.Length != 0 && rangeEnd.Length != 0)
                         {
-                            if (isNumeric(rangeBegin) && isNumeric(rangeEnd))
+                            if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                             {
                                 if (stoi(rangeBegin) < stoi(rangeEnd))
                                 {
@@ -1853,13 +1852,13 @@
                     System.Collections.Generic.List<string> elements = new();
 
                     if (parameters[0] == "")
-                        elements = split(variables[indexOfVariable(_b)].getString(), ' ');
+                        elements = split(GetVString(_b), ' ');
                     else
                     {
                         if (parameters[0][0] == ';')
-                            elements = split(variables[indexOfVariable(_b)].getString(), ';');
+                            elements = split(GetVString(_b), ';');
                         else
-                            elements = split(variables[indexOfVariable(_b)].getString(), parameters[0][0]);
+                            elements = split(GetVString(_b), parameters[0][0]);
                     }
 
                     lists[indexOfList(arg0)].clear();
@@ -1889,9 +1888,9 @@
                         if (variableExists(parameters[i]))
                         {
                             if (isString(parameters[i]))
-                                lists[indexOfList(arg0)].remove(variables[indexOfVariable(parameters[i])].getString());
+                                lists[indexOfList(arg0)].remove(GetVString(parameters[i]));
                             else if (isNumber(parameters[i]))
-                                lists[indexOfList(arg0)].remove(dtos(variables[indexOfVariable(parameters[i])].getNumber()));
+                                lists[indexOfList(arg0)].remove(dtos(GetVNumber(parameters[i])));
                             else
                                 error(ErrorLogger.IS_NULL, parameters[i], false);
                         }
@@ -1907,18 +1906,18 @@
                 if (arg1 == "+=")
                 {
                     if (isString(arg2))
-                        lists[indexOfList(arg0)].add(variables[indexOfVariable(arg2)].getString());
+                        lists[indexOfList(arg0)].add(GetVString(arg2));
                     else if (isNumber(arg2))
-                        lists[indexOfList(arg0)].add(dtos(variables[indexOfVariable(arg2)].getNumber()));
+                        lists[indexOfList(arg0)].add(dtos(GetVNumber(arg2)));
                     else
                         error(ErrorLogger.CONV_ERR, arg2, false);
                 }
                 else if (arg1 == "-=")
                 {
                     if (isString(arg2))
-                        lists[indexOfList(arg0)].remove(variables[indexOfVariable(arg2)].getString());
+                        lists[indexOfList(arg0)].remove(GetVString(arg2));
                     else if (isNumber(arg2))
-                        lists[indexOfList(arg0)].remove(dtos(variables[indexOfVariable(arg2)].getNumber()));
+                        lists[indexOfList(arg0)].remove(dtos(GetVNumber(arg2)));
                     else
                         error(ErrorLogger.CONV_ERR, arg2, false);
                 }
@@ -1987,7 +1986,7 @@
                             {
                                 string listValue = (lists[indexOfList(beforeBracket)].at(stoi(afterBracket)));
 
-                                if (isNumeric(listValue))
+                                if (StringHelper.IsNumeric(listValue))
                                     createVariable(arg0, stod(listValue));
                                 else
                                     createVariable(arg0, listValue);
@@ -2015,10 +2014,10 @@
                     if (variableExists(before))
                     {
                         if (isString(before))
-                            createVariable(arg0, (int)variables[indexOfVariable(before)].getString()[0]);
+                            createVariable(arg0, (int)GetVString(before)[0]);
                         else if (isNumber(before))
                         {
-                            int i = (int)variables[indexOfVariable(before)].getNumber();
+                            int i = (int)GetVNumber(before);
                             createVariable(arg0, (double)i);
                         }
                         else
@@ -2032,10 +2031,10 @@
                     if (variableExists(before))
                     {
                         if (isString(before))
-                            createVariable(arg0, (double)variables[indexOfVariable(before)].getString()[0]);
+                            createVariable(arg0, (double)GetVString(before)[0]);
                         else if (isNumber(before))
                         {
-                            double i = variables[indexOfVariable(before)].getNumber();
+                            double i = GetVNumber(before);
                             createVariable(arg0, (double)i);
                         }
                         else
@@ -2049,7 +2048,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, dtos(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, dtos(GetVNumber(before)));
                         else
                             error(ErrorLogger.IS_NULL, before, false);
                     }
@@ -2061,7 +2060,7 @@
                     if (variableExists(before))
                     {
                         if (isString(before))
-                            createVariable(arg0, stod(variables[indexOfVariable(before)].getString()));
+                            createVariable(arg0, stod(GetVString(before)));
                         else
                             error(ErrorLogger.IS_NULL, before, false);
                     }
@@ -2074,7 +2073,7 @@
                     {
                         parse(arg2);
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                             createVariable(arg0, stod(__LastValue));
                         else
                             createVariable(arg0, __LastValue);
@@ -2085,7 +2084,7 @@
                         {
                             executeTemplate(objects[indexOfObject(before)].getMethod(beforeParameters(after)), getParameters(after));
 
-                            if (isNumeric(__LastValue))
+                            if (StringHelper.IsNumeric(__LastValue))
                                 createVariable(arg0, stod(__LastValue));
                             else
                                 createVariable(arg0, __LastValue);
@@ -2107,24 +2106,24 @@
                 {
                     if (isString(before))
                     {
-                        if (System.IO.File.Exists(variables[indexOfVariable(before)].getString()))
+                        if (System.IO.File.Exists(GetVString(before)))
                         {
                             string bigString = ("");
-                            foreach (var line in System.IO.File.ReadAllLines(variables[indexOfVariable(before)].getString()))
+                            foreach (var line in System.IO.File.ReadAllLines(GetVString(before)))
                             {
                                 bigString += (line + "\r\n");
                             }
                             createVariable(arg0, bigString);
                         }
                         else
-                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(before)].getString(), false);
+                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
                     }
                     else
                         error(ErrorLogger.NULL_STRING, before, false);
                 }
                 else if (__DefiningObject)
                 {
-                    if (isNumeric(arg2))
+                    if (StringHelper.IsNumeric(arg2))
                     {
                         Variable newVariable = new(arg0, stod(arg2));
 
@@ -2153,7 +2152,7 @@
                 {
                     parse(arg2);
 
-                    if (isNumeric(__LastValue))
+                    if (StringHelper.IsNumeric(__LastValue))
                         createVariable(arg0, stod(__LastValue));
                     else
                         createVariable(arg0, __LastValue);
@@ -2180,7 +2179,7 @@
                             System.Collections.Generic.List<string> range = getRange(arg2);
                             string s0 = (range[0]), s2 = (range[1]);
 
-                            if (isNumeric(s0) && isNumeric(s2))
+                            if (StringHelper.IsNumeric(s0) && StringHelper.IsNumeric(s2))
                             {
                                 double n0 = stod(s0), n2 = stod(s2);
 
@@ -2205,20 +2204,20 @@
                                 if (variableExists(s0))
                                 {
                                     if (isNumber(s0))
-                                        s0 = dtos(variables[indexOfVariable(s0)].getNumber());
+                                        s0 = dtos(GetVNumber(s0));
                                     else if (isString(s0))
-                                        s0 = variables[indexOfVariable(s0)].getString();
+                                        s0 = GetVString(s0);
                                 }
 
                                 if (variableExists(s2))
                                 {
                                     if (isNumber(s2))
-                                        s2 = dtos(variables[indexOfVariable(s2)].getNumber());
+                                        s2 = dtos(GetVNumber(s2));
                                     else if (isString(s2))
-                                        s2 = variables[indexOfVariable(s2)].getString();
+                                        s2 = GetVString(s2);
                                 }
 
-                                if (isNumeric(s0) && isNumeric(s2))
+                                if (StringHelper.IsNumeric(s0) && StringHelper.IsNumeric(s2))
                                 {
                                     double n0 = stod(s0), n2 = stod(s2);
 
@@ -2249,7 +2248,7 @@
                     {
                         executeTemplate(getMethod(beforeParameters(arg2)), getParameters(arg2));
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                             createVariable(arg0, stod(__LastValue));
                         else
                             createVariable(arg0, __LastValue);
@@ -2258,9 +2257,9 @@
                 else if (variableExists(arg2))
                 {
                     if (isNumber(arg2))
-                        createVariable(arg0, variables[indexOfVariable(arg2)].getNumber());
+                        createVariable(arg0, GetVNumber(arg2));
                     else if (isString(arg2))
-                        createVariable(arg0, variables[indexOfVariable(arg2)].getString());
+                        createVariable(arg0, GetVString(arg2));
                     else
                         createVariable(arg0, __Null);
                 }
@@ -2271,7 +2270,7 @@
                     {
                         line = getSilentOutput("");
 
-                        if (isNumeric(line))
+                        if (StringHelper.IsNumeric(line))
                             createVariable(arg0, stod(line));
                         else
                             createVariable(arg0, line);
@@ -2281,7 +2280,7 @@
                         cout = "readline: ";
                         line = Console.ReadLine();
 
-                        if (isNumeric(line))
+                        if (StringHelper.IsNumeric(line))
                             createVariable(arg0, stod(line));
                         else
                             createVariable(arg0, line);
@@ -2296,10 +2295,10 @@
                         if (isString(after))
                         {
                             string line = "";
-                            cout = cleanString(variables[indexOfVariable(after)].getString());
+                            cout = cleanString(GetVString(after));
                             line = Console.ReadLine();
 
-                            if (isNumeric(line))
+                            if (StringHelper.IsNumeric(line))
                                 createVariable(arg0, stod(line));
                             else
                                 createVariable(arg0, line);
@@ -2310,7 +2309,7 @@
                             cout = "readline: ";
                             line = Console.ReadLine();
 
-                            if (isNumeric(line))
+                            if (StringHelper.IsNumeric(line))
                                 createVariable(arg0, stod(line));
                             else
                                 createVariable(arg0, line);
@@ -2322,7 +2321,7 @@
                         cout = cleanString(after);
                         line = Console.ReadLine();
 
-                        if (isNumeric(line))
+                        if (StringHelper.IsNumeric(line))
                             createVariable(arg0, stod(line));
                         else
                             createVariable(arg0, line);
@@ -2335,9 +2334,9 @@
                         if (isString(after))
                         {
                             string line = "";
-                            line = getSilentOutput(variables[indexOfVariable(after)].getString());
+                            line = getSilentOutput(GetVString(after));
 
-                            if (isNumeric(line))
+                            if (StringHelper.IsNumeric(line))
                                 createVariable(arg0, stod(line));
                             else
                                 createVariable(arg0, line);
@@ -2349,7 +2348,7 @@
                             string line = "";
                             line = getSilentOutput("password: ");
 
-                            if (isNumeric(line))
+                            if (StringHelper.IsNumeric(line))
                                 createVariable(arg0, stod(line));
                             else
                                 createVariable(arg0, line);
@@ -2362,7 +2361,7 @@
                         string line = "";
                         line = getSilentOutput(cleanString(after));
 
-                        if (isNumeric(line))
+                        if (StringHelper.IsNumeric(line))
                             createVariable(arg0, stod(line));
                         else
                             createVariable(arg0, line);
@@ -2375,7 +2374,7 @@
                     if (variableExists(before))
                     {
                         if (isString(before))
-                            createVariable(arg0, (double)variables[indexOfVariable(before)].getString().Length);
+                            createVariable(arg0, (double)GetVString(before).Length);
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2387,7 +2386,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Sin(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Sin(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2399,7 +2398,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Sinh(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Sinh(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2411,7 +2410,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Asin(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Asin(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2423,7 +2422,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Tan(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Tan(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2435,7 +2434,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Tanh(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Tanh(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2447,7 +2446,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Atan(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Atan(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2459,7 +2458,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Cos(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Cos(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2471,7 +2470,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Acos(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Acos(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2483,7 +2482,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Cosh(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Cosh(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2495,7 +2494,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Log(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Log(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2507,7 +2506,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Sqrt(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Sqrt(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2519,7 +2518,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Abs(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Abs(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2531,7 +2530,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Floor(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Floor(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2543,7 +2542,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Ceiling(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Ceiling(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2555,7 +2554,7 @@
                     if (variableExists(before))
                     {
                         if (isNumber(before))
-                            createVariable(arg0, System.Math.Exp(variables[indexOfVariable(before)].getNumber()));
+                            createVariable(arg0, System.Math.Exp(GetVNumber(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2567,7 +2566,7 @@
                     if (variableExists(before))
                     {
                         if (isString(before))
-                            createVariable(arg0, getUpper(variables[indexOfVariable(before)].getString()));
+                            createVariable(arg0, getUpper(GetVString(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2579,7 +2578,7 @@
                     if (variableExists(before))
                     {
                         if (isString(before))
-                            createVariable(arg0, getLower(variables[indexOfVariable(before)].getString()));
+                            createVariable(arg0, getLower(GetVString(before)));
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2592,10 +2591,10 @@
                     {
                         if (isString(before))
                         {
-                            if (System.IO.File.Exists(variables[indexOfVariable(before)].getString()))
-                                createVariable(arg0, getBytes(variables[indexOfVariable(before)].getString()));
+                            if (System.IO.File.Exists(GetVString(before)))
+                                createVariable(arg0, getBytes(GetVString(before)));
                             else
-                                error(ErrorLogger.READ_FAIL, variables[indexOfVariable(before)].getString(), false);
+                                error(ErrorLogger.READ_FAIL, GetVString(before), false);
                         }
                         else
                             error(ErrorLogger.CONV_ERR, before, false);
@@ -2614,7 +2613,7 @@
                 }
                 else
                 {
-                    if (isNumeric(arg2))
+                    if (StringHelper.IsNumeric(arg2))
                         createVariable(arg0, stod(arg2));
                     else
                         createVariable(arg0, cleanString(arg2));
@@ -2625,15 +2624,15 @@
                 if (variableExists(arg2))
                 {
                     if (isString(arg2))
-                        createVariable(arg0, variables[indexOfVariable(arg2)].getString());
+                        createVariable(arg0, GetVString(arg2));
                     else if (isNumber(arg2))
-                        createVariable(arg0, variables[indexOfVariable(arg2)].getNumber());
+                        createVariable(arg0, GetVNumber(arg2));
                     else
                         createVariable(arg0, __Null);
                 }
                 else
                 {
-                    if (isNumeric(arg2))
+                    if (StringHelper.IsNumeric(arg2))
                         createVariable(arg0, stod(arg2));
                     else
                         createVariable(arg0, cleanString(arg2));
@@ -2644,13 +2643,13 @@
                 if (variableExists(arg2))
                 {
                     if (isNumber(arg2))
-                        createVariable(arg0, 0 - variables[indexOfVariable(arg2)].getNumber());
+                        createVariable(arg0, 0 - GetVNumber(arg2));
                     else
                         createVariable(arg0, __Null);
                 }
                 else
                 {
-                    if (isNumeric(arg2))
+                    if (StringHelper.IsNumeric(arg2))
                         createVariable(arg0, stod(arg2));
                     else
                         createVariable(arg0, cleanString(arg2));
@@ -2661,7 +2660,7 @@
                 if (variableExists(arg2))
                 {
                     if (isString(arg2))
-                        createVariable(arg0, getStdout(variables[indexOfVariable(arg2)].getString()));
+                        createVariable(arg0, getStdout(GetVString(arg2)));
                     else
                         error(ErrorLogger.CONV_ERR, arg2, false);
                 }
@@ -2673,7 +2672,7 @@
                 if (variableExists(arg2))
                 {
                     if (isString(arg2))
-                        createVariable(arg0, getParsedOutput(variables[indexOfVariable(arg2)].getString()));
+                        createVariable(arg0, getParsedOutput(GetVString(arg2)));
                     else
                         error(ErrorLogger.CONV_ERR, arg2, false);
                 }
@@ -2739,7 +2738,7 @@
             {
                 if (arg1 == "=")
                 {
-                    if (isNumeric(arg2))
+                    if (StringHelper.IsNumeric(arg2))
                     {
                         Constant newConstant = new(arg0, stod(arg2));
                         constants.Add(newConstant);
@@ -2759,7 +2758,7 @@
 
         void executeSimpleStatement(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
         {
-            if (isNumeric(arg0) && isNumeric(arg2))
+            if (StringHelper.IsNumeric(arg0) && StringHelper.IsNumeric(arg2))
             {
                 if (arg1 == "+")
                     writeline(dtos(stod(arg0) + stod(arg2)));
@@ -2867,9 +2866,9 @@
                 else if (variableExists(arg1))
                 {
                     if (isString(arg1))
-                        write(variables[indexOfVariable(arg1)].getString());
+                        write(GetVString(arg1));
                     else if (isNumber(arg1))
-                        write(dtos(variables[indexOfVariable(arg1)].getNumber()));
+                        write(dtos(GetVNumber(arg1)));
                 }
                 else if (listExists(arg1))
                 {

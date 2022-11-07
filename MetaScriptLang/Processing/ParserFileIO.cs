@@ -30,7 +30,7 @@
             List newList = new();
             System.Collections.Generic.List<string> dirList = new();
             // TODO: filesOnly logic
-            dirList.AddRange(System.IO.Directory.GetFileSystemEntries(variables[indexOfVariable(before)].getString()));
+            dirList.AddRange(System.IO.Directory.GetFileSystemEntries(GetVString(before)));
 
             for (int i = 0; i < dirList.Count; i++)
             {
@@ -56,23 +56,23 @@
             {
                 if (isString(arg1))
                 {
-                    if (System.IO.File.Exists(variables[indexOfVariable(arg1)].getString()))
+                    if (System.IO.File.Exists(GetVString(arg1)))
                     {
                         if (variableExists(arg2))
                         {
                             if (isString(arg2))
                             {
                                 if (newLine)
-                                    app(variables[indexOfVariable(arg1)].getString(), variables[indexOfVariable(arg2)].getString() + "\r\n");
+                                    app(GetVString(arg1), GetVString(arg2) + "\r\n");
                                 else
-                                    app(variables[indexOfVariable(arg1)].getString(), variables[indexOfVariable(arg2)].getString());
+                                    app(GetVString(arg1), GetVString(arg2));
                             }
                             else if (isNumber(arg2))
                             {
                                 if (newLine)
-                                    app(variables[indexOfVariable(arg1)].getString(), dtos(variables[indexOfVariable(arg2)].getNumber()) + "\r\n");
+                                    app(GetVString(arg1), dtos(GetVNumber(arg2)) + "\r\n");
                                 else
-                                    app(variables[indexOfVariable(arg1)].getString(), dtos(variables[indexOfVariable(arg2)].getNumber()));
+                                    app(GetVString(arg1), dtos(GetVNumber(arg2)));
                             }
                             else
                                 error(ErrorLogger.IS_NULL, arg2, false);
@@ -80,13 +80,13 @@
                         else
                         {
                             if (newLine)
-                                app(variables[indexOfVariable(arg1)].getString(), arg2 + "\r\n");
+                                app(GetVString(arg1), arg2 + "\r\n");
                             else
-                                app(variables[indexOfVariable(arg1)].getString(), arg2);
+                                app(GetVString(arg1), arg2);
                         }
                     }
                     else
-                        error(ErrorLogger.READ_FAIL, variables[indexOfVariable(arg1)].getString(), false);
+                        error(ErrorLogger.READ_FAIL, GetVString(arg1), false);
                 }
                 else
                     error(ErrorLogger.CONV_ERR, arg1, false);
@@ -100,12 +100,12 @@
                         if (System.IO.File.Exists(arg1))
                         {
                             if (newLine)
-                                app(arg1, variables[indexOfVariable(arg2)].getString() + "\r\n");
+                                app(arg1, GetVString(arg2) + "\r\n");
                             else
-                                app(arg1, variables[indexOfVariable(arg2)].getString());
+                                app(arg1, GetVString(arg2));
                         }
                         else
-                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(arg2)].getString(), false);
+                            error(ErrorLogger.READ_FAIL, GetVString(arg2), false);
                     }
                     else
                         error(ErrorLogger.CONV_ERR, arg2, false);
@@ -140,18 +140,18 @@
             {
                 if (isString(arg1))
                 {
-                    if (System.IO.File.Exists(variables[indexOfVariable(arg1)].getString()))
+                    if (System.IO.File.Exists(GetVString(arg1)))
                     {
                         if (variableExists(arg2))
                         {
                             if (isString(arg2))
                             {
-                                app(variables[indexOfVariable(arg1)].getString(), variables[indexOfVariable(arg2)].getString() + "\r\n");
+                                app(GetVString(arg1), GetVString(arg2) + "\r\n");
                                 __LastValue = "0";
                             }
                             else if (isNumber(arg2))
                             {
-                                app(variables[indexOfVariable(arg1)].getString(), dtos(variables[indexOfVariable(arg2)].getNumber()) + "\r\n");
+                                app(GetVString(arg1), dtos(GetVNumber(arg2)) + "\r\n");
                                 __LastValue = "0";
                             }
                             else
@@ -162,22 +162,22 @@
                         }
                         else
                         {
-                            app(variables[indexOfVariable(arg1)].getString(), arg2 + "\r\n");
+                            app(GetVString(arg1), arg2 + "\r\n");
                             __LastValue = "0";
                         }
                     }
                     else
                     {
-                        createFile(variables[indexOfVariable(arg1)].getString());
+                        createFile(GetVString(arg1));
 
                         if (isString(arg2))
                         {
-                            app(variables[indexOfVariable(arg1)].getString(), variables[indexOfVariable(arg2)].getString() + "\r\n");
+                            app(GetVString(arg1), GetVString(arg2) + "\r\n");
                             __LastValue = "1";
                         }
                         else if (isNumber(arg2))
                         {
-                            app(variables[indexOfVariable(arg1)].getString(), dtos(variables[indexOfVariable(arg2)].getNumber()) + "\r\n");
+                            app(GetVString(arg1), dtos(GetVNumber(arg2)) + "\r\n");
                             __LastValue = "1";
                         }
                         else
@@ -203,13 +203,13 @@
                     {
                         if (System.IO.File.Exists(arg1))
                         {
-                            app(arg1, variables[indexOfVariable(arg2)].getString() + "\r\n");
+                            app(arg1, GetVString(arg2) + "\r\n");
                             __LastValue = "0";
                         }
                         else
                         {
-                            createFile(variables[indexOfVariable(arg2)].getString());
-                            app(arg1, variables[indexOfVariable(arg2)].getString() + "\r\n");
+                            createFile(GetVString(arg2));
+                            app(arg1, GetVString(arg2) + "\r\n");
                             __LastValue = "1";
                         }
                     }

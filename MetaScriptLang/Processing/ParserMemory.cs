@@ -2,6 +2,7 @@
 {
     using MetaScriptLang.Data;
     using MetaScriptLang.Logging;
+    using System.Xml.Linq;
 
     public partial class Parser
     {
@@ -49,9 +50,9 @@
                     if (variableExists(parameters[i]))
                     {
                         if (isString(parameters[i]))
-                            lists[indexOfList(arg1)].add(variables[indexOfVariable(parameters[i])].getString());
+                            lists[indexOfList(arg1)].add(GetVString(parameters[i]));
                         else if (isNumber(parameters[i]))
-                            lists[indexOfList(arg1)].add(dtos(variables[indexOfVariable(parameters[i])].getNumber()));
+                            lists[indexOfList(arg1)].add(dtos(GetVNumber(parameters[i])));
                         else
                             error(ErrorLogger.IS_NULL, parameters[i], false);
                     }
@@ -59,29 +60,6 @@
                         lists[indexOfList(arg1)].add(parameters[i]);
                 }
             }
-        }
-
-        void setVariable(string name, string value)
-        {
-            variables[indexOfVariable(name)].setVariable(value);
-            setLastValue(value);
-        }
-
-        void setVariable(string name, double value)
-        {
-            if (isString(name))
-                variables[indexOfVariable(name)].setVariable(dtos(value));
-            else if (isNumber(name))
-                variables[indexOfVariable(name)].setVariable(value);
-            else
-            {
-                if (variables[indexOfVariable(name)].waiting())
-                    variables[indexOfVariable(name)].stopWait();
-
-                variables[indexOfVariable(name)].setVariable(value);
-            }
-
-            setLastValue(dtos(value));
         }
 
         void createVariable(string name, string value)
@@ -133,6 +111,84 @@
             }
 
             return (-1);
+        }
+
+        bool GCCanCollectV(string s)
+        {
+            return this.variables[indexOfVariable(s)].garbage();
+        }
+
+        Variable GetV(string s)
+        {
+            return this.variables[indexOfVariable(s)];
+        }
+
+        string GetVString(string s)
+        {
+            return this.variables[indexOfVariable(s)].getString();
+        }
+
+        double GetVNumber(string s)
+        {
+            return this.variables[indexOfVariable(s)].getNumber();
+        }
+
+        string GetVName(string s)
+        {
+            return this.variables[indexOfVariable(s)].name();
+        }
+
+        bool GetVWaiting(string s)
+        {
+            return this.variables[indexOfVariable(s)].waiting();
+        }
+
+        void SetVString(string target, string value)
+        {
+            this.variables[indexOfVariable(target)].setVariable(value);
+            setLastValue(value);
+        }
+
+        void SetVNumber(string target, double value)
+        {
+            if (isString(target))
+                this.variables[indexOfVariable(target)].setVariable(dtos(value));
+            else if (isNumber(target))
+                this.variables[indexOfVariable(target)].setVariable(value);
+            else
+            {
+                if (GetVWaiting(target))
+                    SetVStopWait(target);
+
+                this.variables[indexOfVariable(target)].setVariable(value);
+            }
+
+            setLastValue(dtos(value));
+        }
+
+        void SetVName(string target, string newName)
+        {
+            this.variables[indexOfVariable(target)].setName(newName);
+        }
+
+        void SetVLock(string target)
+        {
+            this.variables[indexOfVariable(target)].setIndestructible();
+        }
+
+        void SetVUnlock(string target)
+        {
+            this.variables[indexOfVariable(target)].setDestructible();
+        }
+
+        void SetVNull(string target)
+        {
+            this.variables[indexOfVariable(target)].setNull();
+        }
+
+        void SetVStopWait(string target)
+        {
+            this.variables[indexOfVariable(target)].stopWait();
         }
 
         int indexOfVariable(string s)
@@ -441,15 +497,15 @@
         {
             if (variableExists(target))
             {
-                if (System.IO.File.Exists(variables[indexOfVariable(target)].getString()) || System.IO.Directory.Exists(variables[indexOfVariable(target)].getString()))
+                if (System.IO.File.Exists(GetVString(target)) || System.IO.Directory.Exists(GetVString(target)))
                 {
-                    string old_name = (variables[indexOfVariable(target)].getString()), new_name = string.Empty;
+                    string old_name = (GetVString(target)), new_name = string.Empty;
 
                     if (variableExists(name))
                     {
                         if (isString(name))
                         {
-                            new_name = variables[indexOfVariable(name)].getString();
+                            new_name = GetVString(name);
 
                             if (System.IO.File.Exists(old_name))
                             {
@@ -506,7 +562,7 @@
                     if (startsWith(name, "@"))
                     {
                         if (!variableExists(name))
-                            variables[indexOfVariable(target)].setName(name);
+                            SetVName(target, name);
                         else
                             error(ErrorLogger.VAR_DEFINED, name, false);
                     }

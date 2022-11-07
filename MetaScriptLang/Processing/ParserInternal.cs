@@ -61,9 +61,9 @@ namespace MetaScriptLang.Processing
                                 else
                                 {
                                     if (isString(parameters[i]))
-                                        method.addMethodVariable(variables[indexOfVariable(parameters[i])].getString(), variables[indexOfVariable(parameters[i])].name());
+                                        method.addMethodVariable(GetVString(parameters[i]), GetVName(parameters[i]));
                                     else if (isNumber(parameters[i]))
-                                        method.addMethodVariable(variables[indexOfVariable(parameters[i])].getNumber(), variables[indexOfVariable(parameters[i])].name());
+                                        method.addMethodVariable(GetVNumber(parameters[i]), GetVName(parameters[i]));
                                     else
                                         error(ErrorLogger.IS_NULL, parameters[i], false);
                                 }
@@ -173,9 +173,9 @@ namespace MetaScriptLang.Processing
                                 else
                                 {
                                     if (isString(parameters[i]))
-                                        method.addMethodVariable(variables[indexOfVariable(parameters[i])].getString(), variables[indexOfVariable(parameters[i])].name());
+                                        method.addMethodVariable(GetVString(parameters[i]), GetVName(parameters[i]));
                                     else if (isNumber(parameters[i]))
-                                        method.addMethodVariable(variables[indexOfVariable(parameters[i])].getNumber(), variables[indexOfVariable(parameters[i])].name());
+                                        method.addMethodVariable(GetVNumber(parameters[i]), GetVName(parameters[i]));
                                     else
                                         error(ErrorLogger.IS_NULL, parameters[i], false);
                                 }
@@ -371,13 +371,13 @@ namespace MetaScriptLang.Processing
                 else
                 {
                     if (isString(arg1))
-                        __LastValue = variables[indexOfVariable(arg1)].getString();
+                        __LastValue = GetVString(arg1);
                     else if (isNumber(arg1))
-                        __LastValue = dtos(variables[indexOfVariable(arg1)].getNumber());
+                        __LastValue = dtos(GetVNumber(arg1));
                     else
                         __LastValue = "null";
 
-                    if (variables[indexOfVariable(arg1)].garbage())
+                    if (GCCanCollectV(arg1))
                         variables = removeVariable(variables, arg1);
                 }
             }
@@ -411,9 +411,9 @@ namespace MetaScriptLang.Processing
             if (variableExists(arg1))
             {
                 if (isString(arg1))
-                    saveVariable(arg1 + "&" + variables[indexOfVariable(arg1)].getString());
+                    saveVariable(arg1 + "&" + GetVString(arg1));
                 else if (isNumber(arg1))
-                    saveVariable(arg1 + "&" + dtos(variables[indexOfVariable(arg1)].getNumber()));
+                    saveVariable(arg1 + "&" + dtos(GetVNumber(arg1)));
                 else
                     error(ErrorLogger.IS_NULL, arg1, false);
             }
@@ -445,9 +445,9 @@ namespace MetaScriptLang.Processing
                 else
                 {
                     if (isString(arg1))
-                        text = (variables[indexOfVariable(arg1)].getString());
+                        text = (GetVString(arg1));
                     else if (isNumber(arg1))
-                        text = (dtos(variables[indexOfVariable(arg1)].getNumber()));
+                        text = (dtos(GetVNumber(arg1)));
                     else
                     {
                         error(ErrorLogger.IS_NULL, arg1, false);

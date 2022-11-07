@@ -1,5 +1,6 @@
 ﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Helpers;
     using MetaScriptLang.Logging;
 
     public partial class Parser
@@ -23,9 +24,9 @@
                         if (variableExists(builder.ToString()) && zeroDots(builder.ToString()))
                         {
                             if (isString(builder.ToString()))
-                                cleaned.Append(variables[indexOfVariable(builder.ToString())].getString());
+                                cleaned.Append(GetVString(builder.ToString()));
                             else if (isNumber(builder.ToString()))
-                                cleaned.Append(dtos(variables[indexOfVariable(builder.ToString())].getNumber()));
+                                cleaned.Append(dtos(GetVNumber(builder.ToString())));
                             else
                                 cleaned.Append("null");
                         }
@@ -73,6 +74,7 @@
                         }
                         else if (containsBrackets(builder.ToString()))
                         {
+                            // TODO revisit this logic.
                             string _beforeBrackets = beforeBrackets(builder.ToString()), afterBrackets = builder.ToString();
                             string rangeBegin = "", rangeEnd = "", _build = "";
 
@@ -82,14 +84,14 @@
                             {
                                 if (isString(_beforeBrackets))
                                 {
-                                    string tempString = variables[indexOfVariable(_beforeBrackets)].getString();
+                                    string tempString = GetVString(_beforeBrackets);
 
                                     if (listRange.Count == 2)
                                     {
                                         rangeBegin = listRange[0];
                                         rangeEnd = listRange[1];
 
-                                        if (isNumeric(rangeBegin) && isNumeric(rangeEnd))
+                                        if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                                         {
                                             if (stoi(rangeBegin) < stoi(rangeEnd))
                                             {
@@ -123,7 +125,7 @@
                                     {
                                         rangeBegin = listRange[0];
 
-                                        if (isNumeric(rangeBegin))
+                                        if (StringHelper.IsNumeric(rangeBegin))
                                         {
                                             if (stoi(rangeBegin) <= (int)tempString.Length - 1 && stoi(rangeBegin) >= 0)
                                             {
@@ -142,7 +144,7 @@
                                 {
                                     rangeBegin = listRange[0]; rangeEnd = listRange[1];
 
-                                    if (isNumeric(rangeBegin) && isNumeric(rangeEnd))
+                                    if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                                     {
                                         if (stoi(rangeBegin) < stoi(rangeEnd))
                                         {
@@ -198,7 +200,7 @@
                                 {
                                     rangeBegin = listRange[0];
 
-                                    if (isNumeric(rangeBegin))
+                                    if (StringHelper.IsNumeric(rangeBegin))
                                     {
                                         if (stoi(rangeBegin) <= (int)lists[indexOfList(_beforeBrackets)].size() - 1 && stoi(rangeBegin) >= 0)
                                             cleaned.Append(lists[indexOfList(_beforeBrackets)].at(stoi(rangeBegin)));

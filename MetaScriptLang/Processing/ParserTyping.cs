@@ -1,6 +1,7 @@
 ﻿namespace MetaScriptLang.Processing
 {
     using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
 
     public partial class Parser
     {
@@ -12,7 +13,7 @@
 
         bool isNumber(string varName)
         {
-            return variables[indexOfVariable(varName)].getNumber() != __NullNum;
+            return GetVNumber(varName) != __NullNum;
         }
 
         bool isString(Variable var)
@@ -22,17 +23,7 @@
 
         bool isString(string varName)
         {
-            return variables[indexOfVariable(varName)].getString() != __Null;
-        }
-
-        double getNumber(string varName)
-        {
-            return variables[indexOfVariable(varName)].getNumber();
-        }
-
-        string getString(string varName)
-        {
-            return variables[indexOfVariable(varName)].getString();
+            return GetVString(varName) != __Null;
         }
         #endregion
 
@@ -44,15 +35,15 @@
             if (variableExists(arg1))
             {
                 if (isString(arg1))
-                    firstValue = getString(arg1);
+                    firstValue = GetVString(arg1);
             }
 
             if (variableExists(arg2))
             {
                 if (isString(arg2))
-                    lastValue = getString(arg2);
+                    lastValue = GetVString(arg2);
                 else if (isNumber(arg2))
-                    lastValue = dtos(getNumber(arg2));
+                    lastValue = dtos(GetVNumber(arg2));
             }
             else if (methodExists(arg2))
             {
@@ -92,7 +83,7 @@
                 {
                     System.Collections.Generic.List<string> parameters = getBracketRange(_afterBrackets);
 
-                    if (isNumeric(parameters[0]))
+                    if (StringHelper.IsNumeric(parameters[0]))
                     {
                         if ((int)args.Count - 1 >= stoi(parameters[0]) && stoi(parameters[0]) >= 0)
                         {
@@ -147,7 +138,7 @@
                 returnValue = subtractString(firstValue, lastValue);
             else if (op == "*=")
             {
-                if (isNumeric(lastValue))
+                if (StringHelper.IsNumeric(lastValue))
                 {
                     string bigString = ("");
 
@@ -177,13 +168,13 @@
             if (variableExists(arg1))
             {
                 if (isNumber(arg1))
-                    firstValue = getNumber(arg1);
+                    firstValue = GetVNumber(arg1);
             }
 
             if (variableExists(arg2))
             {
                 if (isNumber(arg2))
-                    lastValue = getNumber(arg2);
+                    lastValue = GetVNumber(arg2);
                 else
                     lastValue = 0;
             }
@@ -191,7 +182,7 @@
             {
                 parse(arg2);
 
-                if (isNumeric(__LastValue))
+                if (StringHelper.IsNumeric(__LastValue))
                     lastValue = stod(__LastValue);
                 else
                     lastValue = 0;
@@ -214,14 +205,14 @@
                 {
                     executeTemplate(objects[indexOfObject(_beforeDot)].getMethod(_afterDot), getParameters(_afterDot));
 
-                    if (isNumeric(__LastValue))
+                    if (StringHelper.IsNumeric(__LastValue))
                         lastValue = stod(__LastValue);
                     else
                         lastValue = 0;
                 }
                 else
                 {
-                    if (isNumeric(__LastValue))
+                    if (StringHelper.IsNumeric(__LastValue))
                         lastValue = stod(arg2);
                     else
                         lastValue = 0;
@@ -239,7 +230,7 @@
                     {
                         if (stoi(_afterBrackets) >= 0)
                         {
-                            if (isNumeric(lists[indexOfList(_beforeBrackets)].at(stoi(_afterBrackets))))
+                            if (StringHelper.IsNumeric(lists[indexOfList(_beforeBrackets)].at(stoi(_afterBrackets))))
                                 lastValue = stod(lists[indexOfList(_beforeBrackets)].at(stoi(_afterBrackets)));
                             else
                                 lastValue = 0;
@@ -257,7 +248,7 @@
                 {
                     executeTemplate(methods[indexOfMethod(arg2)], getParameters(arg2));
 
-                    if (isNumeric(__LastValue))
+                    if (StringHelper.IsNumeric(__LastValue))
 
                         lastValue = stod(__LastValue);
                     else
@@ -273,7 +264,7 @@
             }
             else
             {
-                if (isNumeric(arg2))
+                if (StringHelper.IsNumeric(arg2))
                     lastValue = stod(arg2);
                 else
                     lastValue = 0;
@@ -312,7 +303,7 @@
             }
             else
             {
-                if (isNumeric(s))
+                if (StringHelper.IsNumeric(s))
                     return (true);
             }
 
@@ -351,7 +342,7 @@
                         {
                             parse(temporaryBuild.ToString());
 
-                            if (isNumeric(__LastValue))
+                            if (StringHelper.IsNumeric(__LastValue))
                                 temporaryBuild.Clear();
                             else
                                 return (true);
@@ -373,12 +364,12 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                             temporaryBuild.Clear();
                         else
                             return (true);
                     }
-                    else if (!isNumeric(temporaryBuild.ToString()))
+                    else if (!StringHelper.IsNumeric(temporaryBuild.ToString()))
                         return (true);
                     else
                         temporaryBuild.Clear();
@@ -396,12 +387,12 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                             temporaryBuild.Clear();
                         else
                             return (true);
                     }
-                    else if (!isNumeric(temporaryBuild.ToString()))
+                    else if (!StringHelper.IsNumeric(temporaryBuild.ToString()))
                         return (true);
                     else
                         temporaryBuild.Clear();
@@ -419,12 +410,12 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                             temporaryBuild.Clear();
                         else
                             return (true);
                     }
-                    else if (!isNumeric(temporaryBuild.ToString()))
+                    else if (!StringHelper.IsNumeric(temporaryBuild.ToString()))
                         return (true);
                     else
                         temporaryBuild.Clear();
@@ -442,12 +433,12 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                             temporaryBuild.Clear();
                         else
                             return (true);
                     }
-                    else if (!isNumeric(temporaryBuild.ToString()))
+                    else if (!StringHelper.IsNumeric(temporaryBuild.ToString()))
                         return (true);
                     else
                         temporaryBuild.Clear();
@@ -465,12 +456,12 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                             temporaryBuild.Clear();
                         else
                             return (true);
                     }
-                    else if (!isNumeric(temporaryBuild.ToString()))
+                    else if (!StringHelper.IsNumeric(temporaryBuild.ToString()))
                         return (true);
                     else
                         temporaryBuild.Clear();
@@ -488,12 +479,12 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                             temporaryBuild.Clear();
                         else
                             return (true);
                     }
-                    else if (!isNumeric(temporaryBuild.ToString()))
+                    else if (!StringHelper.IsNumeric(temporaryBuild.ToString()))
                         return (true);
                     else
                         temporaryBuild.Clear();
@@ -545,13 +536,13 @@
                                 if (isNumber(temporaryBuild.ToString()))
                                 {
                                     vars.Add(temporaryBuild.ToString());
-                                    contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                                    contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                                     temporaryBuild.Clear();
                                 }
                                 else if (isString(temporaryBuild.ToString()))
                                 {
                                     vars.Add(temporaryBuild.ToString());
-                                    contents.Add(variables[indexOfVariable(temporaryBuild.ToString())].getString());
+                                    contents.Add(GetVString(temporaryBuild.ToString()));
                                     temporaryBuild.Clear();
                                 }
                             }
@@ -577,14 +568,14 @@
                         if (isNumber(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("+");
                         }
                         else if (isString(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(variables[indexOfVariable(temporaryBuild.ToString())].getString());
+                            contents.Add(GetVString(temporaryBuild.ToString()));
                             temporaryBuild.Clear();
                             contents.Add("+");
                         }
@@ -612,14 +603,14 @@
                         if (isNumber(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("-");
                         }
                         else if (isString(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(variables[indexOfVariable(temporaryBuild.ToString())].getString());
+                            contents.Add(GetVString(temporaryBuild.ToString()));
                             temporaryBuild.Clear();
                             contents.Add("-");
                         }
@@ -647,14 +638,14 @@
                         if (isNumber(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("*");
                         }
                         else if (isString(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(variables[indexOfVariable(temporaryBuild.ToString())].getString());
+                            contents.Add(GetVString(temporaryBuild.ToString()));
                             temporaryBuild.Clear();
                             contents.Add("*");
                         }
@@ -684,13 +675,13 @@
                 if (isNumber(temporaryBuild.ToString()))
                 {
                     vars.Add(temporaryBuild.ToString());
-                    contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                    contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                     temporaryBuild.Clear();
                 }
                 else if (isString(temporaryBuild.ToString()))
                 {
                     vars.Add(temporaryBuild.ToString());
-                    contents.Add(variables[indexOfVariable(temporaryBuild.ToString())].getString());
+                    contents.Add(GetVString(temporaryBuild.ToString()));
                     temporaryBuild.Clear();
                 }
             }
@@ -721,7 +712,7 @@
                     }
                     else if (multiplyNext)
                     {
-                        if (isNumeric(contents[i]))
+                        if (StringHelper.IsNumeric(contents[i]))
                         {
                             string appendage = stackValue;
 
@@ -782,7 +773,7 @@
                             if (isNumber(temporaryBuild.ToString()))
                             {
                                 vars.Add(temporaryBuild.ToString());
-                                contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                                contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                                 temporaryBuild.Clear();
                             }
                         }
@@ -790,7 +781,7 @@
                         {
                             parse(temporaryBuild.ToString());
 
-                            if (isNumeric(__LastValue))
+                            if (StringHelper.IsNumeric(__LastValue))
                             {
                                 contents.Add(__LastValue);
                                 temporaryBuild.Clear();
@@ -810,7 +801,7 @@
                         if (isNumber(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("+");
                         }
@@ -819,7 +810,7 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                         {
                             contents.Add(__LastValue);
                             temporaryBuild.Clear();
@@ -841,7 +832,7 @@
                         if (isNumber(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("-");
                         }
@@ -850,7 +841,7 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                         {
                             contents.Add(__LastValue);
                             temporaryBuild.Clear();
@@ -870,7 +861,7 @@
                     {
                         if (isNumber(temporaryBuild.ToString()))
                         {
-                            contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("*");
                         }
@@ -879,7 +870,7 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                         {
                             contents.Add(__LastValue);
                             temporaryBuild.Clear();
@@ -901,7 +892,7 @@
                         if (isNumber(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("/");
                         }
@@ -910,7 +901,7 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                         {
                             contents.Add(__LastValue);
                             temporaryBuild.Clear();
@@ -932,7 +923,7 @@
                         if (isNumber(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("%");
                         }
@@ -941,7 +932,7 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                         {
                             contents.Add(__LastValue);
                             temporaryBuild.Clear();
@@ -962,7 +953,7 @@
                         if (isNumber(temporaryBuild.ToString()))
                         {
                             vars.Add(temporaryBuild.ToString());
-                            contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                            contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                             temporaryBuild.Clear();
                             contents.Add("^");
                         }
@@ -971,7 +962,7 @@
                     {
                         parse(temporaryBuild.ToString());
 
-                        if (isNumeric(__LastValue))
+                        if (StringHelper.IsNumeric(__LastValue))
                         {
                             contents.Add(__LastValue);
                             temporaryBuild.Clear();
@@ -994,7 +985,7 @@
                 if (isNumber(temporaryBuild.ToString()))
                 {
                     vars.Add(temporaryBuild.ToString());
-                    contents.Add(dtos(variables[indexOfVariable(temporaryBuild.ToString())].getNumber()));
+                    contents.Add(dtos(GetVNumber(temporaryBuild.ToString())));
                     temporaryBuild.Clear();
                 }
             }
@@ -1062,7 +1053,7 @@
                 }
                 else
                 {
-                    if (isNumeric(contents[i]))
+                    if (StringHelper.IsNumeric(contents[i]))
                     {
                         startOperating = true;
                         stackValue = stod(contents[i]);

@@ -1,6 +1,7 @@
 ﻿namespace MetaScriptLang.Processing
 {
     using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
     
     public partial class Parser
     {
@@ -19,22 +20,22 @@
                 if (variableExists(strings[i]))
                 {
                     if (isString(strings[i]))
-                        createVariable(methodVariables[i].name(), variables[indexOfVariable(strings[i])].getString());
+                        createVariable(methodVariables[i].name(), GetVString(strings[i]));
                     else if (isNumber(strings[i]))
-                        createVariable(methodVariables[i].name(), variables[indexOfVariable(strings[i])].getNumber());
+                        createVariable(methodVariables[i].name(), GetVNumber(strings[i]));
                 }
                 else if (methodExists(strings[i]))
                 {
                     parse(strings[i]);
 
-                    if (isNumeric(__LastValue))
+                    if (StringHelper.IsNumeric(__LastValue))
                         createVariable(methodVariables[i].name(), stod(__LastValue));
                     else
                         createVariable(methodVariables[i].name(), __LastValue);
                 }
                 else
                 {
-                    if (isNumeric(strings[i]))
+                    if (StringHelper.IsNumeric(strings[i]))
                         createVariable(methodVariables[i].name(), stod(strings[i]));
                     else
                         createVariable(methodVariables[i].name(), strings[i]);
@@ -195,15 +196,15 @@
             collectGarbage();
         }
 
-        void executeNest(MetaScriptLang.Data.Container n)
+        void executeNest(MetaScriptLang.Data.SwitchCase n)
         {
             __DefiningNest = false;
             __DefiningIfStatement = false;
 
-            for (int i = 0; i < n.size(); i++)
+            for (int i = 0; i < n.Count; i++)
             {
                 if (__FailedNest == false)
-                    parse(n.at(i));
+                    parse(n[i]);
                 else
                     break;
             }

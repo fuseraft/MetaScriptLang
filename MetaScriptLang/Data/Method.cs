@@ -28,7 +28,7 @@
 
         private List list = new ();
 
-        private Container nest = new ();
+        private SwitchCase nest = new ();
 
         private char defaultSymbol;
 
@@ -169,24 +169,24 @@
 
         public void buildNest()
         {
-            Container newNest = new ($"{methodName}<nest>");
+            SwitchCase newNest = new ();
             nest = newNest;
         }
 
-        public Container getNest()
+        public SwitchCase getNest()
         {
             return (nest);
         }
 
         public void inNest(string line)
         {
-            nest.add(line);
+            nest.Add(line);
         }
 
         public string nestAt(int index)
         {
-            if (index < nest.size())
-                return (nest.at(index));
+            if (index < nest.Count)
+                return (nest[index]);
             else
                 return "nothing!!!";
         }

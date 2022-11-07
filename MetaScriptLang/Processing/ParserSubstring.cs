@@ -1,7 +1,8 @@
-﻿using MetaScriptLang.Logging;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Helpers;
+    using MetaScriptLang.Logging;
+
     public partial class Parser
     {
         string getSubString(string arg1, string arg2, string beforeBracket)
@@ -12,7 +13,7 @@ namespace MetaScriptLang.Processing
             {
                 System.Collections.Generic.List<string> listRange = getBracketRange(arg2);
 
-                string variableString = variables[indexOfVariable(beforeBracket)].getString();
+                string variableString = GetVString(beforeBracket);
 
                 if (listRange.Count == 2)
                 {
@@ -20,7 +21,7 @@ namespace MetaScriptLang.Processing
 
                     if (rangeBegin.Length != 0 && rangeEnd.Length != 0)
                     {
-                        if (isNumeric(rangeBegin) && isNumeric(rangeEnd))
+                        if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                         {
                             if (stoi(rangeBegin) < stoi(rangeEnd))
                             {
@@ -65,7 +66,7 @@ namespace MetaScriptLang.Processing
 
                     if (rangeBegin.Length != 0)
                     {
-                        if (isNumeric(rangeBegin))
+                        if (StringHelper.IsNumeric(rangeBegin))
                         {
                             if ((int)variableString.Length - 1 >= stoi(rangeBegin) && stoi(rangeBegin) >= 0)
                             {
@@ -92,7 +93,7 @@ namespace MetaScriptLang.Processing
             {
                 System.Collections.Generic.List<string> listRange = getBracketRange(arg2);
 
-                string variableString = variables[indexOfVariable(beforeBracket)].getString();
+                string variableString = GetVString(beforeBracket);
 
                 if (listRange.Count == 2)
                 {
@@ -100,7 +101,7 @@ namespace MetaScriptLang.Processing
 
                     if (rangeBegin.Length != 0 && rangeEnd.Length != 0)
                     {
-                        if (isNumeric(rangeBegin) && isNumeric(rangeEnd))
+                        if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                         {
                             if (stoi(rangeBegin) < stoi(rangeEnd))
                             {
@@ -112,7 +113,7 @@ namespace MetaScriptLang.Processing
                                         tempString += (variableString[i]);
 
                                     if (variableExists(arg1))
-                                        setVariable(arg1, tempString);
+                                        SetVString(arg1, tempString);
                                     else
                                         createVariable(arg1, tempString);
                                 }
@@ -129,7 +130,7 @@ namespace MetaScriptLang.Processing
                                         tempString += (variableString[i]);
 
                                     if (variableExists(arg1))
-                                        setVariable(arg1, tempString);
+                                        SetVString(arg1, tempString);
                                     else
                                         createVariable(arg1, tempString);
                                 }
@@ -151,7 +152,7 @@ namespace MetaScriptLang.Processing
 
                     if (rangeBegin.Length != 0)
                     {
-                        if (isNumeric(rangeBegin))
+                        if (StringHelper.IsNumeric(rangeBegin))
                         {
                             if ((int)variableString.Length - 1 >= stoi(rangeBegin) && stoi(rangeBegin) >= 0)
                             {
@@ -159,7 +160,7 @@ namespace MetaScriptLang.Processing
                                 tmp_ += (variableString[stoi(rangeBegin)]);
 
                                 if (variableExists(arg1))
-                                    setVariable(arg1, tmp_);
+                                    SetVString(arg1, tmp_);
                                 else
                                     createVariable(arg1, tmp_);
                             }

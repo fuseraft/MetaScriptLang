@@ -1,6 +1,7 @@
 ﻿namespace MetaScriptLang.Processing
 {
     using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
     using MetaScriptLang.Logging;
 
     public partial class Parser
@@ -215,7 +216,7 @@
                         {
                             System.Collections.Generic.List<string> parameters = getBracketRange(command[i]);
 
-                            if (isNumeric(parameters[0]))
+                            if (StringHelper.IsNumeric(parameters[0]))
                             {
                                 if (args.Count - 1 >= Convert.ToInt32(parameters[0]) && Convert.ToInt32(parameters[0]) >= 0)
                                 {
@@ -239,7 +240,7 @@
                             doNothing();
                         }
                         else if (startsWith(s, "case"))
-                            mainSwitch.addCase(command[1]);
+                            mainSwitch.CreateSwitchCase(command[1]);
                         else if (s == "default")
                             __InDefaultCase = true;
                         else if (s == "end" || s == "}")
@@ -247,28 +248,28 @@
                             string switch_value = string.Empty;
 
                             if (isString(__SwitchVarName))
-                                switch_value = variables[indexOfVariable(__SwitchVarName)].getString();
+                                switch_value = GetVString(__SwitchVarName);
                             else if (isNumber(__SwitchVarName))
-                                switch_value = dtos(variables[indexOfVariable(__SwitchVarName)].getNumber());
+                                switch_value = dtos(GetVNumber(__SwitchVarName));
                             else
                                 switch_value = string.Empty;
 
-                            Container rightCase = mainSwitch.rightCase(switch_value);
+                            SwitchCase rightCase = mainSwitch.FindSwitchCase(switch_value);
 
                             __InDefaultCase = false;
                             __DefiningSwitchBlock = false;
 
-                            for (int i = 0; i < (int)rightCase.size(); i++)
-                                parse(rightCase.at(i));
+                            for (int i = 0; i < rightCase.Count; i++)
+                                parse(rightCase[i]);
 
-                            mainSwitch.clear();
+                            mainSwitch.Clear();
                         }
                         else
                         {
                             if (__InDefaultCase)
-                                mainSwitch.addToDefault(s);
+                                mainSwitch.AddToDefaultSwitchCase(s);
                             else
-                                mainSwitch.addToCase(s);
+                                mainSwitch.AddToCurrentSwitchCase(s);
                         }
                     }
                     else if (__DefiningModule)
@@ -379,9 +380,9 @@
                                         if (variableExists(words[z]))
                                         {
                                             if (isString(words[z]))
-                                                freshLine += (variables[indexOfVariable(words[z])].getString());
+                                                freshLine += (GetVString(words[z]));
                                             else if (isNumber(words[z]))
-                                                freshLine += (dtos(variables[indexOfVariable(words[z])].getNumber()));
+                                                freshLine += (dtos(GetVNumber(words[z])));
                                         }
                                         else
                                             freshLine += (words[z]);
@@ -556,7 +557,7 @@
                                     {
                                         if (op == "==")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() == variables[indexOfVariable(v2)].getNumber())
+                                            while (GetVNumber(v1) == GetVNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -570,7 +571,7 @@
                                         }
                                         else if (op == "<")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() < variables[indexOfVariable(v2)].getNumber())
+                                            while (GetVNumber(v1) < GetVNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -584,7 +585,7 @@
                                         }
                                         else if (op == ">")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() > variables[indexOfVariable(v2)].getNumber())
+                                            while (GetVNumber(v1) > GetVNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -598,7 +599,7 @@
                                         }
                                         else if (op == "<=")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() <= variables[indexOfVariable(v2)].getNumber())
+                                            while (GetVNumber(v1) <= GetVNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -612,7 +613,7 @@
                                         }
                                         else if (op == ">=")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() >= variables[indexOfVariable(v2)].getNumber())
+                                            while (GetVNumber(v1) >= GetVNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -626,7 +627,7 @@
                                         }
                                         else if (op == "!=")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() != variables[indexOfVariable(v2)].getNumber())
+                                            while (GetVNumber(v1) != GetVNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -643,7 +644,7 @@
                                     {
                                         if (op == "==")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() == stoi(v2))
+                                            while (GetVNumber(v1) == stoi(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -657,7 +658,7 @@
                                         }
                                         else if (op == "<")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() < stoi(v2))
+                                            while (GetVNumber(v1) < stoi(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -671,7 +672,7 @@
                                         }
                                         else if (op == ">")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() > stoi(v2))
+                                            while (GetVNumber(v1) > stoi(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -685,7 +686,7 @@
                                         }
                                         else if (op == "<=")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() <= stoi(v2))
+                                            while (GetVNumber(v1) <= stoi(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -699,7 +700,7 @@
                                         }
                                         else if (op == ">=")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() >= stoi(v2))
+                                            while (GetVNumber(v1) >= stoi(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -713,7 +714,7 @@
                                         }
                                         else if (op == "!=")
                                         {
-                                            while (variables[indexOfVariable(v1)].getNumber() != stoi(v2))
+                                            while (GetVNumber(v1) != stoi(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -1164,7 +1165,7 @@
                 }
                 else
                 {
-                    if (isNumeric(arg1) || isTrue(arg1) || isFalse(arg1))
+                    if (StringHelper.IsNumeric(arg1) || isTrue(arg1) || isFalse(arg1))
                     {
                         tmpValue = arg1;
                     }
@@ -1227,9 +1228,9 @@
                 if (variableExists(arg1))
                 {
                     if (isString(arg1))
-                        cerr = variables[indexOfVariable(arg1)].getString() + System.Environment.NewLine;
+                        cerr = GetVString(arg1) + System.Environment.NewLine;
                     else if (isNumber(arg1))
-                        cerr = variables[indexOfVariable(arg1)].getNumber() + System.Environment.NewLine;
+                        cerr = GetVNumber(arg1) + System.Environment.NewLine;
                     else
                         error(ErrorLogger.IS_NULL, arg1, false);
                 }
@@ -1238,7 +1239,7 @@
             }
             else if (arg0 == "delay")
             {
-                if (isNumeric(arg1))
+                if (StringHelper.IsNumeric(arg1))
                     delay(stoi(arg1));
                 else
                     error(ErrorLogger.CONV_ERR, arg1, false);
@@ -1281,14 +1282,14 @@
             else if (arg0 == "see_string")
             {
                 if (variableExists(arg1))
-                    write(variables[indexOfVariable(arg1)].getString());
+                    write(GetVString(arg1));
                 else
                     error(ErrorLogger.VAR_UNDEFINED, arg1, false);
             }
             else if (arg0 == "see_number")
             {
                 if (variableExists(arg1))
-                    write(dtos(variables[indexOfVariable(arg1)].getNumber()));
+                    write(dtos(GetVNumber(arg1)));
                 else
                     error(ErrorLogger.VAR_UNDEFINED, arg1, false);
             }
@@ -1298,14 +1299,14 @@
                 {
                     if (isString(arg1))
                     {
-                        if (!System.IO.File.Exists(variables[indexOfVariable(arg1)].getString()))
+                        if (!System.IO.File.Exists(GetVString(arg1)))
                         {
-                            createFile(variables[indexOfVariable(arg1)].getString());
+                            createFile(GetVString(arg1));
                             __DefiningScript = true;
-                            __CurrentScriptName = variables[indexOfVariable(arg1)].getString();
+                            __CurrentScriptName = GetVString(arg1);
                         }
                         else
-                            error(ErrorLogger.FILE_EXISTS, variables[indexOfVariable(arg1)].getString(), false);
+                            error(ErrorLogger.FILE_EXISTS, GetVString(arg1), false);
                     }
                 }
                 else if (!System.IO.File.Exists(arg1))
@@ -1365,10 +1366,10 @@
                 {
                     if (isString(arg1))
                     {
-                        if (System.IO.Directory.Exists(variables[indexOfVariable(arg1)].getString()))
-                            System.Environment.CurrentDirectory = (variables[indexOfVariable(arg1)].getString());
+                        if (System.IO.Directory.Exists(GetVString(arg1)))
+                            System.Environment.CurrentDirectory = (GetVString(arg1));
                         else
-                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(arg1)].getString(), false);
+                            error(ErrorLogger.READ_FAIL, GetVString(arg1), false);
                     }
                     else
                         error(ErrorLogger.NULL_STRING, arg1, false);
@@ -1404,7 +1405,7 @@
                 if (variableExists(arg1))
                 {
                     if (isString(arg1))
-                        parse(variables[indexOfVariable(arg1)].getString());
+                        parse(GetVString(arg1));
                     else
                         error(ErrorLogger.IS_NULL, arg1, false);
                 }
@@ -1416,7 +1417,7 @@
                 if (variableExists(arg1))
                 {
                     if (isString(arg1))
-                        sysExec(variables[indexOfVariable(arg1)].getString(), command);
+                        sysExec(GetVString(arg1), command);
                     else
                         error(ErrorLogger.IS_NULL, arg1, false);
                 }
@@ -1429,9 +1430,9 @@
                 {
                     if (isString(arg1))
                     {
-                        if (System.IO.Directory.Exists(variables[indexOfVariable(arg1)].getString()))
+                        if (System.IO.Directory.Exists(GetVString(arg1)))
                         {
-                            __InitialDirectory = variables[indexOfVariable(arg1)].getString();
+                            __InitialDirectory = GetVString(arg1);
                             System.Environment.CurrentDirectory = (__InitialDirectory);
                         }
                         else
@@ -1525,7 +1526,7 @@
                     {
                         if (isString(arg1))
                         {
-                            if (System.IO.Directory.Exists(variables[indexOfVariable(arg1)].getString()))
+                            if (System.IO.Directory.Exists(GetVString(arg1)))
                                 __true();
                             else
                                 __false();
@@ -1562,7 +1563,7 @@
                     {
                         if (isString(arg1))
                         {
-                            if (System.IO.File.Exists(variables[indexOfVariable(arg1)].getString()))
+                            if (System.IO.File.Exists(GetVString(arg1)))
                                 __true();
                             else
                                 __false();
@@ -1583,7 +1584,7 @@
             {
                 if (variableExists(arg1))
                 {
-                    if (variables[indexOfVariable(arg1)].garbage())
+                    if (GCCanCollectV(arg1))
                         __true();
                     else
                         __false();
@@ -1616,7 +1617,7 @@
                     }
                     else
                     {
-                        if (isNumeric(arg1))
+                        if (StringHelper.IsNumeric(arg1))
                             __true();
                         else
                             __false();
@@ -1648,7 +1649,7 @@
                     }
                     else
                     {
-                        if (isNumeric(arg1))
+                        if (StringHelper.IsNumeric(arg1))
                             __false();
                         else
                             __true();
@@ -1675,7 +1676,7 @@
                     {
                         if (isString(arg1))
                         {
-                            if (isUpper(variables[indexOfVariable(arg1)].getString()))
+                            if (isUpper(GetVString(arg1)))
                                 __true();
                             else
                                 __false();
@@ -1685,7 +1686,7 @@
                     }
                     else
                     {
-                        if (isNumeric(arg1))
+                        if (StringHelper.IsNumeric(arg1))
                             __false();
                         else
                         {
@@ -1717,7 +1718,7 @@
                     {
                         if (isString(arg1))
                         {
-                            if (isLower(variables[indexOfVariable(arg1)].getString()))
+                            if (isLower(GetVString(arg1)))
                                 __true();
                             else
                                 __false();
@@ -1727,7 +1728,7 @@
                     }
                     else
                     {
-                        if (isNumeric(arg1))
+                        if (StringHelper.IsNumeric(arg1))
                             __false();
                         else
                         {
@@ -1765,14 +1766,14 @@
             else if (arg0 == "lock")
             {
                 if (variableExists(arg1))
-                    variables[indexOfVariable(arg1)].setIndestructible();
+                    SetVLock(arg1);
                 else if (methodExists(arg1))
                     methods[indexOfMethod(arg1)].setIndestructible();
             }
             else if (arg0 == "unlock")
             {
                 if (variableExists(arg1))
-                    variables[indexOfVariable(arg1)].setDestructible();
+                    SetVUnlock(arg1);
                 else if (methodExists(arg1))
                     methods[indexOfMethod(arg1)].setDestructible();
             }
@@ -1794,10 +1795,10 @@
                 {
                     if (isString(arg1))
                     {
-                        if (!System.IO.File.Exists(variables[indexOfVariable(arg1)].getString()))
-                            createFile(variables[indexOfVariable(arg1)].getString());
+                        if (!System.IO.File.Exists(GetVString(arg1)))
+                            createFile(GetVString(arg1));
                         else
-                            error(ErrorLogger.FILE_EXISTS, variables[indexOfVariable(arg1)].getString(), false);
+                            error(ErrorLogger.FILE_EXISTS, GetVString(arg1), false);
                     }
                     else
                         error(ErrorLogger.NULL_STRING, arg1, false);
@@ -1816,10 +1817,10 @@
                 {
                     if (isString(arg1))
                     {
-                        if (System.IO.File.Exists(variables[indexOfVariable(arg1)].getString()))
-                            System.IO.File.Delete(variables[indexOfVariable(arg1)].getString());
+                        if (System.IO.File.Exists(GetVString(arg1)))
+                            System.IO.File.Delete(GetVString(arg1));
                         else
-                            error(ErrorLogger.FILE_NOT_FOUND, variables[indexOfVariable(arg1)].getString(), false);
+                            error(ErrorLogger.FILE_NOT_FOUND, GetVString(arg1), false);
                     }
                     else
                         error(ErrorLogger.NULL_STRING, arg1, false);
@@ -1838,10 +1839,10 @@
                 {
                     if (isString(arg1))
                     {
-                        if (!System.IO.Directory.Exists(variables[indexOfVariable(arg1)].getString()))
-                            System.IO.Directory.CreateDirectory(variables[indexOfVariable(arg1)].getString());
+                        if (!System.IO.Directory.Exists(GetVString(arg1)))
+                            System.IO.Directory.CreateDirectory(GetVString(arg1));
                         else
-                            error(ErrorLogger.DIR_EXISTS, variables[indexOfVariable(arg1)].getString(), false);
+                            error(ErrorLogger.DIR_EXISTS, GetVString(arg1), false);
                     }
                     else
                         error(ErrorLogger.NULL_STRING, arg1, false);
@@ -1860,10 +1861,10 @@
                 {
                     if (isString(arg1))
                     {
-                        if (System.IO.Directory.Exists(variables[indexOfVariable(arg1)].getString()))
-                            System.IO.Directory.Delete(variables[indexOfVariable(arg1)].getString());
+                        if (System.IO.Directory.Exists(GetVString(arg1)))
+                            System.IO.Directory.Delete(GetVString(arg1));
                         else
-                            error(ErrorLogger.DIR_NOT_FOUND, variables[indexOfVariable(arg1)].getString(), false);
+                            error(ErrorLogger.DIR_NOT_FOUND, GetVString(arg1), false);
                     }
                     else
                         error(ErrorLogger.NULL_STRING, arg1, false);
@@ -1979,9 +1980,9 @@
                         if (variableExists(arg1))
                         {
                             if (isString(arg1))
-                                testString = variables[indexOfVariable(arg1)].getString();
+                                testString = GetVString(arg1);
                             else if (isNumber(arg1))
-                                testString = dtos(variables[indexOfVariable(arg1)].getNumber());
+                                testString = dtos(GetVNumber(arg1));
                             else
                                 error(ErrorLogger.IS_NULL, arg1, false);
                         }
@@ -2015,63 +2016,63 @@
                     {
                         if (arg2 == "==")
                         {
-                            if (variables[indexOfVariable(arg1)].getString() == variables[indexOfVariable(arg3)].getString())
+                            if (GetVString(arg1) == GetVString(arg3))
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (variables[indexOfVariable(arg1)].getString() != variables[indexOfVariable(arg3)].getString())
+                            if (GetVString(arg1) != GetVString(arg3))
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == ">")
                         {
-                            if (variables[indexOfVariable(arg1)].getString().Length > variables[indexOfVariable(arg3)].getString().Length)
+                            if (GetVString(arg1).Length > GetVString(arg3).Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "<")
                         {
-                            if (variables[indexOfVariable(arg1)].getString().Length < variables[indexOfVariable(arg3)].getString().Length)
+                            if (GetVString(arg1).Length < GetVString(arg3).Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (variables[indexOfVariable(arg1)].getString().Length <= variables[indexOfVariable(arg3)].getString().Length)
+                            if (GetVString(arg1).Length <= GetVString(arg3).Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (variables[indexOfVariable(arg1)].getString().Length >= variables[indexOfVariable(arg3)].getString().Length)
+                            if (GetVString(arg1).Length >= GetVString(arg3).Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "contains")
                         {
-                            if (contains(variables[indexOfVariable(arg1)].getString(), variables[indexOfVariable(arg3)].getString()))
+                            if (contains(GetVString(arg1), GetVString(arg3)))
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "ends_with")
                         {
-                            if (endsWith(variables[indexOfVariable(arg1)].getString(), variables[indexOfVariable(arg3)].getString()))
+                            if (endsWith(GetVString(arg1), GetVString(arg3)))
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "begins_with")
                         {
-                            if (startsWith(variables[indexOfVariable(arg1)].getString(), variables[indexOfVariable(arg3)].getString()))
+                            if (startsWith(GetVString(arg1), GetVString(arg3)))
                                 setFalseIf();
                             else
                                 setTrueIf();
@@ -2086,42 +2087,42 @@
                     {
                         if (arg2 == "==")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() == variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) == GetVNumber(arg3))
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() != variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) != GetVNumber(arg3))
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == ">")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() > variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) > GetVNumber(arg3))
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() >= variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) >= GetVNumber(arg3))
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "<")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() < variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) < GetVNumber(arg3))
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() <= variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) <= GetVNumber(arg3))
                                 setFalseIf();
                             else
                                 setTrueIf();
@@ -2142,46 +2143,46 @@
                 {
                     if (isNumber(arg1))
                     {
-                        if (isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg3))
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() == stod(arg3))
+                                if (GetVNumber(arg1) == stod(arg3))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() != stod(arg3))
+                                if (GetVNumber(arg1) != stod(arg3))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() > stod(arg3))
+                                if (GetVNumber(arg1) > stod(arg3))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() < stod(arg3))
+                                if (GetVNumber(arg1) < stod(arg3))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() >= stod(arg3))
+                                if (GetVNumber(arg1) >= stod(arg3))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() <= stod(arg3))
+                                if (GetVNumber(arg1) <= stod(arg3))
                                     setFalseIf();
                                 else
                                     setTrueIf();
@@ -2259,14 +2260,14 @@
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isUpper(variables[indexOfVariable(arg1)].getString()))
+                                    if (isUpper(GetVString(arg1)))
                                         setFalseIf();
                                     else
                                         setTrueIf();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isUpper(variables[indexOfVariable(arg1)].getString()))
+                                    if (isUpper(GetVString(arg1)))
                                         setTrueIf();
                                     else
                                         setFalseIf();
@@ -2296,14 +2297,14 @@
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isLower(variables[indexOfVariable(arg1)].getString()))
+                                    if (isLower(GetVString(arg1)))
                                         setFalseIf();
                                     else
                                         setTrueIf();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isLower(variables[indexOfVariable(arg1)].getString()))
+                                    if (isLower(GetVString(arg1)))
                                         setTrueIf();
                                     else
                                         setFalseIf();
@@ -2331,7 +2332,7 @@
                         {
                             if (isString(arg1))
                             {
-                                if (System.IO.File.Exists(variables[indexOfVariable(arg1)].getString()))
+                                if (System.IO.File.Exists(GetVString(arg1)))
                                 {
                                     if (arg2 == "==")
                                         setFalseIf();
@@ -2361,7 +2362,7 @@
                         {
                             if (isString(arg1))
                             {
-                                if (System.IO.Directory.Exists(variables[indexOfVariable(arg1)].getString()))
+                                if (System.IO.Directory.Exists(GetVString(arg1)))
                                 {
                                     if (arg2 == "==")
                                         setFalseIf();
@@ -2391,63 +2392,63 @@
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg1)].getString() == arg3)
+                                if (GetVString(arg1) == arg3)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString() != arg3)
+                                if (GetVString(arg1) != arg3)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length > arg3.Length)
+                                if (GetVString(arg1).Length > arg3.Length)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length < arg3.Length)
+                                if (GetVString(arg1).Length < arg3.Length)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length >= arg3.Length)
+                                if (GetVString(arg1).Length >= arg3.Length)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length <= arg3.Length)
+                                if (GetVString(arg1).Length <= arg3.Length)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "contains")
                             {
-                                if (contains(variables[indexOfVariable(arg1)].getString(), arg3))
+                                if (contains(GetVString(arg1), arg3))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "ends_with")
                             {
-                                if (endsWith(variables[indexOfVariable(arg1)].getString(), arg3))
+                                if (endsWith(GetVString(arg1), arg3))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "begins_with")
                             {
-                                if (startsWith(variables[indexOfVariable(arg1)].getString(), arg3))
+                                if (startsWith(GetVString(arg1), arg3))
                                     setFalseIf();
                                 else
                                     setTrueIf();
@@ -2473,46 +2474,46 @@
 
                     if (isNumber(arg1))
                     {
-                        if (isNumeric(stackValue))
+                        if (StringHelper.IsNumeric(stackValue))
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() == stod(stackValue))
+                                if (GetVNumber(arg1) == stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() != stod(stackValue))
+                                if (GetVNumber(arg1) != stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() > stod(stackValue))
+                                if (GetVNumber(arg1) > stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() < stod(stackValue))
+                                if (GetVNumber(arg1) < stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() >= stod(stackValue))
+                                if (GetVNumber(arg1) >= stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() <= stod(stackValue))
+                                if (GetVNumber(arg1) <= stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
@@ -2590,14 +2591,14 @@
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isUpper(variables[indexOfVariable(arg1)].getString()))
+                                    if (isUpper(GetVString(arg1)))
                                         setFalseIf();
                                     else
                                         setTrueIf();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isUpper(variables[indexOfVariable(arg1)].getString()))
+                                    if (isUpper(GetVString(arg1)))
                                         setTrueIf();
                                     else
                                         setFalseIf();
@@ -2627,14 +2628,14 @@
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isLower(variables[indexOfVariable(arg1)].getString()))
+                                    if (isLower(GetVString(arg1)))
                                         setFalseIf();
                                     else
                                         setTrueIf();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isLower(variables[indexOfVariable(arg1)].getString()))
+                                    if (isLower(GetVString(arg1)))
                                         setTrueIf();
                                     else
                                         setFalseIf();
@@ -2662,7 +2663,7 @@
                         {
                             if (isString(arg1))
                             {
-                                if (System.IO.File.Exists(variables[indexOfVariable(arg1)].getString()))
+                                if (System.IO.File.Exists(GetVString(arg1)))
                                 {
                                     if (arg2 == "==")
                                         setFalseIf();
@@ -2692,7 +2693,7 @@
                         {
                             if (isString(arg1))
                             {
-                                if (System.IO.Directory.Exists(variables[indexOfVariable(arg1)].getString()))
+                                if (System.IO.Directory.Exists(GetVString(arg1)))
                                 {
                                     if (arg2 == "==")
                                         setFalseIf();
@@ -2722,63 +2723,63 @@
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg1)].getString() == stackValue)
+                                if (GetVString(arg1) == stackValue)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString() != stackValue)
+                                if (GetVString(arg1) != stackValue)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length > stackValue.Length)
+                                if (GetVString(arg1).Length > stackValue.Length)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length < stackValue.Length)
+                                if (GetVString(arg1).Length < stackValue.Length)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length >= stackValue.Length)
+                                if (GetVString(arg1).Length >= stackValue.Length)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length <= stackValue.Length)
+                                if (GetVString(arg1).Length <= stackValue.Length)
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "contains")
                             {
-                                if (contains(variables[indexOfVariable(arg1)].getString(), stackValue))
+                                if (contains(GetVString(arg1), stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "ends_with")
                             {
-                                if (endsWith(variables[indexOfVariable(arg1)].getString(), stackValue))
+                                if (endsWith(GetVString(arg1), stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "begins_with")
                             {
-                                if (startsWith(variables[indexOfVariable(arg1)].getString(), stackValue))
+                                if (startsWith(GetVString(arg1), stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
@@ -2795,46 +2796,46 @@
                 {
                     if (isNumber(arg3))
                     {
-                        if (isNumeric(arg1))
+                        if (StringHelper.IsNumeric(arg1))
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() == stod(arg1))
+                                if (GetVNumber(arg3) == stod(arg1))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() != stod(arg1))
+                                if (GetVNumber(arg3) != stod(arg1))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() > stod(arg1))
+                                if (GetVNumber(arg3) > stod(arg1))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() < stod(arg1))
+                                if (GetVNumber(arg3) < stod(arg1))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() >= stod(arg1))
+                                if (GetVNumber(arg3) >= stod(arg1))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() <= stod(arg1))
+                                if (GetVNumber(arg3) <= stod(arg1))
                                     setFalseIf();
                                 else
                                     setTrueIf();
@@ -2855,42 +2856,42 @@
                     {
                         if (arg2 == "==")
                         {
-                            if (variables[indexOfVariable(arg3)].getString() == arg1)
+                            if (GetVString(arg3) == arg1)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString() != arg1)
+                            if (GetVString(arg3) != arg1)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == ">")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length > arg1.Length)
+                            if (GetVString(arg3).Length > arg1.Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "<")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length < arg1.Length)
+                            if (GetVString(arg3).Length < arg1.Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length >= arg1.Length)
+                            if (GetVString(arg3).Length >= arg1.Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length <= arg1.Length)
+                            if (GetVString(arg3).Length <= arg1.Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
@@ -2915,46 +2916,46 @@
 
                     if (isNumber(arg3))
                     {
-                        if (isNumeric(stackValue))
+                        if (StringHelper.IsNumeric(stackValue))
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() == stod(stackValue))
+                                if (GetVNumber(arg3) == stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() != stod(stackValue))
+                                if (GetVNumber(arg3) != stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() > stod(stackValue))
+                                if (GetVNumber(arg3) > stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() < stod(stackValue))
+                                if (GetVNumber(arg3) < stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() >= stod(stackValue))
+                                if (GetVNumber(arg3) >= stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() <= stod(stackValue))
+                                if (GetVNumber(arg3) <= stod(stackValue))
                                     setFalseIf();
                                 else
                                     setTrueIf();
@@ -2975,42 +2976,42 @@
                     {
                         if (arg2 == "==")
                         {
-                            if (variables[indexOfVariable(arg3)].getString() == stackValue)
+                            if (GetVString(arg3) == stackValue)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString() != stackValue)
+                            if (GetVString(arg3) != stackValue)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == ">")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length > stackValue.Length)
+                            if (GetVString(arg3).Length > stackValue.Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "<")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length < stackValue.Length)
+                            if (GetVString(arg3).Length < stackValue.Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length >= stackValue.Length)
+                            if (GetVString(arg3).Length >= stackValue.Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length <= stackValue.Length)
+                            if (GetVString(arg3).Length <= stackValue.Length)
                                 setFalseIf();
                             else
                                 setTrueIf();
@@ -3045,7 +3046,7 @@
 
                                 arg3Result = __LastValue;
 
-                                if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                                if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                                 {
                                     if (arg2 == "==")
                                     {
@@ -3147,7 +3148,7 @@
 
                                 arg3Result = __LastValue;
 
-                                if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                                if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                                 {
                                     if (arg2 == "==")
                                     {
@@ -3244,7 +3245,7 @@
 
                                 arg1Result = __LastValue;
 
-                                if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                                if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                                 {
                                     if (arg2 == "==")
                                     {
@@ -3337,7 +3338,7 @@
 
                             arg3Result = __LastValue;
 
-                            if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                            if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                             {
                                 if (arg2 == "==")
                                 {
@@ -3433,9 +3434,9 @@
                                 else if (variableExists(arg3))
                                 {
                                     if (isString(arg3))
-                                        arg3Result = variables[indexOfVariable(arg3)].getString();
+                                        arg3Result = GetVString(arg3);
                                     else if (isNumber(arg3))
-                                        arg3Result = dtos(variables[indexOfVariable(arg3)].getNumber());
+                                        arg3Result = dtos(GetVNumber(arg3));
                                     else
                                     {
                                         pass = false;
@@ -3448,7 +3449,7 @@
 
                                 if (pass)
                                 {
-                                    if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                                    if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                                     {
                                         if (arg2 == "==")
                                         {
@@ -3544,9 +3545,9 @@
                                 if (variableExists(arg3))
                                 {
                                     if (isString(arg3))
-                                        arg3Result = variables[indexOfVariable(arg3)].getString();
+                                        arg3Result = GetVString(arg3);
                                     else if (isNumber(arg3))
-                                        arg3Result = dtos(variables[indexOfVariable(arg3)].getNumber());
+                                        arg3Result = dtos(GetVNumber(arg3));
                                     else
                                     {
                                         pass = false;
@@ -3565,7 +3566,7 @@
 
                                 if (pass)
                                 {
-                                    if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                                    if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                                     {
                                         if (arg2 == "==")
                                         {
@@ -3668,9 +3669,9 @@
                                 else if (variableExists(arg1))
                                 {
                                     if (isString(arg1))
-                                        arg1Result = variables[indexOfVariable(arg1)].getString();
+                                        arg1Result = GetVString(arg1);
                                     else if (isNumber(arg1))
-                                        arg1Result = dtos(variables[indexOfVariable(arg1)].getNumber());
+                                        arg1Result = dtos(GetVNumber(arg1));
                                     else
                                     {
                                         pass = false;
@@ -3683,7 +3684,7 @@
 
                                 if (pass)
                                 {
-                                    if (isNumeric(arg3Result) && isNumeric(arg1Result))
+                                    if (StringHelper.IsNumeric(arg3Result) && StringHelper.IsNumeric(arg1Result))
                                     {
                                         if (arg2 == "==")
                                         {
@@ -3777,9 +3778,9 @@
                                 if (variableExists(arg1))
                                 {
                                     if (isString(arg1))
-                                        arg1Result = variables[indexOfVariable(arg1)].getString();
+                                        arg1Result = GetVString(arg1);
                                     else if (isNumber(arg3))
-                                        arg1Result = dtos(variables[indexOfVariable(arg1)].getNumber());
+                                        arg1Result = dtos(GetVNumber(arg1));
                                     else
                                     {
                                         error(ErrorLogger.IS_NULL, arg1, false);
@@ -3795,7 +3796,7 @@
                                 else
                                     arg1Result = arg1;
 
-                                if (isNumeric(arg3Result) && isNumeric(arg1Result))
+                                if (StringHelper.IsNumeric(arg3Result) && StringHelper.IsNumeric(arg1Result))
                                 {
                                     if (arg2 == "==")
                                     {
@@ -3888,9 +3889,9 @@
                     else if (variableExists(arg1))
                     {
                         if (isString(arg1))
-                            arg1Result = variables[indexOfVariable(arg1)].getString();
+                            arg1Result = GetVString(arg1);
                         else if (isNumber(arg1))
-                            arg1Result = dtos(variables[indexOfVariable(arg1)].getNumber());
+                            arg1Result = dtos(GetVNumber(arg1));
                         else
                         {
                             error(ErrorLogger.IS_NULL, arg1, false);
@@ -3908,9 +3909,9 @@
                     else if (variableExists(arg3))
                     {
                         if (isString(arg3))
-                            arg3Result = variables[indexOfVariable(arg3)].getString();
+                            arg3Result = GetVString(arg3);
                         else if (isNumber(arg3))
-                            arg3Result = dtos(variables[indexOfVariable(arg3)].getNumber());
+                            arg3Result = dtos(GetVNumber(arg3));
                         else
                         {
                             error(ErrorLogger.IS_NULL, arg3, false);
@@ -3920,7 +3921,7 @@
                     else
                         arg3Result = arg3;
 
-                    if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                    if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                     {
                         if (arg2 == "==")
                         {
@@ -4119,7 +4120,7 @@
                     }
                     else if (arg2 == ">")
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) > stod(arg3))
                                 setFalseIf();
@@ -4136,7 +4137,7 @@
                     }
                     else if (arg2 == "<")
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) < stod(arg3))
                                 setFalseIf();
@@ -4153,7 +4154,7 @@
                     }
                     else if (arg2 == ">=")
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) >= stod(arg3))
                                 setFalseIf();
@@ -4168,7 +4169,7 @@
                     }
                     else if (arg2 == "<=")
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) <= stod(arg3))
                                 setFalseIf();
@@ -4220,9 +4221,9 @@
                         if (variableExists(arg1))
                         {
                             if (isString(arg1))
-                                testString = variables[indexOfVariable(arg1)].getString();
+                                testString = GetVString(arg1);
                             else if (isNumber(arg1))
-                                testString = dtos(variables[indexOfVariable(arg1)].getNumber());
+                                testString = dtos(GetVNumber(arg1));
                             else
                                 error(ErrorLogger.IS_NULL, arg1, false);
                         }
@@ -4259,9 +4260,9 @@
                         if (variableExists(arg3))
                         {
                             if (isString(arg3))
-                                testString = variables[indexOfVariable(arg3)].getString();
+                                testString = GetVString(arg3);
                             else if (isNumber(arg3))
-                                testString = dtos(variables[indexOfVariable(arg3)].getNumber());
+                                testString = dtos(GetVNumber(arg3));
                             else
                                 error(ErrorLogger.IS_NULL, arg3, false);
                         }
@@ -4295,63 +4296,63 @@
                     {
                         if (arg2 == "==")
                         {
-                            if (variables[indexOfVariable(arg1)].getString() == variables[indexOfVariable(arg3)].getString())
+                            if (GetVString(arg1) == GetVString(arg3))
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (variables[indexOfVariable(arg1)].getString() != variables[indexOfVariable(arg3)].getString())
+                            if (GetVString(arg1) != GetVString(arg3))
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == ">")
                         {
-                            if (variables[indexOfVariable(arg1)].getString().Length > variables[indexOfVariable(arg3)].getString().Length)
+                            if (GetVString(arg1).Length > GetVString(arg3).Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "<")
                         {
-                            if (variables[indexOfVariable(arg1)].getString().Length < variables[indexOfVariable(arg3)].getString().Length)
+                            if (GetVString(arg1).Length < GetVString(arg3).Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (variables[indexOfVariable(arg1)].getString().Length <= variables[indexOfVariable(arg3)].getString().Length)
+                            if (GetVString(arg1).Length <= GetVString(arg3).Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (variables[indexOfVariable(arg1)].getString().Length >= variables[indexOfVariable(arg3)].getString().Length)
+                            if (GetVString(arg1).Length >= GetVString(arg3).Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "contains")
                         {
-                            if (contains(variables[indexOfVariable(arg1)].getString(), variables[indexOfVariable(arg3)].getString()))
+                            if (contains(GetVString(arg1), GetVString(arg3)))
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "ends_with")
                         {
-                            if (endsWith(variables[indexOfVariable(arg1)].getString(), variables[indexOfVariable(arg3)].getString()))
+                            if (endsWith(GetVString(arg1), GetVString(arg3)))
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "begins_with")
                         {
-                            if (startsWith(variables[indexOfVariable(arg1)].getString(), variables[indexOfVariable(arg3)].getString()))
+                            if (startsWith(GetVString(arg1), GetVString(arg3)))
                                 setTrueIf();
                             else
                                 setFalseIf();
@@ -4366,42 +4367,42 @@
                     {
                         if (arg2 == "==")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() == variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) == GetVNumber(arg3))
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() != variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) != GetVNumber(arg3))
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == ">")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() > variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) > GetVNumber(arg3))
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() >= variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) >= GetVNumber(arg3))
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "<")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() < variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) < GetVNumber(arg3))
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() <= variables[indexOfVariable(arg3)].getNumber())
+                            if (GetVNumber(arg1) <= GetVNumber(arg3))
                                 setTrueIf();
                             else
                                 setFalseIf();
@@ -4422,46 +4423,46 @@
                 {
                     if (isNumber(arg1))
                     {
-                        if (isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg3))
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() == stod(arg3))
+                                if (GetVNumber(arg1) == stod(arg3))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() != stod(arg3))
+                                if (GetVNumber(arg1) != stod(arg3))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() > stod(arg3))
+                                if (GetVNumber(arg1) > stod(arg3))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() < stod(arg3))
+                                if (GetVNumber(arg1) < stod(arg3))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() >= stod(arg3))
+                                if (GetVNumber(arg1) >= stod(arg3))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() <= stod(arg3))
+                                if (GetVNumber(arg1) <= stod(arg3))
                                     setTrueIf();
                                 else
                                     setFalseIf();
@@ -4539,14 +4540,14 @@
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isUpper(variables[indexOfVariable(arg1)].getString()))
+                                    if (isUpper(GetVString(arg1)))
                                         setTrueIf();
                                     else
                                         setFalseIf();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isUpper(variables[indexOfVariable(arg1)].getString()))
+                                    if (isUpper(GetVString(arg1)))
                                         setFalseIf();
                                     else
                                         setTrueIf();
@@ -4576,14 +4577,14 @@
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isLower(variables[indexOfVariable(arg1)].getString()))
+                                    if (isLower(GetVString(arg1)))
                                         setTrueIf();
                                     else
                                         setFalseIf();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isLower(variables[indexOfVariable(arg1)].getString()))
+                                    if (isLower(GetVString(arg1)))
                                         setFalseIf();
                                     else
                                         setTrueIf();
@@ -4611,7 +4612,7 @@
                         {
                             if (isString(arg1))
                             {
-                                if (System.IO.File.Exists(variables[indexOfVariable(arg1)].getString()))
+                                if (System.IO.File.Exists(GetVString(arg1)))
                                 {
                                     if (arg2 == "==")
                                         setTrueIf();
@@ -4641,7 +4642,7 @@
                         {
                             if (isString(arg1))
                             {
-                                if (System.IO.Directory.Exists(variables[indexOfVariable(arg1)].getString()))
+                                if (System.IO.Directory.Exists(GetVString(arg1)))
                                 {
                                     if (arg2 == "==")
                                         setTrueIf();
@@ -4671,63 +4672,63 @@
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg1)].getString() == arg3)
+                                if (GetVString(arg1) == arg3)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString() != arg3)
+                                if (GetVString(arg1) != arg3)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length > arg3.Length)
+                                if (GetVString(arg1).Length > arg3.Length)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length < arg3.Length)
+                                if (GetVString(arg1).Length < arg3.Length)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length >= arg3.Length)
+                                if (GetVString(arg1).Length >= arg3.Length)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length <= arg3.Length)
+                                if (GetVString(arg1).Length <= arg3.Length)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "contains")
                             {
-                                if (contains(variables[indexOfVariable(arg1)].getString(), arg3))
+                                if (contains(GetVString(arg1), arg3))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "ends_with")
                             {
-                                if (endsWith(variables[indexOfVariable(arg1)].getString(), arg3))
+                                if (endsWith(GetVString(arg1), arg3))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "begins_with")
                             {
-                                if (startsWith(variables[indexOfVariable(arg1)].getString(), arg3))
+                                if (startsWith(GetVString(arg1), arg3))
                                     setTrueIf();
                                 else
                                     setFalseIf();
@@ -4753,46 +4754,46 @@
 
                     if (isNumber(arg1))
                     {
-                        if (isNumeric(stackValue))
+                        if (StringHelper.IsNumeric(stackValue))
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() == stod(stackValue))
+                                if (GetVNumber(arg1) == stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() != stod(stackValue))
+                                if (GetVNumber(arg1) != stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() > stod(stackValue))
+                                if (GetVNumber(arg1) > stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() < stod(stackValue))
+                                if (GetVNumber(arg1) < stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() >= stod(stackValue))
+                                if (GetVNumber(arg1) >= stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg1)].getNumber() <= stod(stackValue))
+                                if (GetVNumber(arg1) <= stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
@@ -4870,14 +4871,14 @@
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isUpper(variables[indexOfVariable(arg1)].getString()))
+                                    if (isUpper(GetVString(arg1)))
                                         setTrueIf();
                                     else
                                         setFalseIf();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isUpper(variables[indexOfVariable(arg1)].getString()))
+                                    if (isUpper(GetVString(arg1)))
                                         setFalseIf();
                                     else
                                         setTrueIf();
@@ -4907,14 +4908,14 @@
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isLower(variables[indexOfVariable(arg1)].getString()))
+                                    if (isLower(GetVString(arg1)))
                                         setTrueIf();
                                     else
                                         setFalseIf();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isLower(variables[indexOfVariable(arg1)].getString()))
+                                    if (isLower(GetVString(arg1)))
                                         setFalseIf();
                                     else
                                         setTrueIf();
@@ -4942,7 +4943,7 @@
                         {
                             if (isString(arg1))
                             {
-                                if (System.IO.File.Exists(variables[indexOfVariable(arg1)].getString()))
+                                if (System.IO.File.Exists(GetVString(arg1)))
                                 {
                                     if (arg2 == "==")
                                         setTrueIf();
@@ -4972,7 +4973,7 @@
                         {
                             if (isString(arg1))
                             {
-                                if (System.IO.Directory.Exists(variables[indexOfVariable(arg1)].getString()))
+                                if (System.IO.Directory.Exists(GetVString(arg1)))
                                 {
                                     if (arg2 == "==")
                                         setTrueIf();
@@ -5002,63 +5003,63 @@
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg1)].getString() == stackValue)
+                                if (GetVString(arg1) == stackValue)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString() != stackValue)
+                                if (GetVString(arg1) != stackValue)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length > stackValue.Length)
+                                if (GetVString(arg1).Length > stackValue.Length)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length < stackValue.Length)
+                                if (GetVString(arg1).Length < stackValue.Length)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length >= stackValue.Length)
+                                if (GetVString(arg1).Length >= stackValue.Length)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg1)].getString().Length <= stackValue.Length)
+                                if (GetVString(arg1).Length <= stackValue.Length)
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "contains")
                             {
-                                if (contains(variables[indexOfVariable(arg1)].getString(), stackValue))
+                                if (contains(GetVString(arg1), stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "ends_with")
                             {
-                                if (endsWith(variables[indexOfVariable(arg1)].getString(), stackValue))
+                                if (endsWith(GetVString(arg1), stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "begins_with")
                             {
-                                if (startsWith(variables[indexOfVariable(arg1)].getString(), stackValue))
+                                if (startsWith(GetVString(arg1), stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
@@ -5075,46 +5076,46 @@
                 {
                     if (isNumber(arg3))
                     {
-                        if (isNumeric(arg1))
+                        if (StringHelper.IsNumeric(arg1))
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() == stod(arg1))
+                                if (GetVNumber(arg3) == stod(arg1))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() != stod(arg1))
+                                if (GetVNumber(arg3) != stod(arg1))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() > stod(arg1))
+                                if (GetVNumber(arg3) > stod(arg1))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() < stod(arg1))
+                                if (GetVNumber(arg3) < stod(arg1))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() >= stod(arg1))
+                                if (GetVNumber(arg3) >= stod(arg1))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() <= stod(arg1))
+                                if (GetVNumber(arg3) <= stod(arg1))
                                     setTrueIf();
                                 else
                                     setFalseIf();
@@ -5135,42 +5136,42 @@
                     {
                         if (arg2 == "==")
                         {
-                            if (variables[indexOfVariable(arg3)].getString() == arg1)
+                            if (GetVString(arg3) == arg1)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString() != arg1)
+                            if (GetVString(arg3) != arg1)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == ">")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length > arg1.Length)
+                            if (GetVString(arg3).Length > arg1.Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "<")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length < arg1.Length)
+                            if (GetVString(arg3).Length < arg1.Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length >= arg1.Length)
+                            if (GetVString(arg3).Length >= arg1.Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length <= arg1.Length)
+                            if (GetVString(arg3).Length <= arg1.Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
@@ -5195,46 +5196,46 @@
 
                     if (isNumber(arg3))
                     {
-                        if (isNumeric(stackValue))
+                        if (StringHelper.IsNumeric(stackValue))
                         {
                             if (arg2 == "==")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() == stod(stackValue))
+                                if (GetVNumber(arg3) == stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() != stod(stackValue))
+                                if (GetVNumber(arg3) != stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() > stod(stackValue))
+                                if (GetVNumber(arg3) > stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() < stod(stackValue))
+                                if (GetVNumber(arg3) < stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() >= stod(stackValue))
+                                if (GetVNumber(arg3) >= stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (variables[indexOfVariable(arg3)].getNumber() <= stod(stackValue))
+                                if (GetVNumber(arg3) <= stod(stackValue))
                                     setTrueIf();
                                 else
                                     setFalseIf();
@@ -5255,42 +5256,42 @@
                     {
                         if (arg2 == "==")
                         {
-                            if (variables[indexOfVariable(arg3)].getString() == stackValue)
+                            if (GetVString(arg3) == stackValue)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString() != stackValue)
+                            if (GetVString(arg3) != stackValue)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == ">")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length > stackValue.Length)
+                            if (GetVString(arg3).Length > stackValue.Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "<")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length < stackValue.Length)
+                            if (GetVString(arg3).Length < stackValue.Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length >= stackValue.Length)
+                            if (GetVString(arg3).Length >= stackValue.Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (variables[indexOfVariable(arg3)].getString().Length <= stackValue.Length)
+                            if (GetVString(arg3).Length <= stackValue.Length)
                                 setTrueIf();
                             else
                                 setFalseIf();
@@ -5325,7 +5326,7 @@
 
                                 arg3Result = __LastValue;
 
-                                if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                                if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                                 {
                                     if (arg2 == "==")
                                     {
@@ -5427,7 +5428,7 @@
 
                                 arg3Result = __LastValue;
 
-                                if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                                if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                                 {
                                     if (arg2 == "==")
                                     {
@@ -5524,7 +5525,7 @@
 
                                 arg1Result = __LastValue;
 
-                                if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                                if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                                 {
                                     if (arg2 == "==")
                                     {
@@ -5617,7 +5618,7 @@
 
                             arg3Result = __LastValue;
 
-                            if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                            if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                             {
                                 if (arg2 == "==")
                                 {
@@ -5713,9 +5714,9 @@
                                 else if (variableExists(arg3))
                                 {
                                     if (isString(arg3))
-                                        arg3Result = variables[indexOfVariable(arg3)].getString();
+                                        arg3Result = GetVString(arg3);
                                     else if (isNumber(arg3))
-                                        arg3Result = dtos(variables[indexOfVariable(arg3)].getNumber());
+                                        arg3Result = dtos(GetVNumber(arg3));
                                     else
                                     {
                                         pass = false;
@@ -5728,7 +5729,7 @@
 
                                 if (pass)
                                 {
-                                    if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                                    if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                                     {
                                         if (arg2 == "==")
                                         {
@@ -5818,9 +5819,9 @@
                                 if (variableExists(arg3))
                                 {
                                     if (isString(arg3))
-                                        comp = variables[indexOfVariable(arg3)].getString();
+                                        comp = GetVString(arg3);
                                     else if (isNumber(arg3))
-                                        comp = dtos(variables[indexOfVariable(arg3)].getNumber());
+                                        comp = dtos(GetVNumber(arg3));
                                 }
                                 else if (methodExists(arg3))
                                 {
@@ -5837,7 +5838,7 @@
                                 else
                                     comp = arg3;
 
-                                if (isNumeric(stackValue) && isNumeric(comp))
+                                if (StringHelper.IsNumeric(stackValue) && StringHelper.IsNumeric(comp))
                                 {
                                     if (arg2 == "==")
                                     {
@@ -5930,9 +5931,9 @@
                                 if (variableExists(arg3))
                                 {
                                     if (isString(arg3))
-                                        arg3Result = variables[indexOfVariable(arg3)].getString();
+                                        arg3Result = GetVString(arg3);
                                     else if (isNumber(arg3))
-                                        arg3Result = dtos(variables[indexOfVariable(arg3)].getNumber());
+                                        arg3Result = dtos(GetVNumber(arg3));
                                     else
                                     {
                                         pass = false;
@@ -5951,7 +5952,7 @@
 
                                 if (pass)
                                 {
-                                    if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                                    if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                                     {
                                         if (arg2 == "==")
                                         {
@@ -6054,9 +6055,9 @@
                                 else if (variableExists(arg1))
                                 {
                                     if (isString(arg1))
-                                        arg1Result = variables[indexOfVariable(arg1)].getString();
+                                        arg1Result = GetVString(arg1);
                                     else if (isNumber(arg1))
-                                        arg1Result = dtos(variables[indexOfVariable(arg1)].getNumber());
+                                        arg1Result = dtos(GetVNumber(arg1));
                                     else
                                     {
                                         pass = false;
@@ -6069,7 +6070,7 @@
 
                                 if (pass)
                                 {
-                                    if (isNumeric(arg3Result) && isNumeric(arg1Result))
+                                    if (StringHelper.IsNumeric(arg3Result) && StringHelper.IsNumeric(arg1Result))
                                     {
                                         if (arg2 == "==")
                                         {
@@ -6163,9 +6164,9 @@
                                 if (variableExists(arg1))
                                 {
                                     if (isString(arg1))
-                                        arg1Result = variables[indexOfVariable(arg1)].getString();
+                                        arg1Result = GetVString(arg1);
                                     else if (isNumber(arg3))
-                                        arg1Result = dtos(variables[indexOfVariable(arg1)].getNumber());
+                                        arg1Result = dtos(GetVNumber(arg1));
                                     else
                                     {
                                         error(ErrorLogger.IS_NULL, arg1, false);
@@ -6181,7 +6182,7 @@
                                 else
                                     arg1Result = arg1;
 
-                                if (isNumeric(arg3Result) && isNumeric(arg1Result))
+                                if (StringHelper.IsNumeric(arg3Result) && StringHelper.IsNumeric(arg1Result))
                                 {
                                     if (arg2 == "==")
                                     {
@@ -6274,9 +6275,9 @@
                     else if (variableExists(arg1))
                     {
                         if (isString(arg1))
-                            arg1Result = variables[indexOfVariable(arg1)].getString();
+                            arg1Result = GetVString(arg1);
                         else if (isNumber(arg1))
-                            arg1Result = dtos(variables[indexOfVariable(arg1)].getNumber());
+                            arg1Result = dtos(GetVNumber(arg1));
                         else
                         {
                             error(ErrorLogger.IS_NULL, arg1, false);
@@ -6294,9 +6295,9 @@
                     else if (variableExists(arg3))
                     {
                         if (isString(arg3))
-                            arg3Result = variables[indexOfVariable(arg3)].getString();
+                            arg3Result = GetVString(arg3);
                         else if (isNumber(arg3))
-                            arg3Result = dtos(variables[indexOfVariable(arg3)].getNumber());
+                            arg3Result = dtos(GetVNumber(arg3));
                         else
                         {
                             error(ErrorLogger.IS_NULL, arg3, false);
@@ -6306,7 +6307,7 @@
                     else
                         arg3Result = arg3;
 
-                    if (isNumeric(arg1Result) && isNumeric(arg3Result))
+                    if (StringHelper.IsNumeric(arg1Result) && StringHelper.IsNumeric(arg3Result))
                     {
                         if (arg2 == "==")
                         {
@@ -6505,7 +6506,7 @@
                     }
                     else if (arg2 == ">")
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) > stod(arg3))
                                 setTrueIf();
@@ -6522,7 +6523,7 @@
                     }
                     else if (arg2 == "<")
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) < stod(arg3))
                                 setTrueIf();
@@ -6539,7 +6540,7 @@
                     }
                     else if (arg2 == ">=")
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) >= stod(arg3))
                                 setTrueIf();
@@ -6554,7 +6555,7 @@
                     }
                     else if (arg2 == "<=")
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) <= stod(arg3))
                                 setTrueIf();
@@ -6603,8 +6604,8 @@
                     {
                         if (isNumber(arg1) && isNumber(arg3))
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() < variables[indexOfVariable(arg3)].getNumber())
-                                successfulFor(variables[indexOfVariable(arg1)].getNumber(), variables[indexOfVariable(arg3)].getNumber(), "<");
+                            if (GetVNumber(arg1) < GetVNumber(arg3))
+                                successfulFor(GetVNumber(arg1), GetVNumber(arg3), "<");
                             else
                                 failedFor();
                         }
@@ -6616,10 +6617,10 @@
                     }
                     else if (variableExists(arg1) && !variableExists(arg3))
                     {
-                        if (isNumber(arg1) && isNumeric(arg3))
+                        if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() < stod(arg3))
-                                successfulFor(variables[indexOfVariable(arg1)].getNumber(), stod(arg3), "<");
+                            if (GetVNumber(arg1) < stod(arg3))
+                                successfulFor(GetVNumber(arg1), stod(arg3), "<");
                             else
                                 failedFor();
                         }
@@ -6631,10 +6632,10 @@
                     }
                     else if (!variableExists(arg1) && variableExists(arg3))
                     {
-                        if (isNumeric(arg1) && isNumber(arg3))
+                        if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
                         {
-                            if (stod(arg1) < variables[indexOfVariable(arg3)].getNumber())
-                                successfulFor(stod(arg1), variables[indexOfVariable(arg3)].getNumber(), "<");
+                            if (stod(arg1) < GetVNumber(arg3))
+                                successfulFor(stod(arg1), GetVNumber(arg3), "<");
                             else
                                 failedFor();
                         }
@@ -6646,7 +6647,7 @@
                     }
                     else
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) < stod(arg3))
                                 successfulFor(stod(arg1), stod(arg3), "<");
@@ -6666,8 +6667,8 @@
                     {
                         if (isNumber(arg1) && isNumber(arg3))
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() > variables[indexOfVariable(arg3)].getNumber())
-                                successfulFor(variables[indexOfVariable(arg1)].getNumber(), variables[indexOfVariable(arg3)].getNumber(), ">");
+                            if (GetVNumber(arg1) > GetVNumber(arg3))
+                                successfulFor(GetVNumber(arg1), GetVNumber(arg3), ">");
                             else
                                 failedFor();
                         }
@@ -6679,10 +6680,10 @@
                     }
                     else if (variableExists(arg1) && !variableExists(arg3))
                     {
-                        if (isNumber(arg1) && isNumeric(arg3))
+                        if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() > stod(arg3))
-                                successfulFor(variables[indexOfVariable(arg1)].getNumber(), stod(arg3), ">");
+                            if (GetVNumber(arg1) > stod(arg3))
+                                successfulFor(GetVNumber(arg1), stod(arg3), ">");
                             else
                                 failedFor();
                         }
@@ -6694,10 +6695,10 @@
                     }
                     else if (!variableExists(arg1) && variableExists(arg3))
                     {
-                        if (isNumeric(arg1) && isNumber(arg3))
+                        if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
                         {
-                            if (stod(arg1) > variables[indexOfVariable(arg3)].getNumber())
-                                successfulFor(stod(arg1), variables[indexOfVariable(arg3)].getNumber(), ">");
+                            if (stod(arg1) > GetVNumber(arg3))
+                                successfulFor(stod(arg1), GetVNumber(arg3), ">");
                             else
                                 failedFor();
                         }
@@ -6709,7 +6710,7 @@
                     }
                     else
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) > stod(arg3))
                                 successfulFor(stod(arg1), stod(arg3), ">");
@@ -6729,8 +6730,8 @@
                     {
                         if (isNumber(arg1) && isNumber(arg3))
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() <= variables[indexOfVariable(arg3)].getNumber())
-                                successfulFor(variables[indexOfVariable(arg1)].getNumber(), variables[indexOfVariable(arg3)].getNumber(), "<=");
+                            if (GetVNumber(arg1) <= GetVNumber(arg3))
+                                successfulFor(GetVNumber(arg1), GetVNumber(arg3), "<=");
                             else
                                 failedFor();
                         }
@@ -6742,10 +6743,10 @@
                     }
                     else if (variableExists(arg1) && !variableExists(arg3))
                     {
-                        if (isNumber(arg1) && isNumeric(arg3))
+                        if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() <= stod(arg3))
-                                successfulFor(variables[indexOfVariable(arg1)].getNumber(), stod(arg3), "<=");
+                            if (GetVNumber(arg1) <= stod(arg3))
+                                successfulFor(GetVNumber(arg1), stod(arg3), "<=");
                             else
                                 failedFor();
                         }
@@ -6757,10 +6758,10 @@
                     }
                     else if (!variableExists(arg1) && variableExists(arg3))
                     {
-                        if (isNumeric(arg1) && isNumber(arg3))
+                        if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
                         {
-                            if (stod(arg1) <= variables[indexOfVariable(arg3)].getNumber())
-                                successfulFor(stod(arg1), variables[indexOfVariable(arg3)].getNumber(), "<=");
+                            if (stod(arg1) <= GetVNumber(arg3))
+                                successfulFor(stod(arg1), GetVNumber(arg3), "<=");
                             else
                                 failedFor();
                         }
@@ -6772,7 +6773,7 @@
                     }
                     else
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) <= stod(arg3))
                                 successfulFor(stod(arg1), stod(arg3), "<=");
@@ -6792,8 +6793,8 @@
                     {
                         if (isNumber(arg1) && isNumber(arg3))
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() >= variables[indexOfVariable(arg3)].getNumber())
-                                successfulFor(variables[indexOfVariable(arg1)].getNumber(), variables[indexOfVariable(arg3)].getNumber(), ">=");
+                            if (GetVNumber(arg1) >= GetVNumber(arg3))
+                                successfulFor(GetVNumber(arg1), GetVNumber(arg3), ">=");
                             else
                                 failedFor();
                         }
@@ -6805,10 +6806,10 @@
                     }
                     else if (variableExists(arg1) && !variableExists(arg3))
                     {
-                        if (isNumber(arg1) && isNumeric(arg3))
+                        if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (variables[indexOfVariable(arg1)].getNumber() >= stod(arg3))
-                                successfulFor(variables[indexOfVariable(arg1)].getNumber(), stod(arg3), ">=");
+                            if (GetVNumber(arg1) >= stod(arg3))
+                                successfulFor(GetVNumber(arg1), stod(arg3), ">=");
                             else
                                 failedFor();
                         }
@@ -6820,10 +6821,10 @@
                     }
                     else if (!variableExists(arg1) && variableExists(arg3))
                     {
-                        if (isNumeric(arg1) && isNumber(arg3))
+                        if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
                         {
-                            if (stod(arg1) >= variables[indexOfVariable(arg3)].getNumber())
-                                successfulFor(stod(arg1), variables[indexOfVariable(arg3)].getNumber(), ">=");
+                            if (stod(arg1) >= GetVNumber(arg3))
+                                successfulFor(stod(arg1), GetVNumber(arg3), ">=");
                             else
                                 failedFor();
                         }
@@ -6835,7 +6836,7 @@
                     }
                     else
                     {
-                        if (isNumeric(arg1) && isNumeric(arg3))
+                        if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
                             if (stod(arg1) >= stod(arg3))
                                 successfulFor(stod(arg1), stod(arg3), ">=");
@@ -6891,7 +6892,7 @@
                             if (isString(before))
                             {
                                 List newList = new();
-                                string tempVarStr = variables[indexOfVariable(before)].getString();
+                                string tempVarStr = GetVString(before);
                                 int len = tempVarStr.Length;
 
                                 for (int i = 0; i < len; i++)
@@ -6912,30 +6913,30 @@
                                 {
                                     if (after == "get_dirs")
                                     {
-                                        if (System.IO.Directory.Exists(variables[indexOfVariable(before)].getString()))
+                                        if (System.IO.Directory.Exists(GetVString(before)))
                                             successfulFor(getDirectoryList(before, false));
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(before)].getString(), false);
+                                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
                                             failedFor();
                                         }
                                     }
                                     else if (after == "get_files")
                                     {
-                                        if (System.IO.Directory.Exists(variables[indexOfVariable(before)].getString()))
+                                        if (System.IO.Directory.Exists(GetVString(before)))
                                             successfulFor(getDirectoryList(before, true));
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(before)].getString(), false);
+                                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
                                             failedFor();
                                         }
                                     }
                                     else if (after == "read")
                                     {
-                                        if (System.IO.File.Exists(variables[indexOfVariable(before)].getString()))
+                                        if (System.IO.File.Exists(GetVString(before)))
                                         {
                                             List newList = new();
-                                            foreach (var line in System.IO.File.ReadAllLines(variables[indexOfVariable(before)].getString()))
+                                            foreach (var line in System.IO.File.ReadAllLines(GetVString(before)))
                                             {
                                                 newList.add(line);
                                             }
@@ -6943,7 +6944,7 @@
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(before)].getString(), false);
+                                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
                                             failedFor();
                                         }
                                     }
@@ -6984,7 +6985,7 @@
                             if (variableExists(firstRangeSpecifier))
                             {
                                 if (isNumber(firstRangeSpecifier))
-                                    firstRangeSpecifier = dtos(variables[indexOfVariable(firstRangeSpecifier)].getNumber());
+                                    firstRangeSpecifier = dtos(GetVNumber(firstRangeSpecifier));
                                 else
                                     failedFor();
                             }
@@ -6992,12 +6993,12 @@
                             if (variableExists(lastRangeSpecifier))
                             {
                                 if (isNumber(lastRangeSpecifier))
-                                    lastRangeSpecifier = dtos(variables[indexOfVariable(lastRangeSpecifier)].getNumber());
+                                    lastRangeSpecifier = dtos(GetVNumber(lastRangeSpecifier));
                                 else
                                     failedFor();
                             }
 
-                            if (isNumeric(firstRangeSpecifier) && isNumeric(lastRangeSpecifier))
+                            if (StringHelper.IsNumeric(firstRangeSpecifier) && StringHelper.IsNumeric(lastRangeSpecifier))
                             {
                                 __DefaultLoopSymbol = arg1;
 
@@ -7022,7 +7023,7 @@
                         {
                             if (isString(before))
                             {
-                                string tempVarString = (variables[indexOfVariable(before)].getString());
+                                string tempVarString = (GetVString(before));
 
                                 System.Collections.Generic.List<string> range = getBracketRange(arg3);
 
@@ -7032,7 +7033,7 @@
 
                                     if (rangeBegin.Length != 0 && rangeEnd.Length != 0)
                                     {
-                                        if (isNumeric(rangeBegin) && isNumeric(rangeEnd))
+                                        if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                                         {
                                             if (stoi(rangeBegin) < stoi(rangeEnd))
                                             {
@@ -7180,7 +7181,7 @@
                             {
                                 __DefaultLoopSymbol = arg1;
                                 List newList = new();
-                                string _t = variables[indexOfVariable(_b)].getString();
+                                string _t = GetVString(_b);
                                 int _l = _t.Length;
 
                                 for (int i = 0; i < _l; i++)
@@ -7201,37 +7202,37 @@
                                 {
                                     if (_a == "get_dirs")
                                     {
-                                        if (System.IO.Directory.Exists(variables[indexOfVariable(_b)].getString()))
+                                        if (System.IO.Directory.Exists(GetVString(_b)))
                                         {
                                             __DefaultLoopSymbol = arg1;
                                             successfulFor(getDirectoryList(_b, false));
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(_b)].getString(), false);
+                                            error(ErrorLogger.READ_FAIL, GetVString(_b), false);
                                             failedFor();
                                         }
                                     }
                                     else if (_a == "get_files")
                                     {
-                                        if (System.IO.Directory.Exists(variables[indexOfVariable(_b)].getString()))
+                                        if (System.IO.Directory.Exists(GetVString(_b)))
                                         {
                                             __DefaultLoopSymbol = arg1;
                                             successfulFor(getDirectoryList(_b, true));
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(_b)].getString(), false);
+                                            error(ErrorLogger.READ_FAIL, GetVString(_b), false);
                                             failedFor();
                                         }
                                     }
                                     else if (_a == "read")
                                     {
-                                        if (System.IO.File.Exists(variables[indexOfVariable(_b)].getString()))
+                                        if (System.IO.File.Exists(GetVString(_b)))
                                         {
                                             List newList = new();
 
-                                            foreach (var line in System.IO.File.ReadAllLines(variables[indexOfVariable(_b)].getString()))
+                                            foreach (var line in System.IO.File.ReadAllLines(GetVString(_b)))
                                             {
                                                 newList.add(line);
                                             }
@@ -7241,7 +7242,7 @@
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, variables[indexOfVariable(_b)].getString(), false);
+                                            error(ErrorLogger.READ_FAIL, GetVString(_b), false);
                                             failedFor();
                                         }
                                     }
@@ -7291,7 +7292,7 @@
                         failedWhile();
                     }
                 }
-                else if (isNumeric(arg3) && variableExists(arg1))
+                else if (StringHelper.IsNumeric(arg3) && variableExists(arg1))
                 {
                     if (isNumber(arg1))
                     {
@@ -7309,7 +7310,7 @@
                         failedWhile();
                     }
                 }
-                else if (isNumeric(arg1) && isNumeric(arg3))
+                else if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                 {
                     if (arg2 == "<" || arg2 == "<=" || arg2 == ">=" || arg2 == ">" || arg2 == "==" || arg2 == "!=")
                         successfullWhile(arg1, arg2, arg3);
