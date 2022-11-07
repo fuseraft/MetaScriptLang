@@ -46,7 +46,7 @@
                 for (int i = 0; i < (int)varNames.Count; i++)
                 {
                     Variable newVariable = new(varNames[i], varValues[i]);
-                    variables.Add(newVariable);
+                    variables.Add(varNames[i], newVariable);
                 }
 
                 varNames.Clear();

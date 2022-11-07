@@ -25,17 +25,17 @@ namespace MetaScriptLang.Processing
             }
         }
 
-        System.Collections.Generic.List<Method> methods = new();
-        System.Collections.Generic.List<MetaScriptLang.Data.Object> objects = new();
-        System.Collections.Generic.List<Variable> variables = new();
-        System.Collections.Generic.List<MetaScriptLang.Data.List> lists = new();
-        System.Collections.Generic.List<Constant> constants = new();
+        System.Collections.Generic.Dictionary<string, Method> methods = new();
+        System.Collections.Generic.Dictionary<string, MetaScriptLang.Data.Object> objects = new();
+        System.Collections.Generic.Dictionary<string, Variable> variables = new();
+        System.Collections.Generic.Dictionary<string, MetaScriptLang.Data.List> lists = new();
+        System.Collections.Generic.Dictionary<string, Constant> constants = new();
         System.Collections.Generic.List<Method> ifStatements = new();
         System.Collections.Generic.List<Method> forLoops = new();
         System.Collections.Generic.List<Method> whileLoops = new();
         System.Collections.Generic.List<string> args = new();
-        System.Collections.Generic.List<Module> modules = new();
-        System.Collections.Generic.List<Script> scripts = new();
+        System.Collections.Generic.Dictionary<string, Module> modules = new();
+        System.Collections.Generic.Dictionary<string, Script> scripts = new();
 
         Switch mainSwitch = new();
 

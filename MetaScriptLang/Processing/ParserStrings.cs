@@ -526,53 +526,6 @@
             return s1.Replace(s2, "");
         }
 
-        bool isNumeric(string s)
-        {
-            int l = s.Length;
-            bool pFound = false, hFound = false;
-
-            if (l == 0) return false;
-
-            for (int i = 0; i < l; i++)
-            {
-                if (!Char.IsDigit(s[i]))
-                {
-                    switch (s[i])
-                    {
-                        case '.':
-                            if (i == 0)
-                                return false;
-                            else
-                            {
-                                if (!pFound)
-                                    pFound = true;
-                                else
-                                    return false;
-                            }
-                            break;
-
-                        case '-':
-                            if (i != 0)
-                                return false;
-                            else
-                            {
-                                if (!hFound)
-                                    hFound = true;
-                                else
-                                    return false;
-                            }
-                            break;
-
-                        default:
-                            return false;
-                            break;
-                    }
-                }
-            }
-
-            return true;
-        }
-
         bool isTrue(string s)
         {
             return s == "true" || s == "1";

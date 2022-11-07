@@ -23,7 +23,7 @@
         void failedFor()
         {
             Method forMethod = new("[for#" + itos(__ForLoopCount) + "]");
-            forMethod.setFor(false);
+            forMethod.SetIsForLoop(false);
             __DefiningForLoop = true;
             forLoops.Add(forMethod);
             __DefaultLoopSymbol = "$";
@@ -33,7 +33,7 @@
         void failedWhile()
         {
             Method whileMethod = new("[while#" + itos(__WhileLoopCount) + "]");
-            whileMethod.setWhile(false);
+            whileMethod.SetIsWhileLoop(false);
             __DefiningWhileLoop = true;
             whileLoops.Add(whileMethod);
         }
@@ -41,8 +41,8 @@
         void successfullWhile(string v1, string op, string v2)
         {
             Method whileMethod = new("[while#" + itos(__WhileLoopCount) + "]");
-            whileMethod.setWhile(true);
-            whileMethod.setWhileValues(v1, op, v2);
+            whileMethod.SetIsWhileLoop(true);
+            whileMethod.SetWhileLoopValues(v1, op, v2);
             __DefiningWhileLoop = true;
             whileLoops.Add(whileMethod);
             __WhileLoopCount++;
@@ -51,10 +51,10 @@
         void successfulFor(List list)
         {
             Method forMethod = new("[for#" + itos(__ForLoopCount) + "]");
-            forMethod.setFor(true);
-            forMethod.setForList(list);
-            forMethod.setListLoop();
-            forMethod.setSymbol(__DefaultLoopSymbol);
+            forMethod.SetIsForLoop(true);
+            forMethod.SetForListLoop(list);
+            forMethod.SetListLoop();
+            forMethod.SetSymbol(__DefaultLoopSymbol);
             __DefiningForLoop = true;
             forLoops.Add(forMethod);
             __ForLoopCount++;
@@ -64,17 +64,17 @@
         void successfulFor(double a, double b, string op)
         {
             Method forMethod = new("[for#" + itos(__ForLoopCount) + "]");
-            forMethod.setFor(true);
-            forMethod.setSymbol(__DefaultLoopSymbol);
+            forMethod.SetIsForLoop(true);
+            forMethod.SetSymbol(__DefaultLoopSymbol);
 
             if (op == "<=")
-                forMethod.setForValues((int)a, (int)b);
+                forMethod.SetForLoopValues((int)a, (int)b);
             else if (op == ">=")
-                forMethod.setForValues((int)a, (int)b);
+                forMethod.SetForLoopValues((int)a, (int)b);
             else if (op == "<")
-                forMethod.setForValues((int)a, (int)b - 1);
+                forMethod.SetForLoopValues((int)a, (int)b - 1);
             else if (op == ">")
-                forMethod.setForValues((int)a, (int)b + 1);
+                forMethod.SetForLoopValues((int)a, (int)b + 1);
 
             __DefiningForLoop = true;
             forLoops.Add(forMethod);
@@ -85,8 +85,8 @@
         void successfulFor()
         {
             Method forMethod = new("[for#" + itos(__ForLoopCount) + "]");
-            forMethod.setFor(true);
-            forMethod.setInfinite();
+            forMethod.SetIsForLoop(true);
+            forMethod.SetInfinite();
             __DefiningForLoop = true;
             forLoops.Add(forMethod);
             __ForLoopCount++;
@@ -100,7 +100,7 @@
             if (!__DefiningNest)
             {
                 Method ifMethod = new("[failif]");
-                ifMethod.setBool(false);
+                ifMethod.SetIsIfStatement(false);
                 __DefiningIfStatement = true;
                 ifStatements.Add(ifMethod);
                 __FailedIfStatement = true;
@@ -116,13 +116,13 @@
 
             if (__DefiningNest)
             {
-                ifStatements[(int)ifStatements.Count - 1].buildNest();
+                ifStatements[(int)ifStatements.Count - 1].BuildNest();
                 __FailedNest = false;
             }
             else
             {
                 Method ifMethod = new("[if#" + itos(__IfStatementCount) + "]");
-                ifMethod.setBool(true);
+                ifMethod.SetIsIfStatement(true);
                 __DefiningIfStatement = true;
                 ifStatements.Add(ifMethod);
                 __IfStatementCount++;

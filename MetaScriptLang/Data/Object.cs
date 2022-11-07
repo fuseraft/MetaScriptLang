@@ -48,11 +48,6 @@ namespace MetaScriptLang.Data
             return collectable;
         }
 
-        public Method getCurrentMethod()
-        {
-            return getMethod(currentMethod);
-        }
-
         public void setCurrentMethod(string methodName)
         {
             currentMethod = methodName;
@@ -61,19 +56,19 @@ namespace MetaScriptLang.Data
         public void setPublic()
         {
             if (methodExists(currentMethod))
-                methods[methodAt(currentMethod)].setPublic();
+                methods[methodAt(currentMethod)].SetPublic();
         }
 
         public void setPrivate()
         {
             if (methodExists(currentMethod))
-                methods[methodAt(currentMethod)].setPrivate();
+                methods[methodAt(currentMethod)].SetPrivate();
         }
 
         public void addToCurrentMethod(string line)
         {
             if (methodExists(currentMethod))
-                methods[methodAt(currentMethod)].add(line);
+                methods[methodAt(currentMethod)].AddLine(line);
             else
                 Logger.LogInfo("#!=add_to_currentMethod:undefined");
         }
@@ -92,7 +87,7 @@ namespace MetaScriptLang.Data
         {
             for (int i = 0; i < methodSize(); i++)
             {
-                if (methods[i].name() == methodName)
+                if (methods[i].GetName() == methodName)
                     return i;
             }
 
@@ -113,7 +108,7 @@ namespace MetaScriptLang.Data
         public string getMethodName(int index)
         {
             if (index < methods.Count)
-                return methods[index].name();
+                return methods[index].GetName();
 
             return "[undefined]";
         }
@@ -128,7 +123,7 @@ namespace MetaScriptLang.Data
 
         public void addMethod(Method method)
         {
-            if (!method.isBad())
+            if (!method.IsBad())
                 methods.Add(method);
         }
 
@@ -178,7 +173,7 @@ namespace MetaScriptLang.Data
             Method badMethod = new ($"[bad_meth#{badMethods}]");
 
             for (int i = 0; i < methods.Count; i++)
-                if (methods[i].name() == methodName)
+                if (methods[i].GetName() == methodName)
                     return methods[i];
 
             badMethods++;
@@ -219,7 +214,7 @@ namespace MetaScriptLang.Data
         public bool methodExists(string methodName)
         {
             for (int i = 0; i < methods.Count; i++)
-                if (methods[i].name() == methodName)
+                if (methods[i].GetName() == methodName)
                     return true;
 
             return false;

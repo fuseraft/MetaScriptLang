@@ -113,12 +113,12 @@ namespace MetaScriptLang.Processing
         #region Script Runner
         void runScript()
         {
-            for (int i = 0; i < scripts[indexOfScript(__CurrentScript)].size(); i++)
+            for (int i = 0; i < GetSSize(__CurrentScript); i++)
             {
                 __CurrentLineNumber = i + 1;
 
                 if (!__GoToLabel)
-                    parse(scripts[indexOfScript(__CurrentScript)].at(i));
+                    parse(GetSLine(__CurrentLine, i));
                 else
                 {
                     bool startParsing = false;
@@ -126,11 +126,11 @@ namespace MetaScriptLang.Processing
                     __DefiningForLoop = false;
                     __GoToLabel = false;
 
-                    for (int z = 0; z < scripts[indexOfScript(__CurrentScript)].size(); z++)
+                    for (int z = 0; z < GetSSize(__CurrentScript); z++)
                     {
-                        if (endsWith(scripts[indexOfScript(__CurrentScript)].at(z), "::"))
+                        if (endsWith(GetSLine(__CurrentScript, z), "::"))
                         {
-                            string s = (scripts[indexOfScript(__CurrentScript)].at(z));
+                            string s = GetSLine(__CurrentScript, z);
                             s = subtractString(s, "::");
 
                             if (s == __GoTo)
@@ -138,7 +138,7 @@ namespace MetaScriptLang.Processing
                         }
 
                         if (startParsing)
-                            parse(scripts[indexOfScript(__CurrentScript)].at(z));
+                            parse(GetSLine(__CurrentScript, z));
                     }
                 }
             }
@@ -176,7 +176,7 @@ namespace MetaScriptLang.Processing
                     newScript.add("");
             }
 
-            scripts.Add(newScript);
+            scripts.Add(script, newScript);
 
             runScript();
         }

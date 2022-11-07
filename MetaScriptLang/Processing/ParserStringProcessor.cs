@@ -1,5 +1,6 @@
 ﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Helpers;
     using MetaScriptLang.Logging;
 
     public partial class Parser
@@ -20,16 +21,16 @@
                         builder.Clear();
                         builder.Append(subtractChar(builder.ToString(), "{"));
 
-                        if (variableExists(builder.ToString()) && zeroDots(builder.ToString()))
+                        if (VExists(builder.ToString()) && zeroDots(builder.ToString()))
                         {
                             if (isString(builder.ToString()))
-                                cleaned.Append(variables[indexOfVariable(builder.ToString())].getString());
+                                cleaned.Append(GetVString(builder.ToString()));
                             else if (isNumber(builder.ToString()))
-                                cleaned.Append(dtos(variables[indexOfVariable(builder.ToString())].getNumber()));
+                                cleaned.Append(dtos(GetVNumber(builder.ToString())));
                             else
                                 cleaned.Append("null");
                         }
-                        else if (methodExists(builder.ToString()))
+                        else if (MExists(builder.ToString()))
                         {
                             parse(builder.ToString());
 
@@ -48,11 +49,11 @@
                             {
                                 string before = (beforeDot(builder.ToString())), after = (afterDot(builder.ToString()));
 
-                                if (objectExists(before))
+                                if (OExists(before))
                                 {
-                                    if (objects[indexOfObject(before)].methodExists(beforeParameters(after)))
+                                    if (OMExists(before, beforeParameters(after)))
                                     {
-                                        executeTemplate(objects[indexOfObject(before)].getMethod(beforeParameters(after)), getParameters(after));
+                                        executeTemplate(GetOM(before, beforeParameters(after)), getParameters(after));
 
                                         cleaned.Append(__LastValue);
                                     }
@@ -62,9 +63,9 @@
                                 else
                                     error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
                             }
-                            else if (methodExists(beforeParameters(builder.ToString())))
+                            else if (MExists(beforeParameters(builder.ToString())))
                             {
-                                executeTemplate(methods[indexOfMethod(beforeParameters(builder.ToString()))], getParameters(builder.ToString()));
+                                executeTemplate(GetM(beforeParameters(builder.ToString())), getParameters(builder.ToString()));
 
                                 cleaned.Append(__LastValue);
                             }
@@ -73,23 +74,24 @@
                         }
                         else if (containsBrackets(builder.ToString()))
                         {
+                            // TODO revisit this logic.
                             string _beforeBrackets = beforeBrackets(builder.ToString()), afterBrackets = builder.ToString();
                             string rangeBegin = "", rangeEnd = "", _build = "";
 
                             System.Collections.Generic.List<string> listRange = getBracketRange(afterBrackets);
 
-                            if (variableExists(_beforeBrackets))
+                            if (VExists(_beforeBrackets))
                             {
                                 if (isString(_beforeBrackets))
                                 {
-                                    string tempString = variables[indexOfVariable(_beforeBrackets)].getString();
+                                    string tempString = GetVString(_beforeBrackets);
 
                                     if (listRange.Count == 2)
                                     {
                                         rangeBegin = listRange[0];
                                         rangeEnd = listRange[1];
 
-                                        if (isNumeric(rangeBegin) && isNumeric(rangeEnd))
+                                        if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                                         {
                                             if (stoi(rangeBegin) < stoi(rangeEnd))
                                             {
@@ -123,7 +125,7 @@
                                     {
                                         rangeBegin = listRange[0];
 
-                                        if (isNumeric(rangeBegin))
+                                        if (StringHelper.IsNumeric(rangeBegin))
                                         {
                                             if (stoi(rangeBegin) <= (int)tempString.Length - 1 && stoi(rangeBegin) >= 0)
                                             {
@@ -136,24 +138,24 @@
                                     else error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
                                 }
                             }
-                            else if (listExists(_beforeBrackets))
+                            else if (LExists(_beforeBrackets))
                             {
                                 if (listRange.Count == 2)
                                 {
                                     rangeBegin = listRange[0]; rangeEnd = listRange[1];
 
-                                    if (isNumeric(rangeBegin) && isNumeric(rangeEnd))
+                                    if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                                     {
                                         if (stoi(rangeBegin) < stoi(rangeEnd))
                                         {
-                                            if (lists[indexOfList(_beforeBrackets)].size() - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                            if (GetLSize(_beforeBrackets) - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
                                             {
                                                 System.Text.StringBuilder bigString = new();
                                                 bigString.Append("(");
 
                                                 for (int z = stoi(rangeBegin); z <= stoi(rangeEnd); z++)
                                                 {
-                                                    bigString.Append("\"" + lists[indexOfList(_beforeBrackets)].at(z) + "\"");
+                                                    bigString.Append("\"" + GetLLine(_beforeBrackets, z) + "\"");
 
                                                     if (z < stoi(rangeEnd))
                                                         bigString.Append(',');
@@ -168,14 +170,14 @@
                                         }
                                         else if (stoi(rangeBegin) > stoi(rangeEnd))
                                         {
-                                            if (lists[indexOfList(_beforeBrackets)].size() - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                            if (GetLSize(_beforeBrackets) - 1 >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
                                             {
                                                 System.Text.StringBuilder bigString = new();
                                                 bigString.Append('(');
 
                                                 for (int z = stoi(rangeBegin); z >= stoi(rangeEnd); z--)
                                                 {
-                                                    bigString.Append("\"" + lists[indexOfList(_beforeBrackets)].at(z) + "\"");
+                                                    bigString.Append("\"" + GetLLine(_beforeBrackets, z) + "\"");
 
                                                     if (z > stoi(rangeEnd))
                                                         bigString.Append(',');
@@ -198,10 +200,10 @@
                                 {
                                     rangeBegin = listRange[0];
 
-                                    if (isNumeric(rangeBegin))
+                                    if (StringHelper.IsNumeric(rangeBegin))
                                     {
-                                        if (stoi(rangeBegin) <= (int)lists[indexOfList(_beforeBrackets)].size() - 1 && stoi(rangeBegin) >= 0)
-                                            cleaned.Append(lists[indexOfList(_beforeBrackets)].at(stoi(rangeBegin)));
+                                        if (stoi(rangeBegin) <= (int)GetLSize(_beforeBrackets) - 1 && stoi(rangeBegin) >= 0)
+                                            cleaned.Append(GetLLine(_beforeBrackets, stoi(rangeBegin)));
                                         else
                                             error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
                                     }
@@ -216,21 +218,21 @@
                         }
                         else if (!zeroDots(builder.ToString()))
                         {
-                            string before = (beforeDot(builder.ToString())), after = (afterDot(builder.ToString()));
+                            string before = beforeDot(builder.ToString()), after = afterDot(builder.ToString());
 
-                            if (objectExists(before))
+                            if (OExists(before))
                             {
-                                if (objects[indexOfObject(before)].methodExists(after))
+                                if (OMExists(before, after))
                                 {
                                     parse(before + "." + after);
                                     cleaned.Append(__LastValue);
                                 }
-                                else if (objects[indexOfObject(before)].variableExists(after))
+                                else if (OVExists(before, after))
                                 {
-                                    if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
-                                        cleaned.Append(objects[indexOfObject(before)].getVariable(after).getString());
-                                    else if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
-                                        cleaned.Append(dtos(objects[indexOfObject(before)].getVariable(after).getNumber()));
+                                    if (GetOVString(before, after) != __Null)
+                                        cleaned.Append(GetOVString(before, after));
+                                    else if (GetOVNumber(before, after) != __NullNum)
+                                        cleaned.Append(dtos(GetOVNumber(before, after)));
                                     else
                                         cleaned.Append("null");
                                 }
