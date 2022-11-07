@@ -111,11 +111,11 @@ namespace MetaScriptLang.Processing
                 case 0:
                     if (sValue != defaultValue)
                     {
-                        createVariable(arg0, sValue);
+                        CreateVString(arg0, sValue);
                     }
                     else
                     {
-                        createVariable(arg0, dValue);
+                        CreateVNumber(arg0, dValue);
                     }
                     break;
                 case 1:

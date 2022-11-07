@@ -21,7 +21,7 @@
                         builder.Clear();
                         builder.Append(subtractChar(builder.ToString(), "{"));
 
-                        if (variableExists(builder.ToString()) && zeroDots(builder.ToString()))
+                        if (VExists(builder.ToString()) && zeroDots(builder.ToString()))
                         {
                             if (isString(builder.ToString()))
                                 cleaned.Append(GetVString(builder.ToString()));
@@ -30,7 +30,7 @@
                             else
                                 cleaned.Append("null");
                         }
-                        else if (methodExists(builder.ToString()))
+                        else if (MExists(builder.ToString()))
                         {
                             parse(builder.ToString());
 
@@ -63,9 +63,9 @@
                                 else
                                     error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
                             }
-                            else if (methodExists(beforeParameters(builder.ToString())))
+                            else if (MExists(beforeParameters(builder.ToString())))
                             {
-                                executeTemplate(methods[indexOfMethod(beforeParameters(builder.ToString()))], getParameters(builder.ToString()));
+                                executeTemplate(GetM(beforeParameters(builder.ToString())), getParameters(builder.ToString()));
 
                                 cleaned.Append(__LastValue);
                             }
@@ -80,7 +80,7 @@
 
                             System.Collections.Generic.List<string> listRange = getBracketRange(afterBrackets);
 
-                            if (variableExists(_beforeBrackets))
+                            if (VExists(_beforeBrackets))
                             {
                                 if (isString(_beforeBrackets))
                                 {

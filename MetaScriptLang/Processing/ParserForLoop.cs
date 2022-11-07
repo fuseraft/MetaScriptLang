@@ -10,29 +10,29 @@ namespace MetaScriptLang.Processing
         {
             __DefaultLoopSymbol = "$";
 
-            if (m.isListLoop())
+            if (m.IsListLoop())
             {
-                int i = 0, stop = m.getList().size();
+                int i = 0, stop = m.GetList().size();
 
                 while (i < stop)
                 {
-                    for (int z = 0; z < m.size(); z++)
+                    for (int z = 0; z < m.GetMethodSize(); z++)
                     {
                         string cleaned = string.Empty, builder = string.Empty;
-                        int len = m.at(z).Length;
+                        int len = m.GetLine(z).Length;
                         bool buildSymbol = false, almostBuild = false, ended = false;
 
                         for (int a = 0; a < len; a++)
                         {
                             if (almostBuild)
                             {
-                                if (m.at(z)[a] == '{')
+                                if (m.GetLine(z)[a] == '{')
                                     buildSymbol = true;
                             }
 
                             if (buildSymbol)
                             {
-                                if (m.at(z)[a] == '}')
+                                if (m.GetLine(z)[a] == '}')
                                 {
                                     almostBuild = false;
                                     buildSymbol = false;
@@ -40,20 +40,20 @@ namespace MetaScriptLang.Processing
 
                                     builder = subtractString(builder, "{");
 
-                                    if (builder == m.getSymbolString())
+                                    if (builder == m.GetSymbol())
                                     {
-                                        cleaned += (m.getList().at(i));
+                                        cleaned += (m.GetList().at(i));
                                     }
 
                                     builder = string.Empty;
                                 }
                                 else
                                 {
-                                    builder += (m.at(z)[a]);
+                                    builder += (m.GetLine(z)[a]);
                                 }
                             }
 
-                            if (m.at(z)[a] == '$')
+                            if (m.GetLine(z)[a] == '$')
                             {
                                 almostBuild = true;
                             }
@@ -66,7 +66,7 @@ namespace MetaScriptLang.Processing
                                 }
                                 else
                                 {
-                                    cleaned += (m.at(z)[a]);
+                                    cleaned += (m.GetLine(z)[a]);
                                 }
                             }
                         }
@@ -85,14 +85,14 @@ namespace MetaScriptLang.Processing
             }
             else
             {
-                if (m.isInfinite())
+                if (m.IsInfinite())
                 {
                     if (__Negligence)
                     {
                         for (; ; )
                         {
-                            for (int z = 0; z < m.size(); z++)
-                                parse(m.at(z));
+                            for (int z = 0; z < m.GetMethodSize(); z++)
+                                parse(m.GetLine(z));
 
                             if (__Breaking == true)
                             {
@@ -104,15 +104,15 @@ namespace MetaScriptLang.Processing
                     else
                         error(ErrorLogger.INFINITE_LOOP, "", true);
                 }
-                else if (m.start() < m.stop())
+                else if (m.Start() < m.Stop())
                 {
-                    int start = m.start(), stop = m.stop();
+                    int start = m.Start(), stop = m.Stop();
 
                     while (start <= stop)
                     {
-                        for (int z = 0; z < m.size(); z++)
+                        for (int z = 0; z < m.GetMethodSize(); z++)
                         {
-                            string cleanString = (""), builder = (""), tmp = (m.at(z));
+                            string cleanString = (""), builder = (""), tmp = (m.GetLine(z));
                             int l = (tmp.Length);
                             bool buildSymbol = false, almostBuild = false, ended = false;
 
@@ -134,7 +134,7 @@ namespace MetaScriptLang.Processing
 
                                         builder = subtractString(builder, "{");
 
-                                        if (builder == m.getSymbolString())
+                                        if (builder == m.GetSymbol())
                                             cleanString += (itos(start));
 
                                         builder = string.Empty;
@@ -167,15 +167,15 @@ namespace MetaScriptLang.Processing
                         }
                     }
                 }
-                else if (m.start() > m.stop())
+                else if (m.Start() > m.Stop())
                 {
-                    int start = m.start(), stop = m.stop();
+                    int start = m.Start(), stop = m.Stop();
 
                     while (start >= stop)
                     {
-                        for (int z = 0; z < m.size(); z++)
+                        for (int z = 0; z < m.GetMethodSize(); z++)
                         {
-                            string cleaned = string.Empty, builder = string.Empty, tmp = (m.at(z));
+                            string cleaned = string.Empty, builder = string.Empty, tmp = (m.GetLine(z));
                             int l = (tmp.Length);
                             bool buildSymbol = false, almostBuild = false, ended = false;
 
@@ -197,7 +197,7 @@ namespace MetaScriptLang.Processing
 
                                         builder = subtractString(builder, "{");
 
-                                        if (builder == m.getSymbolString())
+                                        if (builder == m.GetSymbol())
                                             cleaned += (itos(start));
 
                                         builder = string.Empty;

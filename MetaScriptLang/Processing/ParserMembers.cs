@@ -25,9 +25,9 @@ namespace MetaScriptLang.Processing
             }
         }
 
-        System.Collections.Generic.List<Method> methods = new();
+        System.Collections.Generic.Dictionary<string, Method> methods = new();
         System.Collections.Generic.List<MetaScriptLang.Data.Object> objects = new();
-        System.Collections.Generic.List<Variable> variables = new();
+        System.Collections.Generic.Dictionary<string, Variable> variables = new();
         System.Collections.Generic.List<MetaScriptLang.Data.List> lists = new();
         System.Collections.Generic.List<Constant> constants = new();
         System.Collections.Generic.List<Method> ifStatements = new();

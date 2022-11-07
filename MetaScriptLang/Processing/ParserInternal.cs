@@ -27,15 +27,15 @@ namespace MetaScriptLang.Processing
                         Method method = new(beforeParameters(arg1));
 
                         if (__DefiningPublicCode)
-                            method.setPublic();
+                            method.SetPublic();
                         else if (__DefiningPrivateCode)
-                            method.setPrivate();
+                            method.SetPrivate();
 
-                        method.setObject(__CurrentObject);
+                        method.SetObject(__CurrentObject);
 
                         for (int i = 0; i < parameters.Count; i++)
                         {
-                            if (variableExists(parameters[i]))
+                            if (VExists(parameters[i]))
                             {
                                 if (!zeroDots(parameters[i]))
                                 {
@@ -46,9 +46,9 @@ namespace MetaScriptLang.Processing
                                         if (objects[indexOfObject(before)].variableExists(after))
                                         {
                                             if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
-                                                method.addMethodVariable(objects[indexOfObject(before)].getVariable(after).getString(), after);
+                                                method.AddVariable(objects[indexOfObject(before)].getVariable(after).getString(), after);
                                             else if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
-                                                method.addMethodVariable(objects[indexOfObject(before)].getVariable(after).getNumber(), after);
+                                                method.AddVariable(objects[indexOfObject(before)].getVariable(after).getNumber(), after);
                                             else
                                                 error(ErrorLogger.IS_NULL, parameters[i], false);
                                         }
@@ -61,9 +61,9 @@ namespace MetaScriptLang.Processing
                                 else
                                 {
                                     if (isString(parameters[i]))
-                                        method.addMethodVariable(GetVString(parameters[i]), GetVName(parameters[i]));
+                                        method.AddVariable(GetVString(parameters[i]), GetVName(parameters[i]));
                                     else if (isNumber(parameters[i]))
-                                        method.addMethodVariable(GetVNumber(parameters[i]), GetVName(parameters[i]));
+                                        method.AddVariable(GetVNumber(parameters[i]), GetVName(parameters[i]));
                                     else
                                         error(ErrorLogger.IS_NULL, parameters[i], false);
                                 }
@@ -73,13 +73,13 @@ namespace MetaScriptLang.Processing
                                 if (isAlpha(parameters[i]))
                                 {
                                     Variable newVariable = new("@[pm#" + itos(__ParamVarCount) + "]", parameters[i]);
-                                    method.addMethodVariable(newVariable);
+                                    method.AddVariable(newVariable);
                                     __ParamVarCount++;
                                 }
                                 else
                                 {
                                     Variable newVariable = new("@[pm#" + itos(__ParamVarCount) + "]", stod(parameters[i]));
-                                    method.addMethodVariable(newVariable);
+                                    method.AddVariable(newVariable);
                                     __ParamVarCount++;
                                 }
                             }
@@ -96,11 +96,11 @@ namespace MetaScriptLang.Processing
                         Method method = new(arg1);
 
                         if (__DefiningPublicCode)
-                            method.setPublic();
+                            method.SetPublic();
                         else if (__DefiningPrivateCode)
-                            method.setPrivate();
+                            method.SetPrivate();
 
-                        method.setObject(__CurrentObject);
+                        method.SetObject(__CurrentObject);
                         objects[indexOfObject(__CurrentObject)].addMethod(method);
                         objects[indexOfObject(__CurrentObject)].setCurrentMethod(arg1);
                         __DefiningMethod = true;
@@ -110,7 +110,7 @@ namespace MetaScriptLang.Processing
             }
             else
             {
-                if (methodExists(arg1))
+                if (MExists(arg1))
                     error(ErrorLogger.METHOD_DEFINED, arg1, false);
                 else
                 {
@@ -123,11 +123,11 @@ namespace MetaScriptLang.Processing
                             Method method = new(after);
 
                             if (__DefiningPublicCode)
-                                method.setPublic();
+                                method.SetPublic();
                             else if (__DefiningPrivateCode)
-                                method.setPrivate();
+                                method.SetPrivate();
 
-                            method.setObject(before);
+                            method.SetObject(before);
                             objects[indexOfObject(before)].addMethod(method);
                             objects[indexOfObject(before)].setCurrentMethod(after);
                             __DefiningMethod = true;
@@ -143,11 +143,11 @@ namespace MetaScriptLang.Processing
                         Method method = new(beforeParameters(arg1));
 
                         if (indestructable)
-                            method.setIndestructible();
+                            method.Lock();
 
                         for (int i = 0; i < parameters.Count; i++)
                         {
-                            if (variableExists(parameters[i]))
+                            if (VExists(parameters[i]))
                             {
                                 if (!zeroDots(parameters[i]))
                                 {
@@ -158,9 +158,9 @@ namespace MetaScriptLang.Processing
                                         if (objects[indexOfObject(before)].variableExists(after))
                                         {
                                             if (objects[indexOfObject(before)].getVariable(after).getString() != __Null)
-                                                method.addMethodVariable(objects[indexOfObject(before)].getVariable(after).getString(), after);
+                                                method.AddVariable(objects[indexOfObject(before)].getVariable(after).getString(), after);
                                             else if (objects[indexOfObject(before)].getVariable(after).getNumber() != __NullNum)
-                                                method.addMethodVariable(objects[indexOfObject(before)].getVariable(after).getNumber(), after);
+                                                method.AddVariable(objects[indexOfObject(before)].getVariable(after).getNumber(), after);
                                             else
                                                 error(ErrorLogger.IS_NULL, parameters[i], false);
                                         }
@@ -173,9 +173,9 @@ namespace MetaScriptLang.Processing
                                 else
                                 {
                                     if (isString(parameters[i]))
-                                        method.addMethodVariable(GetVString(parameters[i]), GetVName(parameters[i]));
+                                        method.AddVariable(GetVString(parameters[i]), GetVName(parameters[i]));
                                     else if (isNumber(parameters[i]))
-                                        method.addMethodVariable(GetVNumber(parameters[i]), GetVName(parameters[i]));
+                                        method.AddVariable(GetVNumber(parameters[i]), GetVName(parameters[i]));
                                     else
                                         error(ErrorLogger.IS_NULL, parameters[i], false);
                                 }
@@ -186,20 +186,20 @@ namespace MetaScriptLang.Processing
                                 {
                                     Variable newVariable = new("@" + parameters[i], "");
                                     newVariable.setNull();
-                                    method.addMethodVariable(newVariable);
+                                    method.AddVariable(newVariable);
                                     __ParamVarCount++;
                                 }
                                 else
                                 {
                                     Variable newVariable = new("@" + parameters[i], 0);
                                     newVariable.setNull();
-                                    method.addMethodVariable(newVariable);
+                                    method.AddVariable(newVariable);
                                     __ParamVarCount++;
                                 }
                             }
                         }
 
-                        methods.Add(method);
+                        methods.Add(method.GetName(), method);
                         __DefiningMethod = true;
                         __DefiningParameterizedMethod = true;
                     }
@@ -208,9 +208,9 @@ namespace MetaScriptLang.Processing
                         Method method = new(arg1);
 
                         if (indestructable)
-                            method.setIndestructible();
+                            method.Lock();
 
-                        methods.Add(method);
+                        methods.Add(method.GetName(), method);
                         __DefiningMethod = true;
                     }
                 }
@@ -297,7 +297,7 @@ namespace MetaScriptLang.Processing
                     if (varNames[i] != arg1)
                     {
                         Variable newVariable = new(varNames[i], varValues[i]);
-                        variables.Add(newVariable);
+                        variables.Add(varNames[i], newVariable);
 
                         if (i != (int)varNames.Count - 1)
                             new_saved += (varNames[i] + "&" + varValues[i] + "#");
@@ -323,9 +323,9 @@ namespace MetaScriptLang.Processing
             {
                 before = (beforeParameters(arg1));
 
-                if (methodExists(before))
+                if (MExists(before))
                 {
-                    executeTemplate(getMethod(before), getParameters(arg1));
+                    executeTemplate(GetM(before), getParameters(arg1));
 
                     parse("return " + __LastValue);
                 }
@@ -357,7 +357,7 @@ namespace MetaScriptLang.Processing
                     }
                 }
             }
-            else if (variableExists(arg1))
+            else if (VExists(arg1))
             {
                 if (objectExists(beforeDot(arg1)))
                 {
@@ -378,7 +378,7 @@ namespace MetaScriptLang.Processing
                         __LastValue = "null";
 
                     if (GCCanCollectV(arg1))
-                        variables = removeVariable(variables, arg1);
+                        DeleteV(arg1);
                 }
             }
             else if (listExists(arg1))
@@ -408,7 +408,7 @@ namespace MetaScriptLang.Processing
 
         void InternalRemember(string arg0, string arg1)
         {
-            if (variableExists(arg1))
+            if (VExists(arg1))
             {
                 if (isString(arg1))
                     saveVariable(arg1 + "&" + GetVString(arg1));
@@ -427,7 +427,7 @@ namespace MetaScriptLang.Processing
             bool is_say = (arg0 == "say");
             bool is_print = (arg0 == "print" || arg0 == "println");
             // if parameter is variable, get it's value
-            if (variableExists(arg1))
+            if (VExists(arg1))
             {
                 // set the value
                 if (!zeroDots(arg1))

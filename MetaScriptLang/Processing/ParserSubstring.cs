@@ -112,10 +112,10 @@
                                     for (int i = stoi(rangeBegin); i <= stoi(rangeEnd); i++)
                                         tempString += (variableString[i]);
 
-                                    if (variableExists(arg1))
+                                    if (VExists(arg1))
                                         SetVString(arg1, tempString);
                                     else
-                                        createVariable(arg1, tempString);
+                                        CreateVString(arg1, tempString);
                                 }
                                 else
                                     error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
@@ -129,10 +129,10 @@
                                     for (int i = stoi(rangeBegin); i >= stoi(rangeEnd); i--)
                                         tempString += (variableString[i]);
 
-                                    if (variableExists(arg1))
+                                    if (VExists(arg1))
                                         SetVString(arg1, tempString);
                                     else
-                                        createVariable(arg1, tempString);
+                                        CreateVString(arg1, tempString);
                                 }
                                 else
                                     error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
@@ -159,10 +159,10 @@
                                 string tmp_ = ("");
                                 tmp_ += (variableString[stoi(rangeBegin)]);
 
-                                if (variableExists(arg1))
+                                if (VExists(arg1))
                                     SetVString(arg1, tmp_);
                                 else
-                                    createVariable(arg1, tmp_);
+                                    CreateVString(arg1, tmp_);
                             }
                         }
                     }

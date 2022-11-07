@@ -36,41 +36,36 @@
 
         public Method(string name)
         {
-            initialize(name);
+            Initialize(name);
         }
 
         public Method(string name, bool isTemplate)
         {
-            initialize(name);
+            Initialize(name);
             isTemplate_ = isTemplate;
         }
 
-        ~Method()
-        {
-            clear();
-        }
-
-        public void setObject(string name)
+        public void SetObject(string name)
         {
             objectName = name;
         }
 
-        public void setIndestructible()
+        public void Lock()
         {
             isIndestructible = true;
         }
 
-        public bool indestructible()
+        public bool IsLocked()
         {
             return isIndestructible;
         }
 
-        public void setDestructible()
+        public void Unlock()
         {
             isIndestructible = false;
         }
 
-        public string getObject()
+        public string GetObject()
         {
             return objectName;
         }
@@ -78,7 +73,7 @@
         /**
          * symbol is the variable containing the current iteration value.
          */
-        public void setSymbol(string symbol)
+        public void SetSymbol(string symbol)
         {
             symbolString = symbol;
         }
@@ -86,104 +81,94 @@
         /**
          * symbol is the variable containing the current iteration value.
          */
-        public void setDefaultSymbol(string symbol)
+        public void SetDefaultSymbol(string symbol)
         {
             defaultSymbol = symbol[0];
         }
 
-        public string getSymbolString()
+        public string GetSymbol()
         {
             return symbolString;
         }
 
-        public char getDefaultSymbol()
+        public char GetDefaultSymbol()
         {
             return defaultSymbol;
         }
 
-        public void setPrivate()
+        public void SetPrivate()
         {
             isPrivate_ = true;
             isPublic_ = false;
         }
 
-        public void setPublic()
+        public void SetPublic()
         {
             isPublic_ = true;
             isPrivate_ = false;
         }
 
-        public bool isPublic()
+        public bool IsPublic()
         {
             return isPublic_;
         }
 
-        public bool isPrivate()
-        {
-            return isPrivate_;
-        }
-
-        public bool isTemplate()
-        {
-            return isTemplate_;
-        }
-
-        public List<Variable> getMethodVariables()
+        public List<Variable> GetVariables()
         {
             return methodVariables;
         }
 
-        public void setName(string name)
+        public void SetName(string name)
         {
             methodName = name;
         }
 
-        public void add(string line)
+        public void AddLine(string line)
         {
             lines.Add(line);
         }
 
-        public void addMethodVariable(string value, string variableName)
+        public void AddVariable(string value, string variableName)
         {
             Variable newVariable = new (variableName, value);
             methodVariables.Add(newVariable);
         }
 
-        public void addMethodVariable(double value, string variableName)
+        public void AddVariable(double value, string variableName)
         {
             Variable newVariable = new (variableName, value);
             methodVariables.Add(newVariable);
         }
 
-        public void addMethodVariable(Variable variable)
+        public void AddVariable(Variable variable)
         {
             methodVariables.Add(variable);
         }
 
-        public string at(int index)
+        public string GetLine(int index)
         {
             if (index < lines.Count)
                 return lines[index];
             return "#!=no_line";
         }
 
-        public void buildNest()
+        public void BuildNest()
         {
             SwitchCase newNest = new ();
             nest = newNest;
         }
 
-        public SwitchCase getNest()
+        public SwitchCase GetNest()
         {
             return (nest);
         }
 
-        public void inNest(string line)
+        public void AddToNest(string line)
         {
             nest.Add(line);
         }
 
-        public string nestAt(int index)
+        public string GetNestLine(int index)
         {
             if (index < nest.Count)
                 return (nest[index]);
@@ -191,18 +176,12 @@
                 return "nothing!!!";
         }
 
-        public void clear()
-        {
-            lines.Clear();
-            methodVariables.Clear();
-        }
-
-        public List<string> getLines()
+        public List<string> GetLines()
         {
             return lines;
         }
 
-        public void initialize(string name)
+        public void Initialize(string name)
         {
             defaultSymbol = '$';
             logicOperatorValue = string.Empty;
@@ -225,125 +204,125 @@
             templateObjects = 0;
         }
 
-        public bool isBad()
+        public bool IsBad()
         {
-            return name().StartsWith("[bad_meth");
+            return methodName.StartsWith("[bad_meth");
         }
 
-        public string name()
+        public string GetName()
         {
             return methodName;
         }
 
-        public void setTemplateSize(int size)
+        public void SetTemplateSize(int size)
         {
             templateObjects = size;
         }
 
-        public int getTemplateSize()
+        public int GetTemplateSize()
         {
             return templateObjects;
         }
 
-        public int size()
+        public int GetMethodSize()
         {
             return lines.Count;
         }
 
-        public bool isIF()
+        public bool IsIfStatement()
         {
             return isIF_;
         }
 
-        public bool isForLoop()
+        public bool IsForLoop()
         {
             return isForLoop_;
         }
 
-        public bool isWhileLoop()
+        public bool IsWhileLoop()
         {
             return isWhileLoop_;
         }
 
-        public bool isInfinite()
+        public bool IsInfinite()
         {
             return isInfinite_;
         }
 
-        public int start()
+        public int Start()
         {
             return startValue;
         }
 
-        public int stop()
+        public int Stop()
         {
             return stopValue;
         }
 
-        public string valueOne()
+        public string FirstValue()
         {
             return valueOne_;
         }
 
-        public string valueTwo()
+        public string SecondValue()
         {
             return valueTwo_;
         }
 
-        public string logicOperator()
+        public string LogicalOperator()
         {
             return logicOperatorValue;
         }
 
-        public void setInfinite()
+        public void SetInfinite()
         {
             isInfinite_ = true;
         }
 
-        public void setBool(bool b)
+        public void SetIsIfStatement(bool b)
         {
             isIF_ = b;
         }
 
-        public void setFor(bool b)
+        public void SetIsForLoop(bool b)
         {
             isForLoop_ = b;
         }
 
-        public void setWhile(bool b)
+        public void SetIsWhileLoop(bool b)
         {
             isWhileLoop_ = b;
         }
 
-        public void setWhileValues(string v1, string op, string v2)
+        public void SetWhileLoopValues(string v1, string op, string v2)
         {
             valueOne_ = v1;
             logicOperatorValue = op;
             valueTwo_ = v2;
         }
 
-        public void setForValues(int a, int b)
+        public void SetForLoopValues(int a, int b)
         {
             startValue = a;
             stopValue = b;
         }
 
-        public void setForList(List l)
+        public void SetForListLoop(List l)
         {
             list = l;
         }
 
-        public bool isListLoop()
+        public bool IsListLoop()
         {
             return isListLoop_;
         }
 
-        public void setListLoop()
+        public void SetListLoop()
         {
             isListLoop_ = true;
         }
 
-        public List getList()
+        public List GetList()
         {
             return list;
         }

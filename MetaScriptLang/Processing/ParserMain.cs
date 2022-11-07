@@ -332,7 +332,7 @@
                                         if (__DefiningObject)
                                             objects[indexOfObject(__CurrentObject)].addToCurrentMethod(s);
                                         else
-                                            methods[methods.Count - 1].add(s);
+                                            methods[CurrentMethodName].AddLine(s);
                                     }
                                     else if (__DefiningLocalSwitchBlock)
                                     {
@@ -341,7 +341,7 @@
                                         if (__DefiningObject)
                                             objects[indexOfObject(__CurrentObject)].addToCurrentMethod(s);
                                         else
-                                            methods[methods.Count - 1].add(s);
+                                            methods[CurrentMethodName].AddLine(s);
                                     }
                                     else
                                     {
@@ -377,7 +377,7 @@
 
                                     for (int z = 0; z < words.Count; z++)
                                     {
-                                        if (variableExists(words[z]))
+                                        if (VExists(words[z]))
                                         {
                                             if (isString(words[z]))
                                                 freshLine += (GetVString(words[z]));
@@ -403,7 +403,7 @@
                                             objects[indexOfObject(__CurrentObject)].setPublic();
                                     }
                                     else
-                                        methods[methods.Count - 1].add(freshLine);
+                                        methods[CurrentMethodName].AddLine(freshLine);
                                 }
                             }
                             else
@@ -419,7 +419,7 @@
                                         if (__DefiningObject)
                                             objects[objects.Count - 1].addToCurrentMethod(s);
                                         else
-                                            methods[methods.Count - 1].add(s);
+                                            methods[CurrentMethodName].AddLine(s);
                                     }
                                     else if (__DefiningLocalSwitchBlock)
                                     {
@@ -428,7 +428,7 @@
                                         if (__DefiningObject)
                                             objects[objects.Count - 1].addToCurrentMethod(s);
                                         else
-                                            methods[methods.Count - 1].add(s);
+                                            methods[CurrentMethodName].AddLine(s);
                                     }
                                     else
                                     {
@@ -468,7 +468,7 @@
                                                 objects[objects.Count - 1].setPublic();
                                         }
                                         else
-                                            methods[methods.Count - 1].add(s);
+                                            methods[CurrentMethodName].AddLine(s);
                                     }
                                 }
                             }
@@ -478,9 +478,9 @@
                             if (__DefiningNest)
                             {
                                 if (command[0] == "endif")
-                                    executeNest(ifStatements[ifStatements.Count - 1].getNest());
+                                    executeNest(ifStatements[ifStatements.Count - 1].GetNest());
                                 else
-                                    ifStatements[(int)ifStatements.Count - 1].inNest(s);
+                                    ifStatements[(int)ifStatements.Count - 1].AddToNest(s);
                             }
                             else
                             {
@@ -503,7 +503,7 @@
 
                                     for (int i = 0; i < ifStatements.Count; i++)
                                     {
-                                        if (ifStatements[i].isIF())
+                                        if (ifStatements[i].IsIfStatement())
                                         {
                                             executeMethod(ifStatements[i]);
 
@@ -536,7 +536,7 @@
                                         setFalseIf();
                                 }
                                 else
-                                    ifStatements[(int)ifStatements.Count - 1].add(s);
+                                    ifStatements[(int)ifStatements.Count - 1].AddLine(s);
                             }
                         }
                         else
@@ -549,11 +549,11 @@
                                 {
                                     __DefiningWhileLoop = false;
 
-                                    string v1 = whileLoops[whileLoops.Count - 1].valueOne(),
-                                           v2 = whileLoops[whileLoops.Count - 1].valueTwo(),
-                                           op = whileLoops[whileLoops.Count - 1].logicOperator();
+                                    string v1 = whileLoops[whileLoops.Count - 1].FirstValue(),
+                                           v2 = whileLoops[whileLoops.Count - 1].SecondValue(),
+                                           op = whileLoops[whileLoops.Count - 1].LogicalOperator();
 
-                                    if (variableExists(v1) && variableExists(v2))
+                                    if (VExists(v1) && VExists(v2))
                                     {
                                         if (op == "==")
                                         {
@@ -640,7 +640,7 @@
                                             __WhileLoopCount = 0;
                                         }
                                     }
-                                    else if (variableExists(v1))
+                                    else if (VExists(v1))
                                     {
                                         if (op == "==")
                                         {
@@ -729,7 +729,7 @@
                                     }
                                 }
                                 else
-                                    whileLoops[whileLoops.Count - 1].add(s);
+                                    whileLoops[whileLoops.Count - 1].AddLine(s);
                             }
                             else if (__DefiningForLoop)
                             {
@@ -738,7 +738,7 @@
                                     __DefiningForLoop = false;
 
                                     for (int i = 0; i < (int)forLoops.Count; i++)
-                                        if (forLoops[i].isForLoop())
+                                        if (forLoops[i].IsForLoop())
                                             forLoop(forLoops[i]);
 
                                     forLoops.Clear();
@@ -750,7 +750,7 @@
                                     if (s == "{")
                                         doNothing();
                                     else
-                                        forLoops[forLoops.Count - 1].add(s);
+                                        forLoops[forLoops.Count - 1].AddLine(s);
                                 }
                             }
                             else
@@ -796,7 +796,7 @@
                                                 {
                                                     InternalGetEnv(string.Empty, after, 3);
                                                 }
-                                                else if (variableExists(before))
+                                                else if (VExists(before))
                                                 {
                                                     if (after == "clear")
                                                         parse(before + " = __Null");
@@ -831,8 +831,8 @@
                                                 scripts[indexOfScript(__CurrentScript)].addMark(newMark);
                                             }
                                         }
-                                        else if (methodExists(s))
-                                            executeMethod(getMethod(s));
+                                        else if (MExists(s))
+                                            executeMethod(GetM(s));
                                         else if (startsWith(s, "[") && endsWith(s, "]"))
                                         {
                                             InternalCreateModule(s);
@@ -841,8 +841,8 @@
                                         {
                                             s = subtractChar(s, "\"");
 
-                                            if (methodExists(beforeParameters(s)))
-                                                executeTemplate(getMethod(beforeParameters(s)), getParameters(s));
+                                            if (MExists(beforeParameters(s)))
+                                                executeTemplate(GetM(beforeParameters(s)), getParameters(s));
                                             else
                                                 sysExec(s, command);
                                         }
@@ -1103,7 +1103,7 @@
             }
             else if (arg0 == "switch")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     __DefiningSwitchBlock = true;
                     __SwitchVarName = arg1;
@@ -1126,7 +1126,7 @@
             {
                 string tmpValue = string.Empty;
                 // if arg1 is a variable
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     // can we can assume that arg1 belongs to an object?
                     if (!zeroDots(arg1))
@@ -1151,11 +1151,11 @@
                     {
                         if (isString(arg1))
                         {
-                            tmpValue = getVariable(arg1).getString();
+                            tmpValue = GetVString(arg1);
                         }
                         else if (isNumber(arg1))
                         {
-                            tmpValue = Convert.ToString(getVariable(arg1).getNumber());
+                            tmpValue = Convert.ToString(GetVNumber(arg1));
                         }
                         else
                         {
@@ -1225,7 +1225,7 @@
             }
             else if (arg0 == "err" || arg0 == "error")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (isString(arg1))
                         cerr = GetVString(arg1) + System.Environment.NewLine;
@@ -1256,46 +1256,46 @@
 
                     for (int i = 0; i < parameters.Count; i++)
                     {
-                        if (variableExists(parameters[i]))
-                            variables = removeVariable(variables, parameters[i]);
+                        if (VExists(parameters[i]))
+                            DeleteV(parameters[i]);
                         else if (listExists(parameters[i]))
                             lists = removeList(lists, parameters[i]);
                         else if (objectExists(parameters[i]))
                             objects = removeObject(objects, parameters[i]);
-                        else if (methodExists(parameters[i]))
-                            methods = removeMethod(methods, parameters[i]);
+                        else if (MExists(parameters[i]))
+                            DeleteM(parameters[i]);
                         else
                             error(ErrorLogger.TARGET_UNDEFINED, parameters[i], false);
                     }
                 }
-                else if (variableExists(arg1))
-                    variables = removeVariable(variables, arg1);
+                else if (VExists(arg1))
+                    DeleteV(arg1);
                 else if (listExists(arg1))
                     lists = removeList(lists, arg1);
                 else if (objectExists(arg1))
                     objects = removeObject(objects, arg1);
-                else if (methodExists(arg1))
-                    methods = removeMethod(methods, arg1);
+                else if (MExists(arg1))
+                    DeleteM(arg1);
                 else
                     error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
             }
             else if (arg0 == "see_string")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                     write(GetVString(arg1));
                 else
                     error(ErrorLogger.VAR_UNDEFINED, arg1, false);
             }
             else if (arg0 == "see_number")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                     write(dtos(GetVNumber(arg1)));
                 else
                     error(ErrorLogger.VAR_UNDEFINED, arg1, false);
             }
             else if (arg0 == "__begin__")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (isString(arg1))
                     {
@@ -1362,7 +1362,7 @@
             }
             else if (arg0 == "cd" || arg0 == "chdir")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (isString(arg1))
                     {
@@ -1402,7 +1402,7 @@
             }
             else if (arg0 == "!")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (isString(arg1))
                         parse(GetVString(arg1));
@@ -1414,7 +1414,7 @@
             }
             else if (arg0 == "?")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (isString(arg1))
                         sysExec(GetVString(arg1), command);
@@ -1426,7 +1426,7 @@
             }
             else if (arg0 == "init_dir" || arg0 == "initial_directory")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (isString(arg1))
                     {
@@ -1469,7 +1469,7 @@
                 }
                 else
                 {
-                    if (methodExists(arg1))
+                    if (MExists(arg1))
                         __true();
                     else
                         __false();
@@ -1493,7 +1493,7 @@
                 }
                 else
                 {
-                    if (variableExists(arg1))
+                    if (VExists(arg1))
                         __true();
                     else
                         __false();
@@ -1522,7 +1522,7 @@
                 }
                 else
                 {
-                    if (variableExists(arg1))
+                    if (VExists(arg1))
                     {
                         if (isString(arg1))
                         {
@@ -1559,7 +1559,7 @@
                 }
                 else
                 {
-                    if (variableExists(arg1))
+                    if (VExists(arg1))
                     {
                         if (isString(arg1))
                         {
@@ -1582,7 +1582,7 @@
             }
             else if (arg0 == "collect?")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (GCCanCollectV(arg1))
                         __true();
@@ -1608,7 +1608,7 @@
                 }
                 else
                 {
-                    if (variableExists(arg1))
+                    if (VExists(arg1))
                     {
                         if (isNumber(arg1))
                             __true();
@@ -1640,7 +1640,7 @@
                 }
                 else
                 {
-                    if (variableExists(arg1))
+                    if (VExists(arg1))
                     {
                         if (isString(arg1))
                             __true();
@@ -1672,7 +1672,7 @@
                 }
                 else
                 {
-                    if (variableExists(arg1))
+                    if (VExists(arg1))
                     {
                         if (isString(arg1))
                         {
@@ -1714,7 +1714,7 @@
                 }
                 else
                 {
-                    if (variableExists(arg1))
+                    if (VExists(arg1))
                     {
                         if (isString(arg1))
                         {
@@ -1746,7 +1746,7 @@
             }
             else if (arg0 == "template")
             {
-                if (methodExists(arg1))
+                if (MExists(arg1))
                     error(ErrorLogger.METHOD_DEFINED, arg1, false);
                 else
                 {
@@ -1755,9 +1755,9 @@
                         System.Collections.Generic.List<string> parameters = getParameters(arg1);
                         Method method = new(beforeParameters(arg1), true);
 
-                        method.setTemplateSize(parameters.Count);
+                        method.SetTemplateSize(parameters.Count);
 
-                        methods.Add(method);
+                        methods.Add(method.GetName(), method);
 
                         __DefiningMethod = true;
                     }
@@ -1765,17 +1765,17 @@
             }
             else if (arg0 == "lock")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                     SetVLock(arg1);
-                else if (methodExists(arg1))
-                    methods[indexOfMethod(arg1)].setIndestructible();
+                else if (MExists(arg1))
+                    SetMLock(arg1);
             }
             else if (arg0 == "unlock")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                     SetVUnlock(arg1);
-                else if (methodExists(arg1))
-                    methods[indexOfMethod(arg1)].setDestructible();
+                else if (MExists(arg1))
+                    SetMUnlock(arg1);
             }
             else if (arg0 == "method" || arg0 == "[method]")
             {
@@ -1791,7 +1791,7 @@
             }
             else if (arg0 == "fpush")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (isString(arg1))
                     {
@@ -1813,7 +1813,7 @@
             }
             else if (arg0 == "fpop")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (isString(arg1))
                     {
@@ -1835,7 +1835,7 @@
             }
             else if (arg0 == "dpush")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (isString(arg1))
                     {
@@ -1857,7 +1857,7 @@
             }
             else if (arg0 == "dpop")
             {
-                if (variableExists(arg1))
+                if (VExists(arg1))
                 {
                     if (isString(arg1))
                     {
@@ -1893,7 +1893,7 @@
             if (contains(arg0, "self."))
                 arg0 = replace(arg0, "self", __CurrentMethodObject);
 
-            if (variableExists(arg0))
+            if (VExists(arg0))
             {
                 initializeVariable(arg0, arg1, arg2, s, command);
             }
@@ -1951,7 +1951,7 @@
 
                             for (int i = 0; i < objectMethods.Count; i++)
                             {
-                                if (objectMethods[i].isPublic())
+                                if (objectMethods[i].IsPublic())
                                     newObject.addMethod(objectMethods[i]);
                             }
 
@@ -1977,7 +1977,7 @@
                     {
                         string testString = ("[none]");
 
-                        if (variableExists(arg1))
+                        if (VExists(arg1))
                         {
                             if (isString(arg1))
                                 testString = GetVString(arg1);
@@ -2010,7 +2010,7 @@
                             setTrueIf();
                     }
                 }
-                else if (variableExists(arg1) && variableExists(arg3))
+                else if (VExists(arg1) && VExists(arg3))
                 {
                     if (isString(arg1) && isString(arg3))
                     {
@@ -2139,7 +2139,7 @@
                         setTrueIf();
                     }
                 }
-                else if ((variableExists(arg1) && !variableExists(arg3)) && !methodExists(arg3) && notObjectMethod(arg3) && !containsParameters(arg3))
+                else if ((VExists(arg1) && !VExists(arg3)) && !MExists(arg3) && notObjectMethod(arg3) && !containsParameters(arg3))
                 {
                     if (isNumber(arg1))
                     {
@@ -2461,7 +2461,7 @@
                         }
                     }
                 }
-                else if ((variableExists(arg1) && !variableExists(arg3)) && !methodExists(arg3) && notObjectMethod(arg3) && containsParameters(arg3))
+                else if ((VExists(arg1) && !VExists(arg3)) && !MExists(arg3) && notObjectMethod(arg3) && containsParameters(arg3))
                 {
                     string stackValue = (string.Empty);
 
@@ -2792,7 +2792,7 @@
                         }
                     }
                 }
-                else if ((!variableExists(arg1) && variableExists(arg3)) && !methodExists(arg1) && notObjectMethod(arg1) && !containsParameters(arg1))
+                else if ((!VExists(arg1) && VExists(arg3)) && !MExists(arg1) && notObjectMethod(arg1) && !containsParameters(arg1))
                 {
                     if (isNumber(arg3))
                     {
@@ -2903,7 +2903,7 @@
                         }
                     }
                 }
-                else if ((!variableExists(arg1) && variableExists(arg3)) && !methodExists(arg1) && notObjectMethod(arg1) && containsParameters(arg1))
+                else if ((!VExists(arg1) && VExists(arg3)) && !MExists(arg1) && notObjectMethod(arg1) && containsParameters(arg1))
                 {
                     string stackValue = (string.Empty);
 
@@ -3143,8 +3143,8 @@
 
                                 arg1Result = __LastValue;
 
-                                if (methodExists(beforeParameters(arg3)))
-                                    executeTemplate(methods[indexOfMethod(beforeParameters(arg3))], getParameters(arg3));
+                                if (MExists(beforeParameters(arg3)))
+                                    executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
 
                                 arg3Result = __LastValue;
 
@@ -3240,8 +3240,8 @@
 
                                 arg3Result = __LastValue;
 
-                                if (methodExists(beforeParameters(arg1)))
-                                    executeTemplate(methods[indexOfMethod(beforeParameters(arg1))], getParameters(arg1));
+                                if (MExists(beforeParameters(arg1)))
+                                    executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
 
                                 arg1Result = __LastValue;
 
@@ -3328,13 +3328,13 @@
                         {
                             string arg1Result = (string.Empty), arg3Result = (string.Empty);
 
-                            if (methodExists(beforeParameters(arg1)))
-                                executeTemplate(methods[indexOfMethod(beforeParameters(arg1))], getParameters(arg1));
+                            if (MExists(beforeParameters(arg1)))
+                                executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
 
                             arg1Result = __LastValue;
 
-                            if (methodExists(beforeParameters(arg3)))
-                                executeTemplate(methods[indexOfMethod(beforeParameters(arg3))], getParameters(arg3));
+                            if (MExists(beforeParameters(arg3)))
+                                executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
 
                             arg3Result = __LastValue;
 
@@ -3420,18 +3420,18 @@
 
                         if (zeroDots(arg1))
                         {
-                            if (methodExists(beforeParameters(arg1)))
+                            if (MExists(beforeParameters(arg1)))
                             {
-                                executeTemplate(methods[indexOfMethod(beforeParameters(arg1))], getParameters(arg1));
+                                executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
 
                                 arg1Result = __LastValue;
 
-                                if (methodExists(arg3))
+                                if (MExists(arg3))
                                 {
                                     parse(arg3);
                                     arg3Result = __LastValue;
                                 }
-                                else if (variableExists(arg3))
+                                else if (VExists(arg3))
                                 {
                                     if (isString(arg3))
                                         arg3Result = GetVString(arg3);
@@ -3542,7 +3542,7 @@
 
                                 arg1Result = __LastValue;
 
-                                if (variableExists(arg3))
+                                if (VExists(arg3))
                                 {
                                     if (isString(arg3))
                                         arg3Result = GetVString(arg3);
@@ -3555,7 +3555,7 @@
                                         setTrueIf();
                                     }
                                 }
-                                else if (methodExists(arg3))
+                                else if (MExists(arg3))
                                 {
                                     parse(arg3);
 
@@ -3655,18 +3655,18 @@
 
                         if (zeroDots(arg3))
                         {
-                            if (methodExists(beforeParameters(arg3)))
+                            if (MExists(beforeParameters(arg3)))
                             {
-                                executeTemplate(methods[indexOfMethod(beforeParameters(arg3))], getParameters(arg3));
+                                executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
 
                                 arg3Result = __LastValue;
 
-                                if (methodExists(arg1))
+                                if (MExists(arg1))
                                 {
                                     parse(arg1);
                                     arg1Result = __LastValue;
                                 }
-                                else if (variableExists(arg1))
+                                else if (VExists(arg1))
                                 {
                                     if (isString(arg1))
                                         arg1Result = GetVString(arg1);
@@ -3775,7 +3775,7 @@
 
                                 arg3Result = __LastValue;
 
-                                if (variableExists(arg1))
+                                if (VExists(arg1))
                                 {
                                     if (isString(arg1))
                                         arg1Result = GetVString(arg1);
@@ -3787,7 +3787,7 @@
                                         setTrueIf();
                                     }
                                 }
-                                else if (methodExists(arg1))
+                                else if (MExists(arg1))
                                 {
                                     parse(arg1);
 
@@ -3877,16 +3877,16 @@
                         }
                     }
                 }
-                else if ((methodExists(arg1) && arg3 != "method?") || methodExists(arg3))
+                else if ((MExists(arg1) && arg3 != "method?") || MExists(arg3))
                 {
                     string arg1Result = (string.Empty), arg3Result = (string.Empty);
 
-                    if (methodExists(arg1))
+                    if (MExists(arg1))
                     {
                         parse(arg1);
                         arg1Result = __LastValue;
                     }
-                    else if (variableExists(arg1))
+                    else if (VExists(arg1))
                     {
                         if (isString(arg1))
                             arg1Result = GetVString(arg1);
@@ -3901,12 +3901,12 @@
                     else
                         arg1Result = arg1;
 
-                    if (methodExists(arg3))
+                    if (MExists(arg3))
                     {
                         parse(arg3);
                         arg3Result = __LastValue;
                     }
-                    else if (variableExists(arg3))
+                    else if (VExists(arg3))
                     {
                         if (isString(arg3))
                             arg3Result = GetVString(arg3);
@@ -4025,7 +4025,7 @@
                     }
                     else if (arg3 == "variable?")
                     {
-                        if (variableExists(arg1))
+                        if (VExists(arg1))
                         {
                             if (arg2 == "==")
                                 setFalseIf();
@@ -4052,7 +4052,7 @@
                     }
                     else if (arg3 == "method?")
                     {
-                        if (methodExists(arg1))
+                        if (MExists(arg1))
                         {
                             if (arg2 == "==")
                                 setFalseIf();
@@ -4218,7 +4218,7 @@
                     {
                         string testString = ("[none]");
 
-                        if (variableExists(arg1))
+                        if (VExists(arg1))
                         {
                             if (isString(arg1))
                                 testString = GetVString(arg1);
@@ -4257,7 +4257,7 @@
                     {
                         string testString = ("[none]");
 
-                        if (variableExists(arg3))
+                        if (VExists(arg3))
                         {
                             if (isString(arg3))
                                 testString = GetVString(arg3);
@@ -4290,7 +4290,7 @@
                             setFalseIf();
                     }
                 }
-                else if (variableExists(arg1) && variableExists(arg3))
+                else if (VExists(arg1) && VExists(arg3))
                 {
                     if (isString(arg1) && isString(arg3))
                     {
@@ -4419,7 +4419,7 @@
                         setFalseIf();
                     }
                 }
-                else if ((variableExists(arg1) && !variableExists(arg3)) && !methodExists(arg3) && notObjectMethod(arg3) && !containsParameters(arg3))
+                else if ((VExists(arg1) && !VExists(arg3)) && !MExists(arg3) && notObjectMethod(arg3) && !containsParameters(arg3))
                 {
                     if (isNumber(arg1))
                     {
@@ -4741,7 +4741,7 @@
                         }
                     }
                 }
-                else if ((variableExists(arg1) && !variableExists(arg3)) && !methodExists(arg3) && notObjectMethod(arg3) && containsParameters(arg3))
+                else if ((VExists(arg1) && !VExists(arg3)) && !MExists(arg3) && notObjectMethod(arg3) && containsParameters(arg3))
                 {
                     string stackValue = (string.Empty);
 
@@ -5072,7 +5072,7 @@
                         }
                     }
                 }
-                else if ((!variableExists(arg1) && variableExists(arg3)) && !methodExists(arg1) && notObjectMethod(arg1) && !containsParameters(arg1))
+                else if ((!VExists(arg1) && VExists(arg3)) && !MExists(arg1) && notObjectMethod(arg1) && !containsParameters(arg1))
                 {
                     if (isNumber(arg3))
                     {
@@ -5183,7 +5183,7 @@
                         }
                     }
                 }
-                else if ((!variableExists(arg1) && variableExists(arg3)) && !methodExists(arg1) && notObjectMethod(arg1) && containsParameters(arg1))
+                else if ((!VExists(arg1) && VExists(arg3)) && !MExists(arg1) && notObjectMethod(arg1) && containsParameters(arg1))
                 {
                     string stackValue = (string.Empty);
 
@@ -5423,8 +5423,8 @@
 
                                 arg1Result = __LastValue;
 
-                                if (methodExists(beforeParameters(arg3)))
-                                    executeTemplate(methods[indexOfMethod(beforeParameters(arg3))], getParameters(arg3));
+                                if (MExists(beforeParameters(arg3)))
+                                    executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
 
                                 arg3Result = __LastValue;
 
@@ -5520,8 +5520,8 @@
 
                                 arg3Result = __LastValue;
 
-                                if (methodExists(beforeParameters(arg1)))
-                                    executeTemplate(methods[indexOfMethod(beforeParameters(arg1))], getParameters(arg1));
+                                if (MExists(beforeParameters(arg1)))
+                                    executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
 
                                 arg1Result = __LastValue;
 
@@ -5608,13 +5608,13 @@
                         {
                             string arg1Result = (string.Empty), arg3Result = (string.Empty);
 
-                            if (methodExists(beforeParameters(arg1)))
-                                executeTemplate(methods[indexOfMethod(beforeParameters(arg1))], getParameters(arg1));
+                            if (MExists(beforeParameters(arg1)))
+                                executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
 
                             arg1Result = __LastValue;
 
-                            if (methodExists(beforeParameters(arg3)))
-                                executeTemplate(methods[indexOfMethod(beforeParameters(arg3))], getParameters(arg3));
+                            if (MExists(beforeParameters(arg3)))
+                                executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
 
                             arg3Result = __LastValue;
 
@@ -5700,18 +5700,18 @@
 
                         if (zeroDots(arg1))
                         {
-                            if (methodExists(beforeParameters(arg1)))
+                            if (MExists(beforeParameters(arg1)))
                             {
-                                executeTemplate(methods[indexOfMethod(beforeParameters(arg1))], getParameters(arg1));
+                                executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
 
                                 arg1Result = __LastValue;
 
-                                if (methodExists(arg3))
+                                if (MExists(arg3))
                                 {
                                     parse(arg3);
                                     arg3Result = __LastValue;
                                 }
-                                else if (variableExists(arg3))
+                                else if (VExists(arg3))
                                 {
                                     if (isString(arg3))
                                         arg3Result = GetVString(arg3);
@@ -5816,14 +5816,14 @@
 
                                 string comp = (string.Empty);
 
-                                if (variableExists(arg3))
+                                if (VExists(arg3))
                                 {
                                     if (isString(arg3))
                                         comp = GetVString(arg3);
                                     else if (isNumber(arg3))
                                         comp = dtos(GetVNumber(arg3));
                                 }
-                                else if (methodExists(arg3))
+                                else if (MExists(arg3))
                                 {
                                     parse(arg3);
 
@@ -5831,7 +5831,7 @@
                                 }
                                 else if (containsParameters(arg3))
                                 {
-                                    executeTemplate(getMethod(beforeParameters(arg3)), getParameters(arg3));
+                                    executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
 
                                     comp = __LastValue;
                                 }
@@ -5928,7 +5928,7 @@
 
                                 arg1Result = __LastValue;
 
-                                if (variableExists(arg3))
+                                if (VExists(arg3))
                                 {
                                     if (isString(arg3))
                                         arg3Result = GetVString(arg3);
@@ -5941,7 +5941,7 @@
                                         setFalseIf();
                                     }
                                 }
-                                else if (methodExists(arg3))
+                                else if (MExists(arg3))
                                 {
                                     parse(arg3);
 
@@ -6041,18 +6041,18 @@
 
                         if (zeroDots(arg3))
                         {
-                            if (methodExists(beforeParameters(arg3)))
+                            if (MExists(beforeParameters(arg3)))
                             {
-                                executeTemplate(methods[indexOfMethod(beforeParameters(arg3))], getParameters(arg3));
+                                executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
 
                                 arg3Result = __LastValue;
 
-                                if (methodExists(arg1))
+                                if (MExists(arg1))
                                 {
                                     parse(arg1);
                                     arg1Result = __LastValue;
                                 }
-                                else if (variableExists(arg1))
+                                else if (VExists(arg1))
                                 {
                                     if (isString(arg1))
                                         arg1Result = GetVString(arg1);
@@ -6161,7 +6161,7 @@
 
                                 arg3Result = __LastValue;
 
-                                if (variableExists(arg1))
+                                if (VExists(arg1))
                                 {
                                     if (isString(arg1))
                                         arg1Result = GetVString(arg1);
@@ -6173,7 +6173,7 @@
                                         setFalseIf();
                                     }
                                 }
-                                else if (methodExists(arg1))
+                                else if (MExists(arg1))
                                 {
                                     parse(arg1);
 
@@ -6263,16 +6263,16 @@
                         }
                     }
                 }
-                else if ((methodExists(arg1) && arg3 != "method?") || methodExists(arg3))
+                else if ((MExists(arg1) && arg3 != "method?") || MExists(arg3))
                 {
                     string arg1Result = (string.Empty), arg3Result = (string.Empty);
 
-                    if (methodExists(arg1))
+                    if (MExists(arg1))
                     {
                         parse(arg1);
                         arg1Result = __LastValue;
                     }
-                    else if (variableExists(arg1))
+                    else if (VExists(arg1))
                     {
                         if (isString(arg1))
                             arg1Result = GetVString(arg1);
@@ -6287,12 +6287,12 @@
                     else
                         arg1Result = arg1;
 
-                    if (methodExists(arg3))
+                    if (MExists(arg3))
                     {
                         parse(arg3);
                         arg3Result = __LastValue;
                     }
-                    else if (variableExists(arg3))
+                    else if (VExists(arg3))
                     {
                         if (isString(arg3))
                             arg3Result = GetVString(arg3);
@@ -6411,7 +6411,7 @@
                     }
                     else if (arg3 == "variable?")
                     {
-                        if (variableExists(arg1))
+                        if (VExists(arg1))
                         {
                             if (arg2 == "==")
                                 setTrueIf();
@@ -6438,7 +6438,7 @@
                     }
                     else if (arg3 == "method?")
                     {
-                        if (methodExists(arg1))
+                        if (MExists(arg1))
                         {
                             if (arg2 == "==")
                                 setTrueIf();
@@ -6600,7 +6600,7 @@
             {
                 if (arg2 == "<")
                 {
-                    if (variableExists(arg1) && variableExists(arg3))
+                    if (VExists(arg1) && VExists(arg3))
                     {
                         if (isNumber(arg1) && isNumber(arg3))
                         {
@@ -6615,7 +6615,7 @@
                             failedFor();
                         }
                     }
-                    else if (variableExists(arg1) && !variableExists(arg3))
+                    else if (VExists(arg1) && !VExists(arg3))
                     {
                         if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
                         {
@@ -6630,7 +6630,7 @@
                             failedFor();
                         }
                     }
-                    else if (!variableExists(arg1) && variableExists(arg3))
+                    else if (!VExists(arg1) && VExists(arg3))
                     {
                         if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
                         {
@@ -6663,7 +6663,7 @@
                 }
                 else if (arg2 == ">")
                 {
-                    if (variableExists(arg1) && variableExists(arg3))
+                    if (VExists(arg1) && VExists(arg3))
                     {
                         if (isNumber(arg1) && isNumber(arg3))
                         {
@@ -6678,7 +6678,7 @@
                             failedFor();
                         }
                     }
-                    else if (variableExists(arg1) && !variableExists(arg3))
+                    else if (VExists(arg1) && !VExists(arg3))
                     {
                         if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
                         {
@@ -6693,7 +6693,7 @@
                             failedFor();
                         }
                     }
-                    else if (!variableExists(arg1) && variableExists(arg3))
+                    else if (!VExists(arg1) && VExists(arg3))
                     {
                         if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
                         {
@@ -6726,7 +6726,7 @@
                 }
                 else if (arg2 == "<=")
                 {
-                    if (variableExists(arg1) && variableExists(arg3))
+                    if (VExists(arg1) && VExists(arg3))
                     {
                         if (isNumber(arg1) && isNumber(arg3))
                         {
@@ -6741,7 +6741,7 @@
                             failedFor();
                         }
                     }
-                    else if (variableExists(arg1) && !variableExists(arg3))
+                    else if (VExists(arg1) && !VExists(arg3))
                     {
                         if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
                         {
@@ -6756,7 +6756,7 @@
                             failedFor();
                         }
                     }
-                    else if (!variableExists(arg1) && variableExists(arg3))
+                    else if (!VExists(arg1) && VExists(arg3))
                     {
                         if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
                         {
@@ -6789,7 +6789,7 @@
                 }
                 else if (arg2 == ">=")
                 {
-                    if (variableExists(arg1) && variableExists(arg3))
+                    if (VExists(arg1) && VExists(arg3))
                     {
                         if (isNumber(arg1) && isNumber(arg3))
                         {
@@ -6804,7 +6804,7 @@
                             failedFor();
                         }
                     }
-                    else if (variableExists(arg1) && !variableExists(arg3))
+                    else if (VExists(arg1) && !VExists(arg3))
                     {
                         if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
                         {
@@ -6819,7 +6819,7 @@
                             failedFor();
                         }
                     }
-                    else if (!variableExists(arg1) && variableExists(arg3))
+                    else if (!VExists(arg1) && VExists(arg3))
                     {
                         if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
                         {
@@ -6872,7 +6872,7 @@
                             System.Collections.Generic.List<Method> objMethods = objects[indexOfObject(before)].getMethods();
 
                             for (int i = 0; i < objMethods.Count; i++)
-                                newList.add(objMethods[i].name());
+                                newList.add(objMethods[i].GetName());
 
                             successfulFor(newList);
                         }
@@ -6887,7 +6887,7 @@
 
                             successfulFor(newList);
                         }
-                        else if (variableExists(before) && after == "length")
+                        else if (VExists(before) && after == "length")
                         {
                             if (isString(before))
                             {
@@ -6909,7 +6909,7 @@
                         {
                             if (before.Length != 0 && after.Length != 0)
                             {
-                                if (variableExists(before))
+                                if (VExists(before))
                                 {
                                     if (after == "get_dirs")
                                     {
@@ -6982,7 +6982,7 @@
                         {
                             string firstRangeSpecifier = (rangeSpecifiers[0]), lastRangeSpecifier = (rangeSpecifiers[1]);
 
-                            if (variableExists(firstRangeSpecifier))
+                            if (VExists(firstRangeSpecifier))
                             {
                                 if (isNumber(firstRangeSpecifier))
                                     firstRangeSpecifier = dtos(GetVNumber(firstRangeSpecifier));
@@ -6990,7 +6990,7 @@
                                     failedFor();
                             }
 
-                            if (variableExists(lastRangeSpecifier))
+                            if (VExists(lastRangeSpecifier))
                             {
                                 if (isNumber(lastRangeSpecifier))
                                     lastRangeSpecifier = dtos(GetVNumber(lastRangeSpecifier));
@@ -7019,7 +7019,7 @@
                     {
                         string before = (beforeBrackets(arg3));
 
-                        if (variableExists(before))
+                        if (VExists(before))
                         {
                             if (isString(before))
                             {
@@ -7158,7 +7158,7 @@
                             System.Collections.Generic.List<Method> objMethods = objects[indexOfObject(_b)].getMethods();
 
                             for (int i = 0; i < (int)objMethods.Count; i++)
-                                newList.add(objMethods[i].name());
+                                newList.add(objMethods[i].GetName());
 
                             __DefaultLoopSymbol = arg1;
                             successfulFor(newList);
@@ -7175,7 +7175,7 @@
                             __DefaultLoopSymbol = arg1;
                             successfulFor(newList);
                         }
-                        else if (variableExists(_b) && _a == "length")
+                        else if (VExists(_b) && _a == "length")
                         {
                             if (isString(_b))
                             {
@@ -7198,7 +7198,7 @@
                         {
                             if (_b.Length != 0 && _a.Length != 0)
                             {
-                                if (variableExists(_b))
+                                if (VExists(_b))
                                 {
                                     if (_a == "get_dirs")
                                     {
@@ -7274,7 +7274,7 @@
             }
             else if (arg0 == "while")
             {
-                if (variableExists(arg1) && variableExists(arg3))
+                if (VExists(arg1) && VExists(arg3))
                 {
                     if (isNumber(arg1) && isNumber(arg3))
                     {
@@ -7292,7 +7292,7 @@
                         failedWhile();
                     }
                 }
-                else if (StringHelper.IsNumeric(arg3) && variableExists(arg1))
+                else if (StringHelper.IsNumeric(arg3) && VExists(arg1))
                 {
                     if (isNumber(arg1))
                     {

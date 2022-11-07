@@ -15,9 +15,9 @@
 
         void setList(string arg1, string arg2, System.Collections.Generic.List<string> parameters)
         {
-            if (methodExists(beforeParameters(arg2)))
+            if (MExists(beforeParameters(arg2)))
             {
-                executeTemplate(getMethod(beforeParameters(arg2)), parameters);
+                executeTemplate(GetM(beforeParameters(arg2)), parameters);
 
                 if (containsParameters(__LastValue))
                 {
@@ -47,7 +47,7 @@
             {
                 for (int i = 0; i < parameters.Count; i++)
                 {
-                    if (variableExists(parameters[i]))
+                    if (VExists(parameters[i]))
                     {
                         if (isString(parameters[i]))
                             lists[indexOfList(arg1)].add(GetVString(parameters[i]));
@@ -61,141 +61,14 @@
                 }
             }
         }
-
-        void createVariable(string name, string value)
-        {
-            Variable newVariable = new(name, value);
-
-            if (__ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock)
-                newVariable.collect();
-            else
-                newVariable.dontCollect();
-
-            variables.Add(newVariable);
-            setLastValue(value);
-        }
-
-        ///	Creates a double type variable
-        void createVariable(string name, double value)
-        {
-            Variable newVariable = new(name, value);
-
-            if (__ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock)
-                newVariable.collect();
-            else
-                newVariable.dontCollect();
-
-            variables.Add(newVariable);
-            setLastValue(dtos(value));
-        }
         #endregion
 
         #region Indexing
-        int indexOfMethod(string s)
-        {
-            for (int i = 0; i < (int)methods.Count; i++)
-            {
-                if (methods[i].name() == s)
-                    return (i);
-            }
-
-            return (-1);
-        }
-
         int indexOfObject(string s)
         {
             for (int i = 0; i < (int)objects.Count; i++)
             {
                 if (objects[i].name() == s)
-                    return (i);
-            }
-
-            return (-1);
-        }
-
-        bool GCCanCollectV(string s)
-        {
-            return this.variables[indexOfVariable(s)].garbage();
-        }
-
-        Variable GetV(string s)
-        {
-            return this.variables[indexOfVariable(s)];
-        }
-
-        string GetVString(string s)
-        {
-            return this.variables[indexOfVariable(s)].getString();
-        }
-
-        double GetVNumber(string s)
-        {
-            return this.variables[indexOfVariable(s)].getNumber();
-        }
-
-        string GetVName(string s)
-        {
-            return this.variables[indexOfVariable(s)].name();
-        }
-
-        bool GetVWaiting(string s)
-        {
-            return this.variables[indexOfVariable(s)].waiting();
-        }
-
-        void SetVString(string target, string value)
-        {
-            this.variables[indexOfVariable(target)].setVariable(value);
-            setLastValue(value);
-        }
-
-        void SetVNumber(string target, double value)
-        {
-            if (isString(target))
-                this.variables[indexOfVariable(target)].setVariable(dtos(value));
-            else if (isNumber(target))
-                this.variables[indexOfVariable(target)].setVariable(value);
-            else
-            {
-                if (GetVWaiting(target))
-                    SetVStopWait(target);
-
-                this.variables[indexOfVariable(target)].setVariable(value);
-            }
-
-            setLastValue(dtos(value));
-        }
-
-        void SetVName(string target, string newName)
-        {
-            this.variables[indexOfVariable(target)].setName(newName);
-        }
-
-        void SetVLock(string target)
-        {
-            this.variables[indexOfVariable(target)].setIndestructible();
-        }
-
-        void SetVUnlock(string target)
-        {
-            this.variables[indexOfVariable(target)].setDestructible();
-        }
-
-        void SetVNull(string target)
-        {
-            this.variables[indexOfVariable(target)].setNull();
-        }
-
-        void SetVStopWait(string target)
-        {
-            this.variables[indexOfVariable(target)].stopWait();
-        }
-
-        int indexOfVariable(string s)
-        {
-            for (int i = 0; i < (int)variables.Count; i++)
-            {
-                if (variables[i].name() == s)
                     return (i);
             }
 
@@ -257,55 +130,11 @@
             return (false);
         }
 
-        bool methodExists(string s)
-        {
-            if (!zeroDots(s))
-            {
-                if (objectExists(beforeDot(s)))
-                {
-                    if (objects[indexOfObject(beforeDot(s))].methodExists(afterDot(s)))
-                        return (true);
-                    else
-                        return (false);
-                }
-            }
-            else
-                for (int i = 0; i < (int)methods.Count; i++)
-                    if (methods[i].name() == s)
-                        return (true);
-
-            return (false);
-        }
-
         bool objectExists(string s)
         {
             for (int i = 0; i < (int)objects.Count; i++)
                 if (objects[i].name() == s)
                     return (true);
-
-            return (false);
-        }
-
-        bool variableExists(string s)
-        {
-            if (!zeroDots(s))
-            {
-                string before = (beforeDot(s)), after = (afterDot(s));
-
-                if (objectExists(before))
-                {
-                    if (objects[indexOfObject(before)].variableExists(after))
-                        return (true);
-                    else
-                        return (false);
-                }
-                else
-                    return (false);
-            }
-            else
-                for (int i = 0; i < (int)variables.Count; i++)
-                    if (variables[i].name() == s)
-                        return (true);
 
             return (false);
         }
@@ -368,19 +197,6 @@
         #endregion
 
         #region Retrieval
-        Method getMethod(string s)
-        {
-            Method bad_meth = new("[bad_meth#" + itos(__BadMethodCount) + "]");
-
-            if (methodExists(s))
-                for (int i = 0; i < (int)methods.Count; i++)
-                    if (methods[i].name() == s)
-                        return (methods[i]);
-
-            __BadMethodCount++;
-            return (bad_meth);
-        }
-
         Object getObject(string s)
         {
             Object bad_obj = new("[bad_obj#" + itos(__BadObjectCount) + "]");
@@ -399,49 +215,12 @@
 
             return (bad_obj);
         }
-
-        Variable getVariable(string s)
-        {
-            Variable bad_var = new("[bad_var#" + itos(__BadVarCount) + "]");
-
-            if (variableExists(s))
-            {
-                for (int i = 0; i < (int)variables.Count; i++)
-                    if (variables[i].name() == s)
-                        return (variables[i]);
-            }
-            __BadVarCount++;
-
-            return (bad_var);
-        }
         #endregion
 
         #region Removal
-        System.Collections.Generic.List<Method> removeMethod(System.Collections.Generic.List<Method> v, string target)
-        {
-            System.Collections.Generic.List<Method> cleanedVector = new();
-
-            for (int i = 0; i < (int)v.Count; i++)
-                if (v[i].name() != target)
-                    cleanedVector.Add(v[i]);
-
-            return (cleanedVector);
-        }
-
         System.Collections.Generic.List<MetaScriptLang.Data.Object> removeObject(System.Collections.Generic.List<MetaScriptLang.Data.Object> v, string target)
         {
             System.Collections.Generic.List<MetaScriptLang.Data.Object> cleanedVector = new();
-
-            for (int i = 0; i < (int)v.Count; i++)
-                if (v[i].name() != target)
-                    cleanedVector.Add(v[i]);
-
-            return (cleanedVector);
-        }
-
-        System.Collections.Generic.List<Variable> removeVariable(System.Collections.Generic.List<Variable> v, string target)
-        {
-            System.Collections.Generic.List<Variable> cleanedVector = new();
 
             for (int i = 0; i < (int)v.Count; i++)
                 if (v[i].name() != target)
@@ -495,13 +274,13 @@
         **/
         void redefine(string target, string name)
         {
-            if (variableExists(target))
+            if (VExists(target))
             {
                 if (System.IO.File.Exists(GetVString(target)) || System.IO.Directory.Exists(GetVString(target)))
                 {
                     string old_name = (GetVString(target)), new_name = string.Empty;
 
-                    if (variableExists(name))
+                    if (VExists(name))
                     {
                         if (isString(name))
                         {
@@ -561,7 +340,7 @@
                 {
                     if (startsWith(name, "@"))
                     {
-                        if (!variableExists(name))
+                        if (!VExists(name))
                             SetVName(target, name);
                         else
                             error(ErrorLogger.VAR_DEFINED, name, false);
@@ -584,10 +363,10 @@
                 else
                     error(ErrorLogger.OBJ_METHOD_UNDEFINED, name, false);
             }
-            else if (methodExists(target))
+            else if (MExists(target))
             {
-                if (!methodExists(name))
-                    methods[indexOfMethod(target)].setName(name);
+                if (!MExists(name))
+                    SetMName(target, name);
                 else
                     error(ErrorLogger.METHOD_UNDEFINED, name, false);
             }

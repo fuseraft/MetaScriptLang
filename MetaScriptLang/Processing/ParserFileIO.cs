@@ -52,13 +52,13 @@
 
         void appendText(string arg1, string arg2, bool newLine)
         {
-            if (variableExists(arg1))
+            if (VExists(arg1))
             {
                 if (isString(arg1))
                 {
                     if (System.IO.File.Exists(GetVString(arg1)))
                     {
-                        if (variableExists(arg2))
+                        if (VExists(arg2))
                         {
                             if (isString(arg2))
                             {
@@ -93,7 +93,7 @@
             }
             else
             {
-                if (variableExists(arg2))
+                if (VExists(arg2))
                 {
                     if (isString(arg2))
                     {
@@ -136,13 +136,13 @@
 
         void __fwrite(string arg1, string arg2)
         {
-            if (variableExists(arg1))
+            if (VExists(arg1))
             {
                 if (isString(arg1))
                 {
                     if (System.IO.File.Exists(GetVString(arg1)))
                     {
-                        if (variableExists(arg2))
+                        if (VExists(arg2))
                         {
                             if (isString(arg2))
                             {
@@ -197,7 +197,7 @@
             }
             else
             {
-                if (variableExists(arg2))
+                if (VExists(arg2))
                 {
                     if (isString(arg2))
                     {
