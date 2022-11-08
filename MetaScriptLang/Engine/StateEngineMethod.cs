@@ -5,25 +5,25 @@
 
     public partial class StateEngine
     {
-        private string CurrentMethodName = string.Empty;
+        public string CurrentMethodName = string.Empty;
 
-        void DeleteMethod(string target)
+        public void DeleteMethod(string target)
         {
             this.methods.Remove(target);
         }
 
         #region Existence
-        bool MethodExists(string s)
+        public bool MethodExists(string s)
         {
             if (StringHelper.ZeroDots(s))
             {
                 foreach (var key in this.methods.Keys)
                 {
-                    if (methods[key].GetName() == s)
+                    if (this.methods[key].GetName() == s)
                         return true;
                 }
             }
-            else if (ObjectExists(StringHelper.BeforeDot(s)) && ObjectMethodExists(StringHelper.BeforeDot(s), StringHelper.AfterDot(s)))
+            else if (this.ObjectExists(StringHelper.BeforeDot(s)) && this.ObjectMethodExists(StringHelper.BeforeDot(s), StringHelper.AfterDot(s)))
             {
                 return true;
             }
@@ -33,46 +33,46 @@
         #endregion
 
         #region Getters
-        Method CreateMethod(string name)
+        public Method CreateMethod(string name)
         {
-            CurrentMethodName = name;
+            this.CurrentMethodName = name;
             return new Method(name);
         }
 
-        Method GetMethod(string target)
+        public Method GetMethod(string target)
         {
-            if (methods.ContainsKey(target))
+            if (this.methods.ContainsKey(target))
             {
-                return methods[target];
+                return this.methods[target];
             }
 
             __BadMethodCount++;
             return new Method($"[bad_meth#{StringHelper.ItoS(__BadMethodCount)}]");
         }
 
-        string GetMethodLine(string target, int lineNumber)
+        public string GetMethodLine(string target, int lineNumber)
         {
-            return methods[target].GetLine(lineNumber);
+            return this.methods[target].GetLine(lineNumber);
         }
 
-        int GetMethodSize(string target)
+        public int GetMethodSize(string target)
         {
-            return methods[target].GetMethodSize();
+            return this.methods[target].GetMethodSize();
         }
         #endregion
 
         #region Setters
-        void SetMethodName(string target, string newName)
+        public void SetMethodName(string target, string newName)
         {
             this.methods[target].SetName(newName);
         }
 
-        void LockMethod(string target)
+        public void LockMethod(string target)
         {
             this.methods[target].Lock();
         }
 
-        void UnlockMethod(string target)
+        public void UnlockMethod(string target)
         {
             this.methods[target].Unlock();
         }

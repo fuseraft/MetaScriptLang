@@ -14,9 +14,9 @@
 
         void setList(string arg1, string arg2, System.Collections.Generic.List<string> parameters)
         {
-            if (MethodExists(StringHelper.BeforeParameters(arg2)))
+            if (engine.MethodExists(StringHelper.BeforeParameters(arg2)))
             {
-                executeTemplate(GetMethod(StringHelper.BeforeParameters(arg2)), parameters);
+                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg2)), parameters);
 
                 if (StringHelper.ContainsParameters(__LastValue))
                 {
@@ -30,7 +30,7 @@
             }
             else if (engine.ObjectExists(StringHelper.BeforeDot(StringHelper.BeforeParameters(arg2))))
             {
-                executeTemplate(GetObjectMethod(StringHelper.BeforeDot(StringHelper.BeforeParameters(arg2)), StringHelper.AfterDot(StringHelper.BeforeParameters(arg2))), parameters);
+                executeTemplate(engine.GetObjectMethod(StringHelper.BeforeDot(StringHelper.BeforeParameters(arg2)), StringHelper.AfterDot(StringHelper.BeforeParameters(arg2))), parameters);
 
                 if (StringHelper.ContainsParameters(__LastValue))
                 {
@@ -46,12 +46,12 @@
             {
                 for (int i = 0; i < parameters.Count; i++)
                 {
-                    if (VariableExists(parameters[i]))
+                    if (engine.VariableExists(parameters[i]))
                     {
-                        if (IsStringVariable(parameters[i]))
-                            engine.AddToList(arg1, GetVariableString(parameters[i]));
-                        else if (IsNumberVariable(parameters[i]))
-                            engine.AddToList(arg1, StringHelper.DtoS(GetVariableNumber(parameters[i])));
+                        if (engine.IsStringVariable(parameters[i]))
+                            engine.AddToList(arg1, engine.GetVariableString(parameters[i]));
+                        else if (engine.IsNumberVariable(parameters[i]))
+                            engine.AddToList(arg1, StringHelper.DtoS(engine.GetVariableNumber(parameters[i])));
                         else
                             ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                     }
@@ -124,17 +124,17 @@
         **/
         void MemRedefine(string target, string name)
         {
-            if (VariableExists(target))
+            if (engine.VariableExists(target))
             {
-                if (System.IO.File.Exists(GetVariableString(target)) || System.IO.Directory.Exists(GetVariableString(target)))
+                if (System.IO.File.Exists(engine.GetVariableString(target)) || System.IO.Directory.Exists(engine.GetVariableString(target)))
                 {
-                    string old_name = (GetVariableString(target)), new_name = string.Empty;
+                    string old_name = engine.GetVariableString(target), new_name = string.Empty;
 
-                    if (VariableExists(name))
+                    if (engine.VariableExists(name))
                     {
-                        if (IsStringVariable(name))
+                        if (engine.IsStringVariable(name))
                         {
-                            new_name = GetVariableString(name);
+                            new_name = engine.GetVariableString(name);
 
                             if (System.IO.File.Exists(old_name))
                             {
@@ -190,8 +190,8 @@
                 {
                     if (StringHelper.StringStartsWith(name, "@"))
                     {
-                        if (!VariableExists(name))
-                            SetVariableName(target, name);
+                        if (!engine.VariableExists(name))
+                            engine.SetVariableName(target, name);
                         else
                             ErrorLogger.Error(ErrorLogger.VAR_DEFINED, name, false);
                     }
@@ -209,14 +209,14 @@
             else if (engine.ObjectExists(target))
             {
                 if (!engine.ObjectExists(name))
-                    SetObjectName(target, name);
+                    engine.SetObjectName(target, name);
                 else
                     ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, name, false);
             }
-            else if (MethodExists(target))
+            else if (engine.MethodExists(target))
             {
-                if (!MethodExists(name))
-                    SetMethodName(target, name);
+                if (!engine.MethodExists(name))
+                    engine.SetMethodName(target, name);
                 else
                     ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, name, false);
             }

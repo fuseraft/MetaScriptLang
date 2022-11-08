@@ -54,19 +54,19 @@
 
         public void setPublic()
         {
-            if (methodExists(currentMethod))
+            if (MethodExists(currentMethod))
                 methods[methodAt(currentMethod)].SetPublic();
         }
 
         public void setPrivate()
         {
-            if (methodExists(currentMethod))
+            if (MethodExists(currentMethod))
                 methods[methodAt(currentMethod)].SetPrivate();
         }
 
         public void addToCurrentMethod(string line)
         {
-            if (methodExists(currentMethod))
+            if (MethodExists(currentMethod))
                 methods[methodAt(currentMethod)].AddLine(line);
             else
                 Logger.LogInfo("#!=add_to_currentMethod:undefined");
@@ -210,7 +210,7 @@
             objectName = name;
         }
 
-        public bool methodExists(string methodName)
+        public bool MethodExists(string methodName)
         {
             for (int i = 0; i < methods.Count; i++)
                 if (methods[i].GetName() == methodName)

@@ -77,7 +77,7 @@
                             else if (IsStringVariable(temporaryBuild.ToString()))
                                 return (true);
                         }
-                        else if (MethodExists(temporaryBuild.ToString()))
+                        else if (engine.MethodExists(temporaryBuild.ToString()))
                         {
                             parse(temporaryBuild.ToString());
 
@@ -99,7 +99,7 @@
                         else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -122,7 +122,7 @@
                         else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -145,7 +145,7 @@
                         else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -168,7 +168,7 @@
                         else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -191,7 +191,7 @@
                         else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -214,7 +214,7 @@
                         else if (IsStringVariable(temporaryBuild.ToString()))
                             return (true);
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -285,7 +285,7 @@
                                     temporaryBuild.Clear();
                                 }
                             }
-                            else if (MethodExists(temporaryBuild.ToString()))
+                            else if (engine.MethodExists(temporaryBuild.ToString()))
                             {
                                 parse(temporaryBuild.ToString());
 
@@ -319,7 +319,7 @@
                             contents.Add("+");
                         }
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -354,7 +354,7 @@
                             contents.Add("-");
                         }
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -389,7 +389,7 @@
                             contents.Add("*");
                         }
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -479,7 +479,7 @@
             if (__Returning)
             {
                 for (int i = 0; i < (int)vars.Count; i++)
-                    DeleteVariable(vars[i]);
+                    engine.DeleteVariable(vars[i]);
 
                 __Returning = false;
             }
@@ -516,7 +516,7 @@
                                 temporaryBuild.Clear();
                             }
                         }
-                        else if (MethodExists(temporaryBuild.ToString()))
+                        else if (engine.MethodExists(temporaryBuild.ToString()))
                         {
                             parse(temporaryBuild.ToString());
 
@@ -545,7 +545,7 @@
                             contents.Add("+");
                         }
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -576,7 +576,7 @@
                             contents.Add("-");
                         }
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -605,7 +605,7 @@
                             contents.Add("*");
                         }
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -636,7 +636,7 @@
                             contents.Add("/");
                         }
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -667,7 +667,7 @@
                             contents.Add("%");
                         }
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -697,7 +697,7 @@
                             contents.Add("^");
                         }
                     }
-                    else if (MethodExists(temporaryBuild.ToString()))
+                    else if (engine.MethodExists(temporaryBuild.ToString()))
                     {
                         parse(temporaryBuild.ToString());
 
@@ -803,7 +803,7 @@
             if (__Returning)
             {
                 for (int i = 0; i < (int)vars.Count; i++)
-                    DeleteVariable(vars[i]);
+                    engine.DeleteVariable(vars[i]);
 
                 __Returning = false;
             }

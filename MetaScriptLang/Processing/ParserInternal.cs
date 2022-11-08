@@ -12,17 +12,17 @@
             {
                 if (engine.ObjectExists(before))
                 {
-                    if (ObjectMethodExists(before, after))
+                    if (engine.ObjectMethodExists(before, after))
                     {
-                        for (int i = 0; i < GetObjectMethodSize(before, after); i++)
-                            write(GetObjectMethodLine(before, after, i));
+                        for (int i = 0; i < engine.GetObjectMethodSize(before, after); i++)
+                            write(engine.GetObjectMethodLine(before, after, i));
                     }
-                    else if (ObjectVariableExists(before, after))
+                    else if (engine.ObjectVariableExists(before, after))
                     {
-                        if (GetObjectVariableString(before, after) != __Null)
-                            write(GetObjectVariableString(before, after));
-                        else if (GetObjectVariableNumber(before, after) != __NullNum)
-                            write(StringHelper.DtoS(GetObjectVariableNumber(before, after)));
+                        if (engine.GetObjectVariableString(before, after) != __Null)
+                            write(engine.GetObjectVariableString(before, after));
+                        else if (engine.GetObjectVariableNumber(before, after) != __NullNum)
+                            write(StringHelper.DtoS(engine.GetObjectVariableNumber(before, after)));
                         else
                             write(__Null);
                     }
@@ -36,10 +36,10 @@
             {
                 if (engine.ObjectExists(arg1))
                 {
-                    for (int i = 0; i < GetObjectMethodCount(arg1); i++)
-                        write(GetObjectMethodNameByIndex(arg1, i));
-                    for (int i = 0; i < GetObjectVariableSize(arg1); i++)
-                        write(GetObjectVariableNameByIndex(arg1, i));
+                    for (int i = 0; i < engine.GetObjectMethodCount(arg1); i++)
+                        write(engine.GetObjectMethodNameByIndex(arg1, i));
+                    for (int i = 0; i < engine.GetObjectVariableSize(arg1); i++)
+                        write(engine.GetObjectVariableNameByIndex(arg1, i));
                 }
                 else if (engine.ConstantExists(arg1))
                 {
@@ -48,17 +48,17 @@
                     else if (engine.IsStringConstant(arg1))
                         write(engine.GetConstantString(arg1));
                 }
-                else if (MethodExists(arg1))
+                else if (engine.MethodExists(arg1))
                 {
-                    for (int i = 0; i < GetMethodSize(arg1); i++)
-                        write(GetMethodLine(arg1, i));
+                    for (int i = 0; i < engine.GetMethodSize(arg1); i++)
+                        write(engine.GetMethodLine(arg1, i));
                 }
-                else if (VariableExists(arg1))
+                else if (engine.VariableExists(arg1))
                 {
-                    if (IsStringVariable(arg1))
-                        write(GetVariableString(arg1));
-                    else if (IsNumberVariable(arg1))
-                        write(StringHelper.DtoS(GetVariableNumber(arg1)));
+                    if (engine.IsStringVariable(arg1))
+                        write(engine.GetVariableString(arg1));
+                    else if (engine.IsNumberVariable(arg1))
+                        write(StringHelper.DtoS(engine.GetVariableNumber(arg1)));
                 }
                 else if (engine.ListExists(arg1))
                 {
@@ -81,34 +81,34 @@
                 {
                     foreach (var key in this.lists.Keys)
                     {
-                        write(engine.GetListName(key));
+                        write(this.engine.GetListName(key));
                     }
                 }
                 else if (arg1 == "methods")
                 {
                     foreach (var key in this.methods.Keys)
                     {
-                        write(methods[key].GetName());
+                        write(this.methods[key].GetName());
                     }
                 }
                 else if (arg1 == "objects")
                 {
                     foreach (var key in this.objects.Keys)
                     {
-                        write(objects[key].name());
+                        write(this.objects[key].name());
                     }
                 }
                 else if (arg1 == "constants")
                 {
                     foreach (var key in this.constants.Keys)
                     {
-                        write(constants[key].name());
+                        write(this.constants[key].name());
                     }
                 }
                 else if (arg1 == "os?")
                     write("windows?");
                 else if (arg1 == "last")
-                    write(__LastValue);
+                    write(engine.__LastValue);
                 else
                     ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
             }
@@ -116,11 +116,11 @@
 
         void InternalGlobalize(string arg0, string arg1)
         {
-            if (StringHelper.ContainsString(arg1, ".") && MethodExists(arg1) && !MethodExists(StringHelper.AfterDot(arg1)))
+            if (StringHelper.ContainsString(arg1, ".") && engine.MethodExists(arg1) && !engine.MethodExists(StringHelper.AfterDot(arg1)))
             {
                 Method method = new(StringHelper.AfterDot(arg1));
 
-                System.Collections.Generic.List<string> lines = GetObjectMethod(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)).GetLines();
+                System.Collections.Generic.List<string> lines = engine.GetObjectMethod(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)).GetLines();
 
                 for (int i = 0; i < (int)lines.Count; i++)
                     method.AddLine(lines[i]);
@@ -133,10 +133,10 @@
 
         void InternalCallMethod(string arg0, string arg1, string before, string after)
         {
-            if (__DefiningObject)
+            if (engine.__DefiningObject)
             {
-                if (ObjectMethodExists(__CurrentObject, arg1))
-                    executeMethod(GetObjectMethod(__CurrentObject, arg1));
+                if (engine.ObjectMethodExists(engine.__CurrentObject, arg1))
+                    executeMethod(engine.GetObjectMethod(engine.__CurrentObject, arg1));
                 else
                     ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, arg1, false);
             }
@@ -146,8 +146,8 @@
                 {
                     if (engine.ObjectExists(before))
                     {
-                        if (ObjectMethodExists(before, after))
-                            executeMethod(GetObjectMethod(before, after));
+                        if (engine.ObjectMethodExists(before, after))
+                            executeMethod(engine.GetObjectMethod(before, after));
                         else
                             ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, arg1, false);
                     }
@@ -156,8 +156,8 @@
                 }
                 else
                 {
-                    if (MethodExists(arg1))
-                        executeMethod(GetMethod(arg1));
+                    if (engine.MethodExists(arg1))
+                        executeMethod(engine.GetMethod(arg1));
                     else
                         ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, arg1, true);
                 }
@@ -172,9 +172,9 @@
             if (arg0 == "[method]")
                 indestructable = true;
 
-            if (__DefiningObject)
+            if (engine.__DefiningObject)
             {
-                if (ObjectMethodExists(__CurrentObject, arg1))
+                if (engine.ObjectMethodExists(engine.__CurrentObject, arg1))
                     ErrorLogger.Error(ErrorLogger.METHOD_DEFINED, arg1, false);
                 else
                 {
@@ -184,29 +184,29 @@
 
                         Method method = new(StringHelper.BeforeParameters(arg1));
 
-                        if (__DefiningPublicCode)
+                        if (engine.__DefiningPublicCode)
                             method.SetPublic();
-                        else if (__DefiningPrivateCode)
+                        else if (engine.__DefiningPrivateCode)
                             method.SetPrivate();
 
-                        method.SetObject(__CurrentObject);
+                        method.SetObject(engine.__CurrentObject);
 
                         for (int i = 0; i < parameters.Count; i++)
                         {
-                            if (VariableExists(parameters[i]))
+                            if (engine.VariableExists(parameters[i]))
                             {
                                 if (!StringHelper.ZeroDots(parameters[i]))
                                 {
-                                    string before = (StringHelper.BeforeDot(parameters[i])), after = (StringHelper.AfterDot(parameters[i]));
+                                    string before = StringHelper.BeforeDot(parameters[i]), after = StringHelper.AfterDot(parameters[i]);
 
                                     if (engine.ObjectExists(before))
                                     {
-                                        if (ObjectVariableExists(before, after))
+                                        if (engine.ObjectVariableExists(before, after))
                                         {
-                                            if (GetObjectVariableString(before, after) != __Null)
-                                                method.AddVariable(GetObjectVariableString(before, after), after);
-                                            else if (GetObjectVariableNumber(before, after) != __NullNum)
-                                                method.AddVariable(GetObjectVariableNumber(before, after), after);
+                                            if (engine.GetObjectVariableString(before, after) != engine.__Null)
+                                                method.AddVariable(engine.GetObjectVariableString(before, after), after);
+                                            else if (engine.GetObjectVariableNumber(before, after) != engine.__NullNum)
+                                                method.AddVariable(engine.GetObjectVariableNumber(before, after), after);
                                             else
                                                 ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                                         }
@@ -218,10 +218,10 @@
                                 }
                                 else
                                 {
-                                    if (IsStringVariable(parameters[i]))
-                                        method.AddVariable(GetVariableString(parameters[i]), GetVariableName(parameters[i]));
-                                    else if (IsNumberVariable(parameters[i]))
-                                        method.AddVariable(GetVariableNumber(parameters[i]), GetVariableName(parameters[i]));
+                                    if (engine.IsStringVariable(parameters[i]))
+                                        method.AddVariable(engine.GetVariableString(parameters[i]), engine.GetVariableName(parameters[i]));
+                                    else if (engine.IsNumberVariable(parameters[i]))
+                                        method.AddVariable(engine.GetVariableNumber(parameters[i]), engine.GetVariableName(parameters[i]));
                                     else
                                         ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                                 }
@@ -230,45 +230,45 @@
                             {
                                 if (StringHelper.IsAlphabetical(parameters[i]))
                                 {
-                                    Variable newVariable = new("@[pm#" + StringHelper.ItoS(__ParamVarCount) + "]", parameters[i]);
+                                    Variable newVariable = new("@[pm#" + StringHelper.ItoS(engine.__ParamVarCount) + "]", parameters[i]);
                                     method.AddVariable(newVariable);
-                                    __ParamVarCount++;
+                                    engine.__ParamVarCount++;
                                 }
                                 else
                                 {
-                                    Variable newVariable = new("@[pm#" + StringHelper.ItoS(__ParamVarCount) + "]", StringHelper.StoD(parameters[i]));
+                                    Variable newVariable = new("@[pm#" + StringHelper.ItoS(engine.__ParamVarCount) + "]", StringHelper.StoD(parameters[i]));
                                     method.AddVariable(newVariable);
-                                    __ParamVarCount++;
+                                    engine.__ParamVarCount++;
                                 }
                             }
                         }
 
-                        CreateObjectMethod(__CurrentObject, method);
-                        SetObjectCurrentMethod(__CurrentObject, StringHelper.BeforeParameters(arg1));
-                        __DefiningMethod = true;
-                        __DefiningParameterizedMethod = true;
-                        __DefiningObjectMethod = true;
+                        engine.CreateObjectMethod(engine.__CurrentObject, method);
+                        engine.SetObjectCurrentMethod(engine.__CurrentObject, StringHelper.BeforeParameters(arg1));
+                        engine.__DefiningMethod = true;
+                        engine.__DefiningParameterizedMethod = true;
+                        engine.__DefiningObjectMethod = true;
                     }
                     else
                     {
                         Method method = new(arg1);
 
-                        if (__DefiningPublicCode)
+                        if (engine.__DefiningPublicCode)
                             method.SetPublic();
-                        else if (__DefiningPrivateCode)
+                        else if (engine.__DefiningPrivateCode)
                             method.SetPrivate();
 
-                        method.SetObject(__CurrentObject);
-                        CreateObjectMethod(__CurrentObject, method);
-                        SetObjectCurrentMethod(__CurrentObject, arg1);
-                        __DefiningMethod = true;
-                        __DefiningObjectMethod = true;
+                        method.SetObject(engine.__CurrentObject);
+                        engine.CreateObjectMethod(engine.__CurrentObject, method);
+                        engine.SetObjectCurrentMethod(engine.__CurrentObject, arg1);
+                        engine.__DefiningMethod = true;
+                        engine.__DefiningObjectMethod = true;
                     }
                 }
             }
             else
             {
-                if (MethodExists(arg1))
+                if (engine.MethodExists(arg1))
                     ErrorLogger.Error(ErrorLogger.METHOD_DEFINED, arg1, false);
                 else
                 {
@@ -280,16 +280,16 @@
                         {
                             Method method = new(after);
 
-                            if (__DefiningPublicCode)
+                            if (engine.__DefiningPublicCode)
                                 method.SetPublic();
-                            else if (__DefiningPrivateCode)
+                            else if (engine.__DefiningPrivateCode)
                                 method.SetPrivate();
 
                             method.SetObject(before);
-                            CreateObjectMethod(before, method);
-                            SetObjectCurrentMethod(before, after);
-                            __DefiningMethod = true;
-                            __DefiningObjectMethod = true;
+                            engine.CreateObjectMethod(before, method);
+                            engine.SetObjectCurrentMethod(before, after);
+                            engine.__DefiningMethod = true;
+                            engine.__DefiningObjectMethod = true;
                         }
                         else
                             ErrorLogger.Error(ErrorLogger.OBJ_UNDEFINED, "", false);
@@ -313,12 +313,12 @@
 
                                     if (engine.ObjectExists(before))
                                     {
-                                        if (ObjectVariableExists(before, after))
+                                        if (engine.ObjectVariableExists(before, after))
                                         {
-                                            if (GetObjectVariableString(before, after) != __Null)
-                                                method.AddVariable(GetObjectVariableString(before, after), after);
-                                            else if (GetObjectVariableNumber(before, after) != __NullNum)
-                                                method.AddVariable(GetObjectVariableNumber(before, after), after);
+                                            if (engine.GetObjectVariableString(before, after) != engine.__Null)
+                                                method.AddVariable(engine.GetObjectVariableString(before, after), after);
+                                            else if (engine.GetObjectVariableNumber(before, after) != engine.__NullNum)
+                                                method.AddVariable(engine.GetObjectVariableNumber(before, after), after);
                                             else
                                                 ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                                         }
@@ -330,10 +330,10 @@
                                 }
                                 else
                                 {
-                                    if (IsStringVariable(parameters[i]))
-                                        method.AddVariable(GetVariableString(parameters[i]), GetVariableName(parameters[i]));
-                                    else if (IsNumberVariable(parameters[i]))
-                                        method.AddVariable(GetVariableNumber(parameters[i]), GetVariableName(parameters[i]));
+                                    if (engine.IsStringVariable(parameters[i]))
+                                        method.AddVariable(engine.GetVariableString(parameters[i]), engine.GetVariableName(parameters[i]));
+                                    else if (engine.IsNumberVariable(parameters[i]))
+                                        method.AddVariable(engine.GetVariableNumber(parameters[i]), engine.GetVariableName(parameters[i]));
                                     else
                                         ErrorLogger.Error(ErrorLogger.IS_NULL, parameters[i], false);
                                 }
@@ -345,21 +345,21 @@
                                     Variable newVariable = new("@" + parameters[i], "");
                                     newVariable.setNull();
                                     method.AddVariable(newVariable);
-                                    __ParamVarCount++;
+                                    engine.__ParamVarCount++;
                                 }
                                 else
                                 {
                                     Variable newVariable = new("@" + parameters[i], 0);
                                     newVariable.setNull();
                                     method.AddVariable(newVariable);
-                                    __ParamVarCount++;
+                                    engine.__ParamVarCount++;
                                 }
                             }
                         }
 
                         methods.Add(method.GetName(), method);
-                        __DefiningMethod = true;
-                        __DefiningParameterizedMethod = true;
+                        engine.__DefiningMethod = true;
+                        engine.__DefiningParameterizedMethod = true;
                     }
                     else
                     {
@@ -369,7 +369,7 @@
                             method.Lock();
 
                         methods.Add(method.GetName(), method);
-                        __DefiningMethod = true;
+                        engine.__DefiningMethod = true;
                     }
                 }
             }
@@ -481,9 +481,9 @@
             {
                 before = (StringHelper.BeforeParameters(arg1));
 
-                if (MethodExists(before))
+                if (engine.MethodExists(before))
                 {
-                    executeTemplate(GetMethod(before), StringHelper.GetParameters(arg1));
+                    executeTemplate(engine.GetMethod(before), StringHelper.GetParameters(arg1));
 
                     parse("return " + __LastValue);
                 }
@@ -491,9 +491,9 @@
                 {
                     if (engine.ObjectExists(before))
                     {
-                        if (ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
+                        if (engine.ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
                         {
-                            executeTemplate(GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(arg1));
+                            executeTemplate(engine.GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(arg1));
                             parse("return " + __LastValue);
                         }
                         else
@@ -515,28 +515,28 @@
                     }
                 }
             }
-            else if (VariableExists(arg1))
+            else if (engine.VariableExists(arg1))
             {
                 if (engine.ObjectExists(StringHelper.BeforeDot(arg1)))
                 {
-                    if (GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __Null)
-                        __LastValue = GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1));
-                    else if (GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __NullNum)
-                        __LastValue = StringHelper.DtoS(GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)));
+                    if (engine.GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __Null)
+                        __LastValue = engine.GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1));
+                    else if (engine.GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __NullNum)
+                        __LastValue = StringHelper.DtoS(engine.GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)));
                     else
                         __LastValue = "null";
                 }
                 else
                 {
-                    if (IsStringVariable(arg1))
-                        __LastValue = GetVariableString(arg1);
-                    else if (IsNumberVariable(arg1))
-                        __LastValue = StringHelper.DtoS(GetVariableNumber(arg1));
+                    if (engine.IsStringVariable(arg1))
+                        __LastValue = engine.GetVariableString(arg1);
+                    else if (engine.IsNumberVariable(arg1))
+                        __LastValue = StringHelper.DtoS(engine.GetVariableNumber(arg1));
                     else
                         __LastValue = "null";
 
-                    if (GCCanCollectVariable(arg1))
-                        DeleteVariable(arg1);
+                    if (engine.GCCanCollectVariable(arg1))
+                        engine.DeleteVariable(arg1);
                 }
             }
             else if (engine.ListExists(arg1))
@@ -566,12 +566,12 @@
 
         void InternalRemember(string arg0, string arg1)
         {
-            if (VariableExists(arg1))
+            if (engine.VariableExists(arg1))
             {
-                if (IsStringVariable(arg1))
-                    saveVariable(arg1 + "&" + GetVariableString(arg1));
-                else if (IsNumberVariable(arg1))
-                    saveVariable(arg1 + "&" + StringHelper.DtoS(GetVariableNumber(arg1)));
+                if (engine.IsStringVariable(arg1))
+                    saveVariable(arg1 + "&" + engine.GetVariableString(arg1));
+                else if (engine.IsNumberVariable(arg1))
+                    saveVariable(arg1 + "&" + StringHelper.DtoS(engine.GetVariableNumber(arg1)));
                 else
                     ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
             }
@@ -585,15 +585,15 @@
             bool is_say = (arg0 == "say");
             bool is_print = (arg0 == "print" || arg0 == "println");
             // if parameter is variable, get it's value
-            if (VariableExists(arg1))
+            if (engine.VariableExists(arg1))
             {
                 // set the value
                 if (!StringHelper.ZeroDots(arg1))
                 {
-                    if (GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __Null)
-                        text = (GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)));
-                    else if (GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __NullNum)
-                        text = (StringHelper.DtoS(GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1))));
+                    if (engine.GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __Null)
+                        text = (engine.GetObjectVariableString(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)));
+                    else if (engine.GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)) != __NullNum)
+                        text = (StringHelper.DtoS(engine.GetObjectVariableNumber(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1))));
                     else
                     {
                         ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
@@ -602,10 +602,10 @@
                 }
                 else
                 {
-                    if (IsStringVariable(arg1))
-                        text = (GetVariableString(arg1));
-                    else if (IsNumberVariable(arg1))
-                        text = (StringHelper.DtoS(GetVariableNumber(arg1)));
+                    if (engine.IsStringVariable(arg1))
+                        text = (engine.GetVariableString(arg1));
+                    else if (engine.IsNumberVariable(arg1))
+                        text = (StringHelper.DtoS(engine.GetVariableNumber(arg1)));
                     else
                     {
                         ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);

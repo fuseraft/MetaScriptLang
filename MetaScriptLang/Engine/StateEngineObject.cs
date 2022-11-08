@@ -49,7 +49,7 @@
 
         public bool ObjectMethodExists(string objectName, string methodName)
         {
-            return this.objects[objectName].methodExists(methodName);
+            return this.objects[objectName].MethodExists(methodName);
         }
 
         public bool ObjectVariableExists(string objectName, string variableName)
@@ -147,7 +147,7 @@
                 for (int i = 0; i < objectMethods.Count; i++)
                     newObject.addMethod(objectMethods[i]);
 
-                List<Variable> objectVariables = GetObjectVariableList(oldName);
+                List<Variable> objectVariables = this.GetObjectVariableList(oldName);
 
                 for (int i = 0; i < objectVariables.Count; i++)
                     newObject.addVariable(objectVariables[i]);

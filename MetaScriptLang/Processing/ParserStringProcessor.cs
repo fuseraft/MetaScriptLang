@@ -30,7 +30,7 @@
                             else
                                 cleaned.Append("null");
                         }
-                        else if (MethodExists(builder.ToString()))
+                        else if (engine.MethodExists(builder.ToString()))
                         {
                             parse(builder.ToString());
 
@@ -51,9 +51,9 @@
 
                                 if (engine.ObjectExists(before))
                                 {
-                                    if (ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
+                                    if (engine.ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
                                     {
-                                        executeTemplate(GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(after));
+                                        executeTemplate(engine.GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(after));
 
                                         cleaned.Append(__LastValue);
                                     }
@@ -63,9 +63,9 @@
                                 else
                                     ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, before, false);
                             }
-                            else if (MethodExists(StringHelper.BeforeParameters(builder.ToString())))
+                            else if (engine.MethodExists(StringHelper.BeforeParameters(builder.ToString())))
                             {
-                                executeTemplate(GetMethod(StringHelper.BeforeParameters(builder.ToString())), StringHelper.GetParameters(builder.ToString()));
+                                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(builder.ToString())), StringHelper.GetParameters(builder.ToString()));
 
                                 cleaned.Append(__LastValue);
                             }
@@ -222,17 +222,17 @@
 
                             if (engine.ObjectExists(before))
                             {
-                                if (ObjectMethodExists(before, after))
+                                if (engine.ObjectMethodExists(before, after))
                                 {
                                     parse(before + "." + after);
                                     cleaned.Append(__LastValue);
                                 }
-                                else if (ObjectVariableExists(before, after))
+                                else if (engine.ObjectVariableExists(before, after))
                                 {
-                                    if (GetObjectVariableString(before, after) != __Null)
-                                        cleaned.Append(GetObjectVariableString(before, after));
-                                    else if (GetObjectVariableNumber(before, after) != __NullNum)
-                                        cleaned.Append(StringHelper.DtoS(GetObjectVariableNumber(before, after)));
+                                    if (engine.GetObjectVariableString(before, after) != __Null)
+                                        cleaned.Append(engine.GetObjectVariableString(before, after));
+                                    else if (engine.GetObjectVariableNumber(before, after) != __NullNum)
+                                        cleaned.Append(StringHelper.DtoS(engine.GetObjectVariableNumber(before, after)));
                                     else
                                         cleaned.Append("null");
                                 }

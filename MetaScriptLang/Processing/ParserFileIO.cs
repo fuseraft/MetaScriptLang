@@ -33,27 +33,27 @@
 
         void appendText(string arg1, string arg2, bool newLine)
         {
-            if (VariableExists(arg1))
+            if (engine.VariableExists(arg1))
             {
-                if (IsStringVariable(arg1))
+                if (engine.IsStringVariable(arg1))
                 {
-                    if (System.IO.File.Exists(GetVariableString(arg1)))
+                    if (System.IO.File.Exists(engine.GetVariableString(arg1)))
                     {
-                        if (VariableExists(arg2))
+                        if (engine.VariableExists(arg2))
                         {
-                            if (IsStringVariable(arg2))
+                            if (engine.IsStringVariable(arg2))
                             {
                                 if (newLine)
-                                    app(GetVariableString(arg1), GetVariableString(arg2) + "\r\n");
+                                    app(engine.GetVariableString(arg1), engine.GetVariableString(arg2) + "\r\n");
                                 else
-                                    app(GetVariableString(arg1), GetVariableString(arg2));
+                                    app(engine.GetVariableString(arg1), engine.GetVariableString(arg2));
                             }
-                            else if (IsNumberVariable(arg2))
+                            else if (engine.IsNumberVariable(arg2))
                             {
                                 if (newLine)
-                                    app(GetVariableString(arg1), StringHelper.DtoS(GetVariableNumber(arg2)) + "\r\n");
+                                    app(engine.GetVariableString(arg1), StringHelper.DtoS(engine.GetVariableNumber(arg2)) + "\r\n");
                                 else
-                                    app(GetVariableString(arg1), StringHelper.DtoS(GetVariableNumber(arg2)));
+                                    app(engine.GetVariableString(arg1), StringHelper.DtoS(engine.GetVariableNumber(arg2)));
                             }
                             else
                                 ErrorLogger.Error(ErrorLogger.IS_NULL, arg2, false);
@@ -61,32 +61,32 @@
                         else
                         {
                             if (newLine)
-                                app(GetVariableString(arg1), arg2 + "\r\n");
+                                app(engine.GetVariableString(arg1), arg2 + "\r\n");
                             else
-                                app(GetVariableString(arg1), arg2);
+                                app(engine.GetVariableString(arg1), arg2);
                         }
                     }
                     else
-                        ErrorLogger.Error(ErrorLogger.READ_FAIL, GetVariableString(arg1), false);
+                        ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(arg1), false);
                 }
                 else
                     ErrorLogger.Error(ErrorLogger.CONV_ERR, arg1, false);
             }
             else
             {
-                if (VariableExists(arg2))
+                if (engine.VariableExists(arg2))
                 {
-                    if (IsStringVariable(arg2))
+                    if (engine.IsStringVariable(arg2))
                     {
                         if (System.IO.File.Exists(arg1))
                         {
                             if (newLine)
-                                app(arg1, GetVariableString(arg2) + "\r\n");
+                                app(arg1, engine.GetVariableString(arg2) + "\r\n");
                             else
-                                app(arg1, GetVariableString(arg2));
+                                app(arg1, engine.GetVariableString(arg2));
                         }
                         else
-                            ErrorLogger.Error(ErrorLogger.READ_FAIL, GetVariableString(arg2), false);
+                            ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(arg2), false);
                     }
                     else
                         ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
@@ -117,22 +117,22 @@
 
         void __fwrite(string arg1, string arg2)
         {
-            if (VariableExists(arg1))
+            if (engine.VariableExists(arg1))
             {
-                if (IsStringVariable(arg1))
+                if (engine.IsStringVariable(arg1))
                 {
-                    if (System.IO.File.Exists(GetVariableString(arg1)))
+                    if (System.IO.File.Exists(engine.GetVariableString(arg1)))
                     {
-                        if (VariableExists(arg2))
+                        if (engine.VariableExists(arg2))
                         {
-                            if (IsStringVariable(arg2))
+                            if (engine.IsStringVariable(arg2))
                             {
-                                app(GetVariableString(arg1), GetVariableString(arg2) + "\r\n");
+                                app(engine.GetVariableString(arg1), engine.GetVariableString(arg2) + "\r\n");
                                 __LastValue = "0";
                             }
-                            else if (IsNumberVariable(arg2))
+                            else if (engine.IsNumberVariable(arg2))
                             {
-                                app(GetVariableString(arg1), StringHelper.DtoS(GetVariableNumber(arg2)) + "\r\n");
+                                app(engine.GetVariableString(arg1), StringHelper.DtoS(engine.GetVariableNumber(arg2)) + "\r\n");
                                 __LastValue = "0";
                             }
                             else
@@ -143,22 +143,22 @@
                         }
                         else
                         {
-                            app(GetVariableString(arg1), arg2 + "\r\n");
+                            app(engine.GetVariableString(arg1), arg2 + "\r\n");
                             __LastValue = "0";
                         }
                     }
                     else
                     {
-                        createFile(GetVariableString(arg1));
+                        createFile(engine.GetVariableString(arg1));
 
-                        if (IsStringVariable(arg2))
+                        if (engine.IsStringVariable(arg2))
                         {
-                            app(GetVariableString(arg1), GetVariableString(arg2) + "\r\n");
+                            app(engine.GetVariableString(arg1), engine.GetVariableString(arg2) + "\r\n");
                             __LastValue = "1";
                         }
-                        else if (IsNumberVariable(arg2))
+                        else if (engine.IsNumberVariable(arg2))
                         {
-                            app(GetVariableString(arg1), StringHelper.DtoS(GetVariableNumber(arg2)) + "\r\n");
+                            app(engine.GetVariableString(arg1), StringHelper.DtoS(engine.GetVariableNumber(arg2)) + "\r\n");
                             __LastValue = "1";
                         }
                         else
@@ -178,19 +178,19 @@
             }
             else
             {
-                if (VariableExists(arg2))
+                if (engine.VariableExists(arg2))
                 {
-                    if (IsStringVariable(arg2))
+                    if (engine.IsStringVariable(arg2))
                     {
                         if (System.IO.File.Exists(arg1))
                         {
-                            app(arg1, GetVariableString(arg2) + "\r\n");
+                            app(arg1, engine.GetVariableString(arg2) + "\r\n");
                             __LastValue = "0";
                         }
                         else
                         {
-                            createFile(GetVariableString(arg2));
-                            app(arg1, GetVariableString(arg2) + "\r\n");
+                            createFile(engine.GetVariableString(arg2));
+                            app(arg1, engine.GetVariableString(arg2) + "\r\n");
                             __LastValue = "1";
                         }
                     }

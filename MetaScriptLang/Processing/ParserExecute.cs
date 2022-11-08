@@ -17,28 +17,28 @@
 
             for (int i = 0; i < (int)methodVariables.Count; i++)
             {
-                if (VariableExists(strings[i]))
+                if (engine.VariableExists(strings[i]))
                 {
-                    if (IsStringVariable(strings[i]))
-                        CreateVariableString(methodVariables[i].name(), GetVariableString(strings[i]));
-                    else if (IsNumberVariable(strings[i]))
-                        CreateVariableNumber(methodVariables[i].name(), GetVariableNumber(strings[i]));
+                    if (engine.IsStringVariable(strings[i]))
+                        engine.CreateVariableString(methodVariables[i].name(), engine.GetVariableString(strings[i]));
+                    else if (engine.IsNumberVariable(strings[i]))
+                        engine.CreateVariableNumber(methodVariables[i].name(), engine.GetVariableNumber(strings[i]));
                 }
-                else if (MethodExists(strings[i]))
+                else if (engine.MethodExists(strings[i]))
                 {
                     parse(strings[i]);
 
                     if (StringHelper.IsNumeric(__LastValue))
-                        CreateVariableNumber(methodVariables[i].name(), StringHelper.StoD(__LastValue));
+                        engine.CreateVariableNumber(methodVariables[i].name(), StringHelper.StoD(__LastValue));
                     else
-                        CreateVariableString(methodVariables[i].name(), __LastValue);
+                        engine.CreateVariableString(methodVariables[i].name(), __LastValue);
                 }
                 else
                 {
                     if (StringHelper.IsNumeric(strings[i]))
-                        CreateVariableNumber(methodVariables[i].name(), StringHelper.StoD(strings[i]));
+                        engine.CreateVariableNumber(methodVariables[i].name(), StringHelper.StoD(strings[i]));
                     else
-                        CreateVariableString(methodVariables[i].name(), strings[i]);
+                        engine.CreateVariableString(methodVariables[i].name(), strings[i]);
                 }
             }
 

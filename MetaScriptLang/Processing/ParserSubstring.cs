@@ -113,9 +113,9 @@
                                         tempString += (variableString[i]);
 
                                     if (VariableExists(arg1))
-                                        SetVariableString(arg1, tempString);
+                                        engine.SetVariableString(arg1, tempString);
                                     else
-                                        CreateVariableString(arg1, tempString);
+                                        engine.CreateVariableString(arg1, tempString);
                                 }
                                 else
                                     ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
@@ -129,10 +129,10 @@
                                     for (int i = StringHelper.StoI(rangeBegin); i >= StringHelper.StoI(rangeEnd); i--)
                                         tempString += (variableString[i]);
 
-                                    if (VariableExists(arg1))
-                                        SetVariableString(arg1, tempString);
+                                    if (engine.VariableExists(arg1))
+                                        engine.SetVariableString(arg1, tempString);
                                     else
-                                        CreateVariableString(arg1, tempString);
+                                        engine.CreateVariableString(arg1, tempString);
                                 }
                                 else
                                     ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
@@ -159,10 +159,10 @@
                                 string tmp_ = ("");
                                 tmp_ += (variableString[StringHelper.StoI(rangeBegin)]);
 
-                                if (VariableExists(arg1))
-                                    SetVariableString(arg1, tmp_);
+                                if (engine.VariableExists(arg1))
+                                    engine.SetVariableString(arg1, tmp_);
                                 else
-                                    CreateVariableString(arg1, tmp_);
+                                    engine.CreateVariableString(arg1, tmp_);
                             }
                         }
                     }
