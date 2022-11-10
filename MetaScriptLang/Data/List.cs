@@ -5,74 +5,66 @@
         private System.Collections.Generic.List<string> contents = new ();
         private System.Collections.Generic.List<string> reversion = new ();
         private string listName = String.Empty;
-        private bool collectable = false;
+        private bool autoCollect = false;
 
         public List() { }
 
         public List(string name)
         {
-            collectable = false;
+            autoCollect = false;
             listName = name;
         }
 
         ~List()
         {
-            clear();
+            Clear();
         }
 
-        public void collect()
+        public bool CanCollect => this.autoCollect;
+
+        public void SetAutoCollect(bool autoCollect)
         {
-            collectable = true;
+            this.autoCollect = autoCollect;
         }
 
-        public void dontCollect()
-        {
-            collectable = false;
-        }
-
-        public bool garbage()
-        {
-            return collectable;
-        }
-
-        public void setName(string s)
+        public void SetName(string s)
         {
             listName = s;
         }
 
-        public void listSort()
+        public void Sort()
         {
             reversion = new System.Collections.Generic.List<string>(contents);
             contents.Sort();
         }
 
-        public void listReverse()
+        public void Reverse()
         {
             reversion = new System.Collections.Generic.List<string>(contents);
             contents.Reverse();
         }
 
-        public void listRevert()
+        public void Revert()
         {
             contents = reversion;
         }
 
-        public void add(string line)
+        public void Add(string line)
         {
             contents.Add(line);
         }
 
-        public void remove(string line)
+        public void RemoveAll(string line)
         {
             contents.RemoveAll(s => (s ?? String.Empty).Equals(line));
         }
 
-        public void clear()
+        public void Clear()
         {
             contents.Clear();
         }
 
-        public string at(int index)
+        public string GetItemAt(int index)
         {
             if (index < contents.Count)
                 return contents[index];
@@ -80,12 +72,12 @@
             return "#!=no_line";
         }
 
-        public string name()
+        public string GetName()
         {
             return listName;
         }
 
-        public int size()
+        public int GetSize()
         {
             return contents.Count;
         }

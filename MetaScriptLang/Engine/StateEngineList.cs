@@ -5,7 +5,7 @@
     {
         public bool GCCanCollectList(string listName)
         {
-            return this.lists[listName].garbage();
+            return this.lists[listName].CanCollect;
         }
 
         public void DeleteList(string target)
@@ -35,32 +35,32 @@
 
         public void ListClear(string listName)
         {
-            this.lists[listName].clear();
+            this.lists[listName].Clear();
         }
 
         public void ListSort(string listName)
         {
-            this.lists[listName].listSort();
+            this.lists[listName].Sort();
         }
 
         public void ListReverse(string listName)
         {
-            this.lists[listName].listReverse();
+            this.lists[listName].Reverse();
         }
 
         public void ListRevert(string listName)
         {
-            this.lists[listName].listRevert();
+            this.lists[listName].Revert();
         }
 
         public void RemoveFromList(string listName, string line)
         {
-            this.lists[listName].remove(line);
+            this.lists[listName].RemoveAll(line);
         }
 
         public void AddToList(string listName, string line)
         {
-            this.lists[listName].add(line);
+            this.lists[listName].Add(line);
         }
 
         public MetaScriptLang.Data.List GetList(string listName)
@@ -70,22 +70,22 @@
 
         public int GetListSize(string listName)
         {
-            return this.GetList(listName).size();
+            return this.GetList(listName).GetSize();
         }
 
         public string GetListName(string listName)
         {
-            return this.lists[listName].name();
+            return this.lists[listName].GetName();
         }
 
         public string GetListLine(string listName, int lineNumber)
         {
-            return this.lists[listName].at(lineNumber);
+            return this.lists[listName].GetItemAt(lineNumber);
         }
 
         public void SetListName(string listName, string newName)
         {
-            this.lists[listName].setName(newName);
+            this.lists[listName].SetName(newName);
         }
 
         public bool ListExists(string listName)

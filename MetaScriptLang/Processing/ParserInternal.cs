@@ -70,10 +70,10 @@
                 {
                     foreach (var key in this.variables.Keys)
                     {
-                        if (variables[key].GetStringValue() != __Null)
-                            ConsoleWrite($"{variables[key].SetName()}:\t{variables[key].GetStringValue()}");
-                        else if (variables[key].GetNumberValue() != __NullNum)
-                            ConsoleWrite($"{variables[key].SetName()}:\t{StringHelper.DtoS(variables[key].GetNumberValue())}");
+                        if (variables[key].StringValue != __Null)
+                            ConsoleWrite($"{variables[key].SetName()}:\t{variables[key].StringValue}");
+                        else if (variables[key].NumberValue != __NullNum)
+                            ConsoleWrite($"{variables[key].SetName()}:\t{StringHelper.DtoS(variables[key].NumberValue)}");
                         else
                             ConsoleWrite($"{variables[key].SetName()}:\tis_null");
                     }
@@ -570,9 +570,9 @@
             if (engine.VariableExists(arg1))
             {
                 if (engine.IsStringVariable(arg1))
-                    saveVariable(arg1 + "&" + engine.GetVariableString(arg1));
+                    SaveVariable(arg1 + "&" + engine.GetVariableString(arg1));
                 else if (engine.IsNumberVariable(arg1))
-                    saveVariable(arg1 + "&" + StringHelper.DtoS(engine.GetVariableNumber(arg1)));
+                    SaveVariable(arg1 + "&" + StringHelper.DtoS(engine.GetVariableNumber(arg1)));
                 else
                     ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
             }

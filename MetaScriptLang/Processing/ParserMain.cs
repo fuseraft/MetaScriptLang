@@ -1137,11 +1137,11 @@
 
                         if (engine.IsStringVariable(tmpVar))
                         {
-                            tmpValue = tmpVar.GetStringValue();
+                            tmpValue = tmpVar.StringValue;
                         }
                         else if (engine.IsNumberVariable(tmpVar))
                         {
-                            tmpValue = StringHelper.DtoS(tmpVar.GetNumberValue());
+                            tmpValue = StringHelper.DtoS(tmpVar.NumberValue);
                         }
                         else
                         {
@@ -1395,9 +1395,9 @@
                     List newList = new(arg1);
 
                     if (engine.__ExecutedTemplate || engine.__ExecutedMethod)
-                        newList.collect();
+                        newList.SetAutoCollect(true);
                     else
-                        newList.dontCollect();
+                        newList.SetAutoCollect(false);
 
                     lists.Add(arg1, newList);
                 }
@@ -6863,7 +6863,7 @@
                             List newList = new();
 
                             for (int i = 0; i < args.Count; i++)
-                                newList.add(args[i]);
+                                newList.Add(args[i]);
 
                             engine.SuccessfulForLoop(newList);
                         }
@@ -6874,7 +6874,7 @@
                             System.Collections.Generic.List<Method> objMethods = engine.GetObjectMethodList(before);
 
                             for (int i = 0; i < objMethods.Count; i++)
-                                newList.add(objMethods[i].GetName());
+                                newList.Add(objMethods[i].GetName());
 
                             engine.SuccessfulForLoop(newList);
                         }
@@ -6885,7 +6885,7 @@
                             System.Collections.Generic.List<Variable> objVars = engine.GetObjectVariableList(before);
 
                             for (int i = 0; i < objVars.Count; i++)
-                                newList.add(objVars[i].SetName());
+                                newList.Add(objVars[i].SetName());
 
                             engine.SuccessfulForLoop(newList);
                         }
@@ -6901,7 +6901,7 @@
                                 {
                                     string tempStr = string.Empty;
                                     tempStr += (tempVarStr[i]);
-                                    newList.add(tempStr);
+                                    newList.Add(tempStr);
                                 }
 
                                 engine.SuccessfulForLoop(newList);
@@ -6940,7 +6940,7 @@
                                             List newList = new();
                                             foreach (var line in System.IO.File.ReadAllLines(engine.GetVariableString(before)))
                                             {
-                                                newList.add(line);
+                                                newList.Add(line);
                                             }
                                             engine.SuccessfulForLoop(newList);
                                         }
@@ -7047,7 +7047,7 @@
                                                     {
                                                         string tempString = string.Empty;
                                                         tempString += (tempVarString[i]);
-                                                        newList.add(tempString);
+                                                        newList.Add(tempString);
                                                     }
 
                                                     __DefaultLoopSymbol = arg1;
@@ -7069,7 +7069,7 @@
                                                     {
                                                         string tempString = string.Empty;
                                                         tempString += (tempVarString[i]);
-                                                        newList.add(tempString);
+                                                        newList.Add(tempString);
                                                     }
 
                                                     __DefaultLoopSymbol = arg1;
@@ -7116,7 +7116,7 @@
                             __DefaultLoopSymbol = arg1;
 
                             for (int i = 0; i < (int)args.Count; i++)
-                                newList.add(args[i]);
+                                newList.Add(args[i]);
 
                             engine.SuccessfulForLoop(newList);
                         }
@@ -7124,30 +7124,30 @@
                         {
                             List newList = new();
 
-                            newList.add("cwd");
-                            newList.add("noctis");
-                            newList.add("os?");
-                            newList.add("user");
-                            newList.add("machine");
-                            newList.add("init_dir");
-                            newList.add("initial_directory");
-                            newList.add("am_or_pm");
-                            newList.add("now");
-                            newList.add("day_of_this_week");
-                            newList.add("day_of_this_month");
-                            newList.add("day_of_this_year");
-                            newList.add("month_of_this_year");
-                            newList.add("this_second");
-                            newList.add("this_minute");
-                            newList.add("this_hour");
-                            newList.add("this_month");
-                            newList.add("this_year");
-                            newList.add("empty_string");
-                            newList.add("empty_number");
-                            newList.add("last_error");
-                            newList.add("last_value");
-                            newList.add("get_members");
-                            newList.add("members");
+                            newList.Add("cwd");
+                            newList.Add("noctis");
+                            newList.Add("os?");
+                            newList.Add("user");
+                            newList.Add("machine");
+                            newList.Add("init_dir");
+                            newList.Add("initial_directory");
+                            newList.Add("am_or_pm");
+                            newList.Add("now");
+                            newList.Add("day_of_this_week");
+                            newList.Add("day_of_this_month");
+                            newList.Add("day_of_this_year");
+                            newList.Add("month_of_this_year");
+                            newList.Add("this_second");
+                            newList.Add("this_minute");
+                            newList.Add("this_hour");
+                            newList.Add("this_month");
+                            newList.Add("this_year");
+                            newList.Add("empty_string");
+                            newList.Add("empty_number");
+                            newList.Add("last_error");
+                            newList.Add("last_value");
+                            newList.Add("get_members");
+                            newList.Add("members");
 
                             __DefaultLoopSymbol = arg1;
                             engine.SuccessfulForLoop(newList);
@@ -7159,7 +7159,7 @@
                             System.Collections.Generic.List<Method> objMethods = engine.GetObjectMethodList(_b);
 
                             for (int i = 0; i < (int)objMethods.Count; i++)
-                                newList.add(objMethods[i].GetName());
+                                newList.Add(objMethods[i].GetName());
 
                             __DefaultLoopSymbol = arg1;
                             engine.SuccessfulForLoop(newList);
@@ -7171,7 +7171,7 @@
                             System.Collections.Generic.List<Variable> objVars = engine.GetObjectVariableList(_b);
 
                             for (int i = 0; i < (int)objVars.Count; i++)
-                                newList.add(objVars[i].SetName());
+                                newList.Add(objVars[i].SetName());
 
                             __DefaultLoopSymbol = arg1;
                             engine.SuccessfulForLoop(newList);
@@ -7189,7 +7189,7 @@
                                 {
                                     string tmpStr = string.Empty;
                                     tmpStr += (_t[i]);
-                                    newList.add(tmpStr);
+                                    newList.Add(tmpStr);
                                 }
 
                                 engine.SuccessfulForLoop(newList);
@@ -7235,7 +7235,7 @@
 
                                             foreach (var line in System.IO.File.ReadAllLines(engine.GetVariableString(_b)))
                                             {
-                                                newList.add(line);
+                                                newList.Add(line);
                                             }
 
                                             __DefaultLoopSymbol = arg1;

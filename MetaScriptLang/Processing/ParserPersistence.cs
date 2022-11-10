@@ -1,12 +1,9 @@
-﻿using MetaScriptLang.Data;
-using System.IO;
-using System.Linq;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Data;
     public partial class Parser
     {
-        void saveVariable(string variableName)
+        void SaveVariable(string variableName)
         {
             Crypt c = new();
 

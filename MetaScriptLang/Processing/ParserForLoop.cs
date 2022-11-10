@@ -12,7 +12,7 @@
 
             if (m.IsListLoop())
             {
-                int i = 0, stop = m.GetList().size();
+                int i = 0, stop = m.GetList().GetSize();
 
                 while (i < stop)
                 {
@@ -42,7 +42,7 @@
 
                                     if (builder == m.GetSymbol())
                                     {
-                                        cleaned += (m.GetList().at(i));
+                                        cleaned += (m.GetList().GetItemAt(i));
                                     }
 
                                     builder = string.Empty;

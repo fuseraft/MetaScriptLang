@@ -13,7 +13,7 @@
         #region Typechecking
         public bool IsNumberVariable(Variable var)
         {
-            return var.GetNumberValue() != __NullNum;
+            return var.NumberValue != __NullNum;
         }
 
         public bool IsNumberVariable(string varName)
@@ -23,7 +23,7 @@
 
         public bool IsStringVariable(Variable var)
         {
-            return var.GetStringValue() != __Null;
+            return var.StringValue != __Null;
         }
 
         public bool IsStringVariable(string varName)
@@ -35,7 +35,7 @@
         #region GC
         public bool GCCanCollectVariable(string target)
         {
-            return this.variables[target].IsGarbage();
+            return this.variables[target].CanCollect;
         }
         #endregion
 
@@ -58,27 +58,27 @@
             this.variables.Remove(target);
         }
 
-        public void CreateVariableString(string name, string value)
+        public void CreateStringVariable(string name, string value)
         {
             Variable newVariable = new(name, value);
 
             if (__ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock)
-                newVariable.Collect();
+                newVariable.SetAutoCollect(true);
             else
-                newVariable.DontCollect();
+                newVariable.SetAutoCollect(false);
 
             variables.Add(name, newVariable);
             SetLastValue(value);
         }
 
-        public void CreateVariableNumber(string name, double value)
+        public void CreateNumberVariable(string name, double value)
         {
             Variable newVariable = new(name, value);
 
             if (__ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock) 
-                newVariable.Collect();
+                newVariable.SetAutoCollect(true);
             else
-                newVariable.DontCollect();
+                newVariable.SetAutoCollect(false);
 
             variables.Add(name, newVariable);
             SetLastValue(StringHelper.DtoS(value));
@@ -117,12 +117,12 @@
         #region Getters
         public string GetVariableString(string target)
         {
-            return this.variables[target].GetStringValue();
+            return this.variables[target].StringValue;
         }
 
         public double GetVariableNumber(string target)
         {
-            return this.variables[target].GetNumberValue();
+            return this.variables[target].NumberValue;
         }
 
         public string GetVariableName(string target)

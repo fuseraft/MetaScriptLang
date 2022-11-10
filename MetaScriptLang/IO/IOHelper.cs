@@ -21,10 +21,10 @@
 
             for (int i = 0; i < dirList.Count; i++)
             {
-                newList.add(dirList[i]);
+                newList.Add(dirList[i]);
             }
 
-            if (newList.size() == 0)
+            if (newList.GetSize() == 0)
             {
                 _engine.__DefiningForLoop = false;
             }

@@ -67,6 +67,24 @@
             this.objects[objectName].addVariable(v);
         }
 
+        public void CreateObjectVariable(string objectName, string variableName, string value)
+        {
+            Variable v = new(variableName, value);
+            this.objects[objectName].addVariable(v);
+        }
+
+        public void CreateObjectVariable(string objectName, string variableName, double value)
+        {
+            Variable v = new(variableName, value);
+
+            if (__DefiningPrivateCode)
+                v.MakePrivate();
+            else if (__DefiningPublicCode)
+                v.MakePublic();
+
+            this.objects[objectName].addVariable(v);
+        }
+
         public void DeleteObjectVariable(string objectName, string variableName)
         {
             this.objects[objectName].removeVariable(variableName);
@@ -124,12 +142,12 @@
 
         public string GetObjectVariableString(string objectName, string variableName)
         {
-            return this.objects[objectName].getVariable(variableName).GetStringValue();
+            return this.objects[objectName].getVariable(variableName).StringValue;
         }
 
         public double GetObjectVariableNumber(string objectName, string variableName)
         {
-            return this.objects[objectName].getVariable(variableName).GetNumberValue();
+            return this.objects[objectName].getVariable(variableName).NumberValue;
         }
 
         public void SetObjectCurrentMethod(string objectName, string methodName)

@@ -40,7 +40,7 @@
                     if (engine.GetObjectVariableString(tmpObjName, tmpVarName) != __Null)
                     {
                         string tempObjectVariableName = ("@ " + tmpObjName + tmpVarName + "_string");
-                        engine.CreateVariableString(tempObjectVariableName, engine.GetObjectVariableString(tmpObjName, tmpVarName));
+                        engine.CreateStringVariable(tempObjectVariableName, engine.GetObjectVariableString(tmpObjName, tmpVarName));
                         ParseTwoSpaceString(tempObjectVariableName, arg1, arg2, "", command);
                         engine.SetVariableName(tempObjectVariableName, tmpVarName);
                         engine.DeleteObjectVariable(tmpObjName, tmpVarName);
@@ -50,7 +50,7 @@
                     else if (engine.GetObjectVariableNumber(tmpObjName, tmpVarName) != __NullNum)
                     {
                         string tempObjectVariableName = ("@____" + StringHelper.BeforeDot(arg0) + "___" + StringHelper.AfterDot(arg0) + "_number");
-                        engine.CreateVariableNumber(tempObjectVariableName, engine.GetObjectVariableNumber(StringHelper.BeforeDot(arg0), StringHelper.AfterDot(arg0)));
+                        engine.CreateNumberVariable(tempObjectVariableName, engine.GetObjectVariableNumber(StringHelper.BeforeDot(arg0), StringHelper.AfterDot(arg0)));
                         ParseTwoSpaceString(tempObjectVariableName, arg1, arg2, tempObjectVariableName + " " + arg1 + " " + arg2, command);
                         engine.SetVariableName(tempObjectVariableName, StringHelper.AfterDot(arg0));
                         engine.DeleteObjectVariable(StringHelper.BeforeDot(arg0), StringHelper.AfterDot(arg0));
@@ -1015,9 +1015,9 @@
                                 line = ConsoleHelper.GetLine();
 
                                 if (StringHelper.IsNumeric(line))
-                                    engine.CreateVariableNumber(arg0, StringHelper.StoD(line));
+                                    engine.CreateNumberVariable(arg0, StringHelper.StoD(line));
                                 else
-                                    engine.CreateVariableString(arg0, line);
+                                    engine.CreateStringVariable(arg0, line);
                             }
                         }
                         else if (StringHelper.ContainsParameters(arg2))
@@ -1988,9 +1988,9 @@
                                 string listValue = engine.GetListLine(beforeBracket, StringHelper.StoI(afterBracket));
 
                                 if (StringHelper.IsNumeric(listValue))
-                                    engine.CreateVariableNumber(arg0, StringHelper.StoD(listValue));
+                                    engine.CreateNumberVariable(arg0, StringHelper.StoD(listValue));
                                 else
-                                    engine.CreateVariableString(arg0, listValue);
+                                    engine.CreateStringVariable(arg0, listValue);
                             }
                         }
                         else
@@ -2002,7 +2002,7 @@
                         ErrorLogger.Error(ErrorLogger.LIST_UNDEFINED, beforeBracket, false);
                 }
                 else if (engine.ListExists(before) && after == "size")
-                    engine.CreateVariableNumber(arg0, StringHelper.StoD(StringHelper.ItoS(engine.GetListSize(before))));
+                    engine.CreateNumberVariable(arg0, StringHelper.StoD(StringHelper.ItoS(engine.GetListSize(before))));
                 else if (before == "self")
                 {
                     if (engine.ObjectExists(__CurrentMethodObject))
@@ -2015,10 +2015,10 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsStringVariable(before))
-                            engine.CreateVariableNumber(arg0, engine.GetVariableString(before)[0]);
+                            engine.CreateNumberVariable(arg0, engine.GetVariableString(before)[0]);
                         else if (engine.IsNumberVariable(before))
                         {
-                            engine.CreateVariableNumber(arg0, engine.GetVariableNumber(before));
+                            engine.CreateNumberVariable(arg0, engine.GetVariableNumber(before));
                         }
                         else
                             ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
@@ -2031,10 +2031,10 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsStringVariable(before))
-                            engine.CreateVariableNumber(arg0, engine.GetVariableString(before)[0]);
+                            engine.CreateNumberVariable(arg0, engine.GetVariableString(before)[0]);
                         else if (engine.IsNumberVariable(before))
                         {
-                            engine.CreateVariableNumber(arg0, engine.GetVariableNumber(before));
+                            engine.CreateNumberVariable(arg0, engine.GetVariableNumber(before));
                         }
                         else
                             ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
@@ -2047,7 +2047,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableString(arg0, StringHelper.DtoS(engine.GetVariableNumber(before)));
+                            engine.CreateStringVariable(arg0, StringHelper.DtoS(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
                     }
@@ -2059,7 +2059,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsStringVariable(before))
-                            engine.CreateVariableNumber(arg0, StringHelper.StoD(engine.GetVariableString(before)));
+                            engine.CreateNumberVariable(arg0, StringHelper.StoD(engine.GetVariableString(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.IS_NULL, before, false);
                     }
@@ -2073,9 +2073,9 @@
                         ParseString(arg2);
 
                         if (StringHelper.IsNumeric(__LastValue))
-                            engine.CreateVariableNumber(arg0, StringHelper.StoD(__LastValue));
+                            engine.CreateNumberVariable(arg0, StringHelper.StoD(__LastValue));
                         else
-                            engine.CreateVariableString(arg0, __LastValue);
+                            engine.CreateStringVariable(arg0, __LastValue);
                     }
                     else if (StringHelper.ContainsParameters(after))
                     {
@@ -2084,9 +2084,9 @@
                             executeTemplate(engine.GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(after));
 
                             if (StringHelper.IsNumeric(__LastValue))
-                                engine.CreateVariableNumber(arg0, StringHelper.StoD(__LastValue));
+                                engine.CreateNumberVariable(arg0, StringHelper.StoD(__LastValue));
                             else
-                                engine.CreateVariableString(arg0, __LastValue);
+                                engine.CreateStringVariable(arg0, __LastValue);
                         }
                         else
                             sysExec(s, command);
@@ -2094,9 +2094,9 @@
                     else if (engine.ObjectVariableExists(before, after))
                     {
                         if (engine.GetObjectVariableString(before, after) != __Null)
-                            engine.CreateVariableString(arg0, engine.GetObjectVariableString(before, after));
+                            engine.CreateStringVariable(arg0, engine.GetObjectVariableString(before, after));
                         else if (engine.GetObjectVariableNumber(before, after) != __NullNum)
-                            engine.CreateVariableNumber(arg0, engine.GetObjectVariableNumber(before, after));
+                            engine.CreateNumberVariable(arg0, engine.GetObjectVariableNumber(before, after));
                         else
                             ErrorLogger.Error(ErrorLogger.IS_NULL, engine.GetObjectVariableName(before, after), false);
                     }
@@ -2112,7 +2112,7 @@
                             {
                                 bigString += (line + "\r\n");
                             }
-                            engine.CreateVariableString(arg0, bigString);
+                            engine.CreateStringVariable(arg0, bigString);
                         }
                         else
                             ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(before), false);
@@ -2124,53 +2124,41 @@
                 {
                     if (StringHelper.IsNumeric(arg2))
                     {
-                        Variable newVariable = new(arg0, StringHelper.StoD(arg2));
-
-                        if (__DefiningPrivateCode)
-                            newVariable.MakePrivate();
-                        else if (__DefiningPublicCode)
-                            newVariable.MakePublic();
-
-                        engine.CreateObjectVariable(__CurrentObject, newVariable);
+                        engine.CreateObjectVariable(__CurrentObject, arg0, StringHelper.StoD(arg2));
                     }
                     else
                     {
-                        Variable newVariable = new(arg0, arg2);
-
-                        if (__DefiningPrivateCode)
-                            newVariable.MakePrivate();
-                        else if (__DefiningPublicCode)
-                            newVariable.MakePublic();
-
-                        engine.CreateObjectVariable(__CurrentObject, newVariable);
+                        engine.CreateObjectVariable(__CurrentObject, arg0, arg2);
                     }
                 }
                 else if (arg2 == "null")
-                    engine.CreateVariableString(arg0, arg2);
+                {
+                    engine.CreateStringVariable(arg0, arg2);
+                }
                 else if (engine.MethodExists(arg2))
                 {
                     ParseString(arg2);
 
                     if (StringHelper.IsNumeric(__LastValue))
-                        engine.CreateVariableNumber(arg0, StringHelper.StoD(__LastValue));
+                        engine.CreateNumberVariable(arg0, StringHelper.StoD(__LastValue));
                     else
-                        engine.CreateVariableString(arg0, __LastValue);
+                        engine.CreateStringVariable(arg0, __LastValue);
                 }
                 else if (engine.ConstantExists(arg2))
                 {
                     if (engine.IsNumberConstant(arg2))
-                        engine.CreateVariableNumber(arg0, engine.GetConstantNumber(arg2));
+                        engine.CreateNumberVariable(arg0, engine.GetConstantNumber(arg2));
                     else if (engine.IsStringConstant(arg2))
-                        engine.CreateVariableString(arg0, engine.GetConstantString(arg2));
+                        engine.CreateStringVariable(arg0, engine.GetConstantString(arg2));
                     else
                         ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                 }
                 else if (StringHelper.ContainsParameters(arg2))
                 {
                     if (IsStringStack(arg2))
-                        engine.CreateVariableString(arg0, GetStringStack(arg2));
+                        engine.CreateStringVariable(arg0, GetStringStack(arg2));
                     else if (IsStackReady(arg2))
-                        engine.CreateVariableNumber(arg0, GetStack(arg2));
+                        engine.CreateNumberVariable(arg0, GetStack(arg2));
                     else if (StringHelper.BeforeParameters(arg2) == "random")
                     {
                         if (StringHelper.ContainsString(arg2, ".."))
@@ -2183,20 +2171,20 @@
                                 double n0 = StringHelper.StoD(s0), n2 = StringHelper.StoD(s2);
 
                                 if (n0 < n2)
-                                    engine.CreateVariableNumber(arg0, (int)random(n0, n2));
+                                    engine.CreateNumberVariable(arg0, (int)random(n0, n2));
                                 else if (n0 > n2)
-                                    engine.CreateVariableNumber(arg0, (int)random(n2, n0));
+                                    engine.CreateNumberVariable(arg0, (int)random(n2, n0));
                                 else
-                                    engine.CreateVariableNumber(arg0, (int)random(n0, n2));
+                                    engine.CreateNumberVariable(arg0, (int)random(n0, n2));
                             }
                             else if (StringHelper.IsAlphabetical(s0) && StringHelper.IsAlphabetical(s2))
                             {
                                 if (StringHelper.GetCharAsInt32(s0[0]) < StringHelper.GetCharAsInt32(s2[0]))
-                                    engine.CreateVariableString(arg0, random(s0, s2));
+                                    engine.CreateStringVariable(arg0, random(s0, s2));
                                 else if (StringHelper.GetCharAsInt32(s0[0]) > StringHelper.GetCharAsInt32(s2[0]))
-                                    engine.CreateVariableString(arg0, random(s2, s0));
+                                    engine.CreateStringVariable(arg0, random(s2, s0));
                                 else
-                                    engine.CreateVariableString(arg0, random(s2, s0));
+                                    engine.CreateStringVariable(arg0, random(s2, s0));
                             }
                             else if (engine.VariableExists(s0) || engine.VariableExists(s2))
                             {
@@ -2221,20 +2209,20 @@
                                     double n0 = StringHelper.StoD(s0), n2 = StringHelper.StoD(s2);
 
                                     if (n0 < n2)
-                                        engine.CreateVariableNumber(arg0, (int)random(n0, n2));
+                                        engine.CreateNumberVariable(arg0, (int)random(n0, n2));
                                     else if (n0 > n2)
-                                        engine.CreateVariableNumber(arg0, (int)random(n2, n0));
+                                        engine.CreateNumberVariable(arg0, (int)random(n2, n0));
                                     else
-                                        engine.CreateVariableNumber(arg0, (int)random(n0, n2));
+                                        engine.CreateNumberVariable(arg0, (int)random(n0, n2));
                                 }
                                 else if (StringHelper.IsAlphabetical(s0) && StringHelper.IsAlphabetical(s2))
                                 {
                                     if (StringHelper.GetCharAsInt32(s0[0]) < StringHelper.GetCharAsInt32(s2[0]))
-                                        engine.CreateVariableString(arg0, random(s0, s2));
+                                        engine.CreateStringVariable(arg0, random(s0, s2));
                                     else if (StringHelper.GetCharAsInt32(s0[0]) > StringHelper.GetCharAsInt32(s2[0]))
-                                        engine.CreateVariableString(arg0, random(s2, s0));
+                                        engine.CreateStringVariable(arg0, random(s2, s0));
                                     else
-                                        engine.CreateVariableString(arg0, random(s2, s0));
+                                        engine.CreateStringVariable(arg0, random(s2, s0));
                                 }
                             }
                             else
@@ -2248,19 +2236,19 @@
                         executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg2)), StringHelper.GetParameters(arg2));
 
                         if (StringHelper.IsNumeric(__LastValue))
-                            engine.CreateVariableNumber(arg0, StringHelper.StoD(__LastValue));
+                            engine.CreateNumberVariable(arg0, StringHelper.StoD(__LastValue));
                         else
-                            engine.CreateVariableString(arg0, __LastValue);
+                            engine.CreateStringVariable(arg0, __LastValue);
                     }
                 }
                 else if (engine.VariableExists(arg2))
                 {
                     if (engine.IsNumberVariable(arg2))
-                        engine.CreateVariableNumber(arg0, engine.GetVariableNumber(arg2));
+                        engine.CreateNumberVariable(arg0, engine.GetVariableNumber(arg2));
                     else if (engine.IsStringVariable(arg2))
-                        engine.CreateVariableString(arg0, engine.GetVariableString(arg2));
+                        engine.CreateStringVariable(arg0, engine.GetVariableString(arg2));
                     else
-                        engine.CreateVariableString(arg0, __Null);
+                        engine.CreateStringVariable(arg0, __Null);
                 }
                 else if (arg2 == "password" || arg2 == "readline")
                 {
@@ -2270,9 +2258,9 @@
                         line = getSilentOutput("");
 
                         if (StringHelper.IsNumeric(line))
-                            engine.CreateVariableNumber(arg0, StringHelper.StoD(line));
+                            engine.CreateNumberVariable(arg0, StringHelper.StoD(line));
                         else
-                            engine.CreateVariableString(arg0, line);
+                            engine.CreateStringVariable(arg0, line);
                     }
                     else
                     {
@@ -2280,13 +2268,13 @@
                         line = ConsoleHelper.GetLine();
 
                         if (StringHelper.IsNumeric(line))
-                            engine.CreateVariableNumber(arg0, StringHelper.StoD(line));
+                            engine.CreateNumberVariable(arg0, StringHelper.StoD(line));
                         else
-                            engine.CreateVariableString(arg0, line);
+                            engine.CreateStringVariable(arg0, line);
                     }
                 }
                 else if (arg2 == "args.size")
-                    engine.CreateVariableNumber(arg0, (double)__ArgumentCount);
+                    engine.CreateNumberVariable(arg0, (double)__ArgumentCount);
                 else if (before == "readline")
                 {
                     if (engine.VariableExists(after))
@@ -2298,9 +2286,9 @@
                             line = ConsoleHelper.GetLine();
 
                             if (StringHelper.IsNumeric(line))
-                                engine.CreateVariableNumber(arg0, StringHelper.StoD(line));
+                                engine.CreateNumberVariable(arg0, StringHelper.StoD(line));
                             else
-                                engine.CreateVariableString(arg0, line);
+                                engine.CreateStringVariable(arg0, line);
                         }
                         else
                         {
@@ -2309,9 +2297,9 @@
                             line = ConsoleHelper.GetLine();
 
                             if (StringHelper.IsNumeric(line))
-                                engine.CreateVariableNumber(arg0, StringHelper.StoD(line));
+                                engine.CreateNumberVariable(arg0, StringHelper.StoD(line));
                             else
-                                engine.CreateVariableString(arg0, line);
+                                engine.CreateStringVariable(arg0, line);
                         }
                     }
                     else
@@ -2321,9 +2309,9 @@
                         line = ConsoleHelper.GetLine();
 
                         if (StringHelper.IsNumeric(line))
-                            engine.CreateVariableNumber(arg0, StringHelper.StoD(line));
+                            engine.CreateNumberVariable(arg0, StringHelper.StoD(line));
                         else
-                            engine.CreateVariableString(arg0, line);
+                            engine.CreateStringVariable(arg0, line);
                     }
                 }
                 else if (before == "password")
@@ -2336,9 +2324,9 @@
                             line = getSilentOutput(engine.GetVariableString(after));
 
                             if (StringHelper.IsNumeric(line))
-                                engine.CreateVariableNumber(arg0, StringHelper.StoD(line));
+                                engine.CreateNumberVariable(arg0, StringHelper.StoD(line));
                             else
-                                engine.CreateVariableString(arg0, line);
+                                engine.CreateStringVariable(arg0, line);
 
                             ConsoleHelper.Output = System.Environment.NewLine;
                         }
@@ -2348,9 +2336,9 @@
                             line = getSilentOutput("password: ");
 
                             if (StringHelper.IsNumeric(line))
-                                engine.CreateVariableNumber(arg0, StringHelper.StoD(line));
+                                engine.CreateNumberVariable(arg0, StringHelper.StoD(line));
                             else
-                                engine.CreateVariableString(arg0, line);
+                                engine.CreateStringVariable(arg0, line);
 
                             ConsoleHelper.Output = System.Environment.NewLine;
                         }
@@ -2361,9 +2349,9 @@
                         line = getSilentOutput(cleanString(after));
 
                         if (StringHelper.IsNumeric(line))
-                            engine.CreateVariableNumber(arg0, StringHelper.StoD(line));
+                            engine.CreateNumberVariable(arg0, StringHelper.StoD(line));
                         else
-                            engine.CreateVariableString(arg0, line);
+                            engine.CreateStringVariable(arg0, line);
 
                         ConsoleHelper.Output = System.Environment.NewLine;
                     }
@@ -2373,19 +2361,19 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsStringVariable(before))
-                            engine.CreateVariableNumber(arg0, engine.GetVariableString(before).Length);
+                            engine.CreateNumberVariable(arg0, engine.GetVariableString(before).Length);
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
                     else
-                        engine.CreateVariableNumber(arg0, (double)before.Length);
+                        engine.CreateNumberVariable(arg0, (double)before.Length);
                 }
                 else if (after == "sin")
                 {
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Sin(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Sin(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2397,7 +2385,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Sinh(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Sinh(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2409,7 +2397,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Asin(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Asin(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2421,7 +2409,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Tan(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Tan(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2433,7 +2421,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Tanh(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Tanh(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2445,7 +2433,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Atan(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Atan(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2457,7 +2445,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Cos(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Cos(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2469,7 +2457,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Acos(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Acos(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2481,7 +2469,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Cosh(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Cosh(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2493,7 +2481,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Log(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Log(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2505,7 +2493,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Sqrt(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Sqrt(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2517,7 +2505,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Abs(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Abs(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2529,7 +2517,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Floor(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Floor(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2541,7 +2529,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Ceiling(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Ceiling(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2553,7 +2541,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsNumberVariable(before))
-                            engine.CreateVariableNumber(arg0, System.Math.Exp(engine.GetVariableNumber(before)));
+                            engine.CreateNumberVariable(arg0, System.Math.Exp(engine.GetVariableNumber(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2565,7 +2553,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsStringVariable(before))
-                            engine.CreateVariableString(arg0, StringHelper.ToUppercase(engine.GetVariableString(before)));
+                            engine.CreateStringVariable(arg0, StringHelper.ToUppercase(engine.GetVariableString(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2577,7 +2565,7 @@
                     if (engine.VariableExists(before))
                     {
                         if (engine.IsStringVariable(before))
-                            engine.CreateVariableString(arg0, StringHelper.ToLowercase(engine.GetVariableString(before)));
+                            engine.CreateStringVariable(arg0, StringHelper.ToLowercase(engine.GetVariableString(before)));
                         else
                             ErrorLogger.Error(ErrorLogger.CONV_ERR, before, false);
                     }
@@ -2591,7 +2579,7 @@
                         if (engine.IsStringVariable(before))
                         {
                             if (System.IO.File.Exists(engine.GetVariableString(before)))
-                                engine.CreateVariableNumber(arg0, getBytes(engine.GetVariableString(before)));
+                                engine.CreateNumberVariable(arg0, getBytes(engine.GetVariableString(before)));
                             else
                                 ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(before), false);
                         }
@@ -2601,7 +2589,7 @@
                     else
                     {
                         if (System.IO.File.Exists(before))
-                            engine.CreateVariableNumber(arg0, getBytes(before));
+                            engine.CreateNumberVariable(arg0, getBytes(before));
                         else
                             ErrorLogger.Error(ErrorLogger.READ_FAIL, before, false);
                     }
@@ -2613,9 +2601,9 @@
                 else
                 {
                     if (StringHelper.IsNumeric(arg2))
-                        engine.CreateVariableNumber(arg0, StringHelper.StoD(arg2));
+                        engine.CreateNumberVariable(arg0, StringHelper.StoD(arg2));
                     else
-                        engine.CreateVariableString(arg0, cleanString(arg2));
+                        engine.CreateStringVariable(arg0, cleanString(arg2));
                 }
             }
             else if (arg1 == "+=")
@@ -2623,18 +2611,18 @@
                 if (engine.VariableExists(arg2))
                 {
                     if (engine.IsStringVariable(arg2))
-                        engine.CreateVariableString(arg0, engine.GetVariableString(arg2));
+                        engine.CreateStringVariable(arg0, engine.GetVariableString(arg2));
                     else if (engine.IsNumberVariable(arg2))
-                        engine.CreateVariableNumber(arg0, engine.GetVariableNumber(arg2));
+                        engine.CreateNumberVariable(arg0, engine.GetVariableNumber(arg2));
                     else
-                        engine.CreateVariableString(arg0, __Null);
+                        engine.CreateStringVariable(arg0, __Null);
                 }
                 else
                 {
                     if (StringHelper.IsNumeric(arg2))
-                        engine.CreateVariableNumber(arg0, StringHelper.StoD(arg2));
+                        engine.CreateNumberVariable(arg0, StringHelper.StoD(arg2));
                     else
-                        engine.CreateVariableString(arg0, cleanString(arg2));
+                        engine.CreateStringVariable(arg0, cleanString(arg2));
                 }
             }
             else if (arg1 == "-=")
@@ -2642,16 +2630,16 @@
                 if (engine.VariableExists(arg2))
                 {
                     if (engine.IsNumberVariable(arg2))
-                        engine.CreateVariableNumber(arg0, 0 - engine.GetVariableNumber(arg2));
+                        engine.CreateNumberVariable(arg0, 0 - engine.GetVariableNumber(arg2));
                     else
-                        engine.CreateVariableString(arg0, __Null);
+                        engine.CreateStringVariable(arg0, __Null);
                 }
                 else
                 {
                     if (StringHelper.IsNumeric(arg2))
-                        engine.CreateVariableNumber(arg0, StringHelper.StoD(arg2));
+                        engine.CreateNumberVariable(arg0, StringHelper.StoD(arg2));
                     else
-                        engine.CreateVariableString(arg0, cleanString(arg2));
+                        engine.CreateStringVariable(arg0, cleanString(arg2));
                 }
             }
             else if (arg1 == "?")
@@ -2659,24 +2647,24 @@
                 if (engine.VariableExists(arg2))
                 {
                     if (engine.IsStringVariable(arg2))
-                        engine.CreateVariableString(arg0, getStdout(engine.GetVariableString(arg2)));
+                        engine.CreateStringVariable(arg0, getStdout(engine.GetVariableString(arg2)));
                     else
                         ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                 }
                 else
-                    engine.CreateVariableString(arg0, getStdout(cleanString(arg2)));
+                    engine.CreateStringVariable(arg0, getStdout(cleanString(arg2)));
             }
             else if (arg1 == "!")
             {
                 if (engine.VariableExists(arg2))
                 {
                     if (engine.IsStringVariable(arg2))
-                        engine.CreateVariableString(arg0, ParseStringAndCapture(engine.GetVariableString(arg2)));
+                        engine.CreateStringVariable(arg0, ParseStringAndCapture(engine.GetVariableString(arg2)));
                     else
                         ErrorLogger.Error(ErrorLogger.CONV_ERR, arg2, false);
                 }
                 else
-                    engine.CreateVariableString(arg0, ParseStringAndCapture(cleanString(arg2)));
+                    engine.CreateStringVariable(arg0, ParseStringAndCapture(cleanString(arg2)));
             }
             else
                 ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
@@ -2692,9 +2680,9 @@
                 if (arg1 == "=")
                 {
                     if (engine.GetObjectVariableString(before, after) != __Null)
-                        engine.CreateVariableString(arg0, engine.GetObjectVariableString(before, after));
+                        engine.CreateStringVariable(arg0, engine.GetObjectVariableString(before, after));
                     else if (engine.GetObjectVariableNumber(before, after) != __NullNum)
-                        engine.CreateVariableNumber(arg0, engine.GetObjectVariableNumber(before, after));
+                        engine.CreateNumberVariable(arg0, engine.GetObjectVariableNumber(before, after));
                 }
             }
         }

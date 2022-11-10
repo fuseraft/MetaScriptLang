@@ -112,11 +112,11 @@
                 case 0:
                     if (sValue != defaultValue)
                     {
-                        engine.CreateVariableString(arg0, sValue);
+                        engine.CreateStringVariable(arg0, sValue);
                     }
                     else
                     {
-                        engine.CreateVariableNumber(arg0, dValue);
+                        engine.CreateNumberVariable(arg0, dValue);
                     }
                     break;
                 case 1:

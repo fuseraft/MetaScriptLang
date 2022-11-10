@@ -1,38 +1,27 @@
-﻿namespace MetaScriptLang.Data
+﻿using System.Reflection.Metadata.Ecma335;
+
+namespace MetaScriptLang.Data
 {
     public class Variable
     {
         private double numericValue = -Double.MaxValue;
         private string stringValue = string.Empty, variableName = string.Empty;
 
-        private bool collectable = false,
+        private bool autoCollect = false,
             isPrivate_ = false,
             isPublic_ = false,
-            isIndestructible = false,
+            isLocked = false,
             waitToAssign = false;
 
-        private void SetAll(double numValue, string strValue)
+        public Variable(string name, bool autoCollect = false)
         {
-            SetValue(numValue);
-            SetValue(strValue);
-            collectable = false;
-        }
-
-        public Variable()
-        {
+            Initialize(name, autoCollect);
             SetAll(-Double.MaxValue, "[null]");
         }
 
-        public Variable(string name)
+        public Variable(string name, string value, bool autoCollect = false)
+            : this(name, autoCollect)
         {
-            Initialize(name);
-            SetAll(-Double.MaxValue, "[null]");
-        }
-
-        public Variable(string name, string value)
-        {
-            Initialize(name);
-
             if (value == "null")
             {
                 SetAll(-Double.MaxValue, "[null]");
@@ -42,27 +31,32 @@
                 SetAll(-Double.MaxValue, value);
         }
 
-        public Variable(string name, double value)
+        public Variable(string name, double value, bool autoCollect = false)
+            : this(name, autoCollect)
         {
-            Initialize(name);
             SetAll(value, "[null]");
         }
 
-        ~Variable() { }
+        public bool CanCollect => this.autoCollect;
 
-        public void Collect()
+        public bool IsLocked => this.isLocked;
+
+        public bool IsNull => this.StringValue == "[null]" && this.NumberValue == -Double.MaxValue;
+
+        public string StringValue { get; set; }
+
+        public double NumberValue { get; set; }
+
+        private void SetAll(double numValue, string strValue, bool autoCollect = false)
         {
-            collectable = true;
+            SetAutoCollect(autoCollect);
+            SetValue(numValue);
+            SetValue(strValue);
         }
 
-        public void DontCollect()
+        public void SetAutoCollect(bool autoCollect)
         {
-            collectable = false;
-        }
-
-        public bool IsGarbage()
-        {
-            return collectable;
+            this.autoCollect = autoCollect;
         }
 
         public void SetNull()
@@ -130,42 +124,22 @@
             isPrivate_ = false;
         }
 
-        public double GetNumberValue()
-        {
-            return (numericValue);
-        }
-
-        public string GetStringValue()
-        {
-            return (stringValue);
-        }
-
-        public void Initialize(string name)
+        public void Initialize(string name, bool autoCollect = false)
         {
             variableName = name;
-            collectable = false;
-            isIndestructible = false;
+            this.autoCollect = false;
+            isLocked = false;
             waitToAssign = false;
         }
 
         public void Lock()
         {
-            isIndestructible = true;
+            isLocked = true;
         }
 
         public void Unlock()
         {
-            isIndestructible = false;
-        }
-
-        public bool IsIndestructible()
-        {
-            return isIndestructible;
-        }
-
-        public bool IsNull()
-        {
-            return GetStringValue() == "[null]" && GetNumberValue() == -Double.MaxValue;
+            isLocked = false;
         }
     }
 }

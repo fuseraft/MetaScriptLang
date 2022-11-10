@@ -20,25 +20,25 @@
                 if (engine.VariableExists(strings[i]))
                 {
                     if (engine.IsStringVariable(strings[i]))
-                        engine.CreateVariableString(methodVariables[i].SetName(), engine.GetVariableString(strings[i]));
+                        engine.CreateStringVariable(methodVariables[i].SetName(), engine.GetVariableString(strings[i]));
                     else if (engine.IsNumberVariable(strings[i]))
-                        engine.CreateVariableNumber(methodVariables[i].SetName(), engine.GetVariableNumber(strings[i]));
+                        engine.CreateNumberVariable(methodVariables[i].SetName(), engine.GetVariableNumber(strings[i]));
                 }
                 else if (engine.MethodExists(strings[i]))
                 {
                     ParseString(strings[i]);
 
                     if (StringHelper.IsNumeric(__LastValue))
-                        engine.CreateVariableNumber(methodVariables[i].SetName(), StringHelper.StoD(__LastValue));
+                        engine.CreateNumberVariable(methodVariables[i].SetName(), StringHelper.StoD(__LastValue));
                     else
-                        engine.CreateVariableString(methodVariables[i].SetName(), __LastValue);
+                        engine.CreateStringVariable(methodVariables[i].SetName(), __LastValue);
                 }
                 else
                 {
                     if (StringHelper.IsNumeric(strings[i]))
-                        engine.CreateVariableNumber(methodVariables[i].SetName(), StringHelper.StoD(strings[i]));
+                        engine.CreateNumberVariable(methodVariables[i].SetName(), StringHelper.StoD(strings[i]));
                     else
-                        engine.CreateVariableString(methodVariables[i].SetName(), strings[i]);
+                        engine.CreateStringVariable(methodVariables[i].SetName(), strings[i]);
                 }
             }
 
@@ -151,19 +151,19 @@
                             {
                                 found = true;
 
-                                if (m.GetVariables()[a].GetStringValue() != __Null)
-                                    newWords.Add(m.GetVariables()[a].GetStringValue());
-                                else if (m.GetVariables()[a].GetNumberValue() != __NullNum)
-                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].GetNumberValue()));
+                                if (m.GetVariables()[a].StringValue != __Null)
+                                    newWords.Add(m.GetVariables()[a].StringValue);
+                                else if (m.GetVariables()[a].NumberValue != __NullNum)
+                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].NumberValue));
                             }
                             else if (words[x] == variableString)
                             {
                                 found = true;
 
-                                if (m.GetVariables()[a].GetStringValue() != __Null)
-                                    newWords.Add(m.GetVariables()[a].GetStringValue());
-                                else if (m.GetVariables()[a].GetNumberValue() != __NullNum)
-                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].GetNumberValue()));
+                                if (m.GetVariables()[a].StringValue != __Null)
+                                    newWords.Add(m.GetVariables()[a].StringValue);
+                                else if (m.GetVariables()[a].NumberValue != __NullNum)
+                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].NumberValue));
                             }
                         }
 

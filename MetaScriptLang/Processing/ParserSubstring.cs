@@ -115,7 +115,7 @@
                                     if (engine.VariableExists(arg1))
                                         engine.SetVariableString(arg1, tempString);
                                     else
-                                        engine.CreateVariableString(arg1, tempString);
+                                        engine.CreateStringVariable(arg1, tempString);
                                 }
                                 else
                                     ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
@@ -132,7 +132,7 @@
                                     if (engine.VariableExists(arg1))
                                         engine.SetVariableString(arg1, tempString);
                                     else
-                                        engine.CreateVariableString(arg1, tempString);
+                                        engine.CreateStringVariable(arg1, tempString);
                                 }
                                 else
                                     ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
@@ -162,7 +162,7 @@
                                 if (engine.VariableExists(arg1))
                                     engine.SetVariableString(arg1, tmp_);
                                 else
-                                    engine.CreateVariableString(arg1, tmp_);
+                                    engine.CreateStringVariable(arg1, tmp_);
                             }
                         }
                     }

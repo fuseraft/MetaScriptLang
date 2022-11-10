@@ -128,7 +128,7 @@
 
         public void addVariable(Variable variable)
         {
-            if (!variable.IsNull())
+            if (!variable.IsNull)
                 variables.Add(variable);
         }
 
