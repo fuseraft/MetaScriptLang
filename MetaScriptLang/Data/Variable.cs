@@ -11,89 +11,89 @@
             isIndestructible = false,
             waitToAssign = false;
 
-        private void setAll(double numValue, string strValue)
+        private void SetAll(double numValue, string strValue)
         {
-            setVariable(numValue);
-            setVariable(strValue);
+            SetValue(numValue);
+            SetValue(strValue);
             collectable = false;
         }
 
         public Variable()
         {
-            setAll(-Double.MaxValue, "[null]");
+            SetAll(-Double.MaxValue, "[null]");
         }
 
         public Variable(string name)
         {
-            initialize(name);
-            setAll(-Double.MaxValue, "[null]");
+            Initialize(name);
+            SetAll(-Double.MaxValue, "[null]");
         }
 
         public Variable(string name, string value)
         {
-            initialize(name);
+            Initialize(name);
 
             if (value == "null")
             {
-                setAll(-Double.MaxValue, "[null]");
+                SetAll(-Double.MaxValue, "[null]");
                 waitToAssign = true;
             }
             else
-                setAll(-Double.MaxValue, value);
+                SetAll(-Double.MaxValue, value);
         }
 
         public Variable(string name, double value)
         {
-            initialize(name);
-            setAll(value, "[null]");
+            Initialize(name);
+            SetAll(value, "[null]");
         }
 
         ~Variable() { }
 
-        public void collect()
+        public void Collect()
         {
             collectable = true;
         }
 
-        public void dontCollect()
+        public void DontCollect()
         {
             collectable = false;
         }
 
-        public bool garbage()
+        public bool IsGarbage()
         {
             return collectable;
         }
 
-        public void clear()
+        public void SetNull()
         {
-            setAll(0, string.Empty);
-        }
-
-        public void setNull()
-        {
-            setAll(-Double.MaxValue, "[null]");
+            SetAll(-Double.MaxValue, "[null]");
             waitToAssign = true;
         }
 
-        public void setName(string name)
+        public void SetName(string name)
         {
             variableName = name;
         }
 
-        public bool waiting()
+        public string SetName()
+        {
+            return variableName;
+        }
+
+        public bool StartWaitingForAssignment()
         {
             return (waitToAssign);
         }
 
-        public void stopWait()
+        public void StopWaitingForAssignment()
         {
             waitToAssign = false;
         }
 
-        public void setVariable(double value)
+        public void SetValue(double value)
         {
-            if (waiting())
+            if (StartWaitingForAssignment())
             {
                 numericValue = value;
                 stringValue = "[null]";
@@ -106,9 +106,9 @@
             }
         }
 
-        public void setVariable(string value)
+        public void SetValue(string value)
         {
-            if (waiting())
+            if (StartWaitingForAssignment())
             {
                 stringValue = value;
                 numericValue = -Double.MaxValue;
@@ -118,39 +118,29 @@
                 stringValue = value;
         }
 
-        public void setPrivate()
+        public void MakePrivate()
         {
             isPrivate_ = true;
             isPublic_ = false;
         }
 
-        public void setPublic()
+        public void MakePublic()
         {
             isPublic_ = true;
             isPrivate_ = false;
         }
 
-        public bool isPublic()
-        {
-            return (isPublic_);
-        }
-
-        public bool isPrivate()
-        {
-            return (isPrivate_);
-        }
-
-        public double getNumber()
+        public double GetNumberValue()
         {
             return (numericValue);
         }
 
-        public string getString()
+        public string GetStringValue()
         {
             return (stringValue);
         }
 
-        public void initialize(string name)
+        public void Initialize(string name)
         {
             variableName = name;
             collectable = false;
@@ -158,34 +148,24 @@
             waitToAssign = false;
         }
 
-        public void setIndestructible()
+        public void Lock()
         {
             isIndestructible = true;
         }
 
-        public void setDestructible()
+        public void Unlock()
         {
             isIndestructible = false;
         }
 
-        public bool indestructible()
+        public bool IsIndestructible()
         {
             return isIndestructible;
         }
 
-        public bool isNullString()
+        public bool IsNull()
         {
-            return getString() == "[null]" && getNumber() == -Double.MaxValue;
-        }
-
-        public bool isNull()
-        {
-            return getString() == "[null]" && getNumber() == -Double.MaxValue;
-        }
-
-        public string name()
-        {
-            return variableName;
+            return GetStringValue() == "[null]" && GetNumberValue() == -Double.MaxValue;
         }
     }
 }

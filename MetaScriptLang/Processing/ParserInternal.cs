@@ -2,6 +2,7 @@
 {
     using MetaScriptLang.Data;
     using MetaScriptLang.Helpers;
+    using MetaScriptLang.IO;
     using MetaScriptLang.Logging;
 
     public partial class Parser
@@ -15,16 +16,16 @@
                     if (engine.ObjectMethodExists(before, after))
                     {
                         for (int i = 0; i < engine.GetObjectMethodSize(before, after); i++)
-                            write(engine.GetObjectMethodLine(before, after, i));
+                            ConsoleWrite(engine.GetObjectMethodLine(before, after, i));
                     }
                     else if (engine.ObjectVariableExists(before, after))
                     {
                         if (engine.GetObjectVariableString(before, after) != __Null)
-                            write(engine.GetObjectVariableString(before, after));
+                            ConsoleWrite(engine.GetObjectVariableString(before, after));
                         else if (engine.GetObjectVariableNumber(before, after) != __NullNum)
-                            write(StringHelper.DtoS(engine.GetObjectVariableNumber(before, after)));
+                            ConsoleWrite(StringHelper.DtoS(engine.GetObjectVariableNumber(before, after)));
                         else
-                            write(__Null);
+                            ConsoleWrite(__Null);
                     }
                     else
                         ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
@@ -37,78 +38,78 @@
                 if (engine.ObjectExists(arg1))
                 {
                     for (int i = 0; i < engine.GetObjectMethodCount(arg1); i++)
-                        write(engine.GetObjectMethodNameByIndex(arg1, i));
+                        ConsoleWrite(engine.GetObjectMethodNameByIndex(arg1, i));
                     for (int i = 0; i < engine.GetObjectVariableSize(arg1); i++)
-                        write(engine.GetObjectVariableNameByIndex(arg1, i));
+                        ConsoleWrite(engine.GetObjectVariableNameByIndex(arg1, i));
                 }
                 else if (engine.ConstantExists(arg1))
                 {
                     if (engine.IsNumberConstant(arg1))
-                        write(StringHelper.DtoS(engine.GetConstantNumber(arg1)));
+                        ConsoleWrite(StringHelper.DtoS(engine.GetConstantNumber(arg1)));
                     else if (engine.IsStringConstant(arg1))
-                        write(engine.GetConstantString(arg1));
+                        ConsoleWrite(engine.GetConstantString(arg1));
                 }
                 else if (engine.MethodExists(arg1))
                 {
                     for (int i = 0; i < engine.GetMethodSize(arg1); i++)
-                        write(engine.GetMethodLine(arg1, i));
+                        ConsoleWrite(engine.GetMethodLine(arg1, i));
                 }
                 else if (engine.VariableExists(arg1))
                 {
                     if (engine.IsStringVariable(arg1))
-                        write(engine.GetVariableString(arg1));
+                        ConsoleWrite(engine.GetVariableString(arg1));
                     else if (engine.IsNumberVariable(arg1))
-                        write(StringHelper.DtoS(engine.GetVariableNumber(arg1)));
+                        ConsoleWrite(StringHelper.DtoS(engine.GetVariableNumber(arg1)));
                 }
                 else if (engine.ListExists(arg1))
                 {
                     for (int i = 0; i < engine.GetListSize(arg1); i++)
-                        write(engine.GetListLine(arg1, i));
+                        ConsoleWrite(engine.GetListLine(arg1, i));
                 }
                 else if (arg1 == "variables")
                 {
                     foreach (var key in this.variables.Keys)
                     {
-                        if (variables[key].getString() != __Null)
-                            write($"{variables[key].name()}:\t{variables[key].getString()}");
-                        else if (variables[key].getNumber() != __NullNum)
-                            write($"{variables[key].name()}:\t{StringHelper.DtoS(variables[key].getNumber())}");
+                        if (variables[key].GetStringValue() != __Null)
+                            ConsoleWrite($"{variables[key].SetName()}:\t{variables[key].GetStringValue()}");
+                        else if (variables[key].GetNumberValue() != __NullNum)
+                            ConsoleWrite($"{variables[key].SetName()}:\t{StringHelper.DtoS(variables[key].GetNumberValue())}");
                         else
-                            write($"{variables[key].name()}:\tis_null");
+                            ConsoleWrite($"{variables[key].SetName()}:\tis_null");
                     }
                 }
                 else if (arg1 == "lists")
                 {
                     foreach (var key in this.lists.Keys)
                     {
-                        write(this.engine.GetListName(key));
+                        ConsoleWrite(this.engine.GetListName(key));
                     }
                 }
                 else if (arg1 == "methods")
                 {
                     foreach (var key in this.methods.Keys)
                     {
-                        write(this.methods[key].GetName());
+                        ConsoleWrite(this.methods[key].GetName());
                     }
                 }
                 else if (arg1 == "objects")
                 {
                     foreach (var key in this.objects.Keys)
                     {
-                        write(this.objects[key].name());
+                        ConsoleWrite(this.objects[key].name());
                     }
                 }
                 else if (arg1 == "constants")
                 {
                     foreach (var key in this.constants.Keys)
                     {
-                        write(this.constants[key].name());
+                        ConsoleWrite(this.constants[key].name());
                     }
                 }
                 else if (arg1 == "os?")
-                    write("windows?");
+                    ConsoleWrite("windows?");
                 else if (arg1 == "last")
-                    write(engine.__LastValue);
+                    ConsoleWrite(engine.__LastValue);
                 else
                     ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
             }
@@ -305,7 +306,7 @@
 
                         for (int i = 0; i < parameters.Count; i++)
                         {
-                            if (VariableExists(parameters[i]))
+                            if (engine.VariableExists(parameters[i]))
                             {
                                 if (!StringHelper.ZeroDots(parameters[i]))
                                 {
@@ -343,14 +344,14 @@
                                 if (StringHelper.IsAlphabetical(parameters[i]))
                                 {
                                     Variable newVariable = new("@" + parameters[i], "");
-                                    newVariable.setNull();
+                                    newVariable.SetNull();
                                     method.AddVariable(newVariable);
                                     engine.__ParamVarCount++;
                                 }
                                 else
                                 {
                                     Variable newVariable = new("@" + parameters[i], 0);
-                                    newVariable.setNull();
+                                    newVariable.SetNull();
                                     method.AddVariable(newVariable);
                                     engine.__ParamVarCount++;
                                 }
@@ -475,7 +476,7 @@
 
         bool InternalReturn(string arg0, string arg1, string before, string after)
         {
-            __Returning = true;
+            engine.__Returning = true;
 
             if (StringHelper.ContainsParameters(arg1))
             {
@@ -485,7 +486,7 @@
                 {
                     executeTemplate(engine.GetMethod(before), StringHelper.GetParameters(arg1));
 
-                    parse("return " + __LastValue);
+                    ParseString("return " + __LastValue);
                 }
                 else if (!StringHelper.ZeroDots(arg1))
                 {
@@ -494,7 +495,7 @@
                         if (engine.ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
                         {
                             executeTemplate(engine.GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(arg1));
-                            parse("return " + __LastValue);
+                            ParseString("return " + __LastValue);
                         }
                         else
                             __LastValue = arg1;
@@ -504,10 +505,10 @@
                 }
                 else
                 {
-                    if (isStringStack(arg1))
-                        __LastValue = getStringStack(arg1);
-                    else if (stackReady(arg1))
-                        __LastValue = StringHelper.DtoS(getStack(arg1));
+                    if (IsStringStack(arg1))
+                        __LastValue = GetStringStack(arg1);
+                    else if (IsStackReady(arg1))
+                        __LastValue = StringHelper.DtoS(GetStack(arg1));
                     else
                     {
                         arg1 = StringHelper.SubtractString(StringHelper.SubtractString(arg1, "("), ")");
@@ -616,22 +617,22 @@
 
             if (is_say)
             {
-                writeline(text);
+                ConsoleWriteLine(text);
             }
             else if (is_print)
             {
                 if (arg0 == "println")
                 {
-                    cout = text + System.Environment.NewLine;
+                    ConsoleHelper.Output = text + System.Environment.NewLine;
                 }
                 else
                 {
-                    cout = text;
+                    ConsoleHelper.Output = text;
                 }
             }
             else
             {
-                write(text);
+                ConsoleWrite(text);
             }
         }
     }

@@ -19,9 +19,9 @@
 
             foreach (var key in this.engine.GetVariableKeys())
             {
-                if (this.engine.variables[key].garbage() && !this.engine.__ExecutedIfStatement)
+                if (this.engine.variables[key].IsGarbage() && !this.engine.__ExecutedIfStatement)
                     if (!this.engine.__DontCollectMethodVars)
-                        garbageVars.Add(this.engine.variables[key].name());
+                        garbageVars.Add(this.engine.variables[key].SetName());
             }
 
             for (int i = 0; i < (int)garbageVars.Count; i++)
@@ -116,7 +116,7 @@
 
             foreach (var key in this.engine.variables.Keys)
             {
-                if (this.engine.variables[key].indestructible())
+                if (this.engine.variables[key].IsIndestructible())
                 {
                     // TODO Shallow Copy
                     indestructibleVariables.Add(this.engine.variables[key]);
@@ -126,7 +126,7 @@
             this.engine.variables.Clear();
 
             for (int i = 0; i < indestructibleVariables.Count; i++)
-                this.engine.variables.Add(indestructibleVariables[i].name(), indestructibleVariables[i]);
+                this.engine.variables.Add(indestructibleVariables[i].SetName(), indestructibleVariables[i]);
         }
     }
 }

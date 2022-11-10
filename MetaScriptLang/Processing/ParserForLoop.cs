@@ -71,7 +71,7 @@
                             }
                         }
 
-                        parse(cleaned);
+                        ParseString(cleaned);
                     }
 
                     i++;
@@ -92,7 +92,7 @@
                         for (; ; )
                         {
                             for (int z = 0; z < m.GetMethodSize(); z++)
-                                parse(m.GetLine(z));
+                                ParseString(m.GetLine(z));
 
                             if (__Breaking == true)
                             {
@@ -155,7 +155,7 @@
                                 }
                             }
 
-                            parse(cleanString);
+                            ParseString(cleanString);
                         }
 
                         start++;
@@ -218,7 +218,7 @@
                                 }
                             }
 
-                            parse(cleaned);
+                            ParseString(cleaned);
                         }
 
                         start--;

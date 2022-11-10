@@ -9,11 +9,11 @@
         {
             string returnValue = ("");
 
-            if (IsStringVariable(beforeBracket))
+            if (engine.IsStringVariable(beforeBracket))
             {
                 System.Collections.Generic.List<string> listRange = StringHelper.GetBracketRange(arg2);
 
-                string variableString = GetVariableString(beforeBracket);
+                string variableString = engine.GetVariableString(beforeBracket);
 
                 if (listRange.Count == 2)
                 {
@@ -89,11 +89,11 @@
 
         void setSubString(string arg1, string arg2, string beforeBracket)
         {
-            if (IsStringVariable(beforeBracket))
+            if (engine.IsStringVariable(beforeBracket))
             {
                 System.Collections.Generic.List<string> listRange = StringHelper.GetBracketRange(arg2);
 
-                string variableString = GetVariableString(beforeBracket);
+                string variableString = engine.GetVariableString(beforeBracket);
 
                 if (listRange.Count == 2)
                 {
@@ -112,7 +112,7 @@
                                     for (int i = StringHelper.StoI(rangeBegin); i <= StringHelper.StoI(rangeEnd); i++)
                                         tempString += (variableString[i]);
 
-                                    if (VariableExists(arg1))
+                                    if (engine.VariableExists(arg1))
                                         engine.SetVariableString(arg1, tempString);
                                     else
                                         engine.CreateVariableString(arg1, tempString);

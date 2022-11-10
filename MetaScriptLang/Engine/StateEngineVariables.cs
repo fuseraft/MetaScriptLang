@@ -13,7 +13,7 @@
         #region Typechecking
         public bool IsNumberVariable(Variable var)
         {
-            return var.getNumber() != __NullNum;
+            return var.GetNumberValue() != __NullNum;
         }
 
         public bool IsNumberVariable(string varName)
@@ -23,7 +23,7 @@
 
         public bool IsStringVariable(Variable var)
         {
-            return var.getString() != __Null;
+            return var.GetStringValue() != __Null;
         }
 
         public bool IsStringVariable(string varName)
@@ -35,7 +35,7 @@
         #region GC
         public bool GCCanCollectVariable(string target)
         {
-            return this.variables[target].garbage();
+            return this.variables[target].IsGarbage();
         }
         #endregion
 
@@ -63,9 +63,9 @@
             Variable newVariable = new(name, value);
 
             if (__ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock)
-                newVariable.collect();
+                newVariable.Collect();
             else
-                newVariable.dontCollect();
+                newVariable.DontCollect();
 
             variables.Add(name, newVariable);
             SetLastValue(value);
@@ -76,9 +76,9 @@
             Variable newVariable = new(name, value);
 
             if (__ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock) 
-                newVariable.collect();
+                newVariable.Collect();
             else
-                newVariable.dontCollect();
+                newVariable.DontCollect();
 
             variables.Add(name, newVariable);
             SetLastValue(StringHelper.DtoS(value));
@@ -117,44 +117,44 @@
         #region Getters
         public string GetVariableString(string target)
         {
-            return this.variables[target].getString();
+            return this.variables[target].GetStringValue();
         }
 
         public double GetVariableNumber(string target)
         {
-            return this.variables[target].getNumber();
+            return this.variables[target].GetNumberValue();
         }
 
         public string GetVariableName(string target)
         {
-            return this.variables[target].name();
+            return this.variables[target].SetName();
         }
 
         public bool VariableWaiting(string target)
         {
-            return this.variables[target].waiting();
+            return this.variables[target].StartWaitingForAssignment();
         }
         #endregion
 
         #region Setters
         public void SetVariableString(string target, string value)
         {
-            this.variables[target].setVariable(value);
+            this.variables[target].SetValue(value);
             SetLastValue(value);
         }
 
         public void SetVariableNumber(string target, double value)
         {
             if (IsNumberVariable(target))
-                this.variables[target].setVariable(StringHelper.DtoS(value));
+                this.variables[target].SetValue(StringHelper.DtoS(value));
             else if (IsNumberVariable(target))
-                this.variables[target].setVariable(value);
+                this.variables[target].SetValue(value);
             else
             {
                 if (VariableWaiting(target))
                     StopWaitVariable(target);
 
-                this.variables[target].setVariable(value);
+                this.variables[target].SetValue(value);
             }
 
             SetLastValue(StringHelper.DtoS(value));
@@ -162,27 +162,27 @@
 
         public void SetVariableName(string target, string newName)
         {
-            this.variables[target].setName(newName);
+            this.variables[target].SetName(newName);
         }
 
         public void LockVariable(string target)
         {
-            this.variables[target].setIndestructible();
+            this.variables[target].Lock();
         }
 
         public void UnlockVariable(string target)
         {
-            this.variables[target].setDestructible();
+            this.variables[target].Unlock();
         }
 
         public void SetVariableNull(string target)
         {
-            this.variables[target].setNull();
+            this.variables[target].SetNull();
         }
 
         public void StopWaitVariable(string target)
         {
-            this.variables[target].stopWait();
+            this.variables[target].StopWaitingForAssignment();
         }
         #endregion
     }

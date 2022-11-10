@@ -17,7 +17,7 @@
                 __CurrentScript = noctis;
                 args.Add(noctis);
                 __ArgumentCount = args.Count;
-                loop(false);
+                StartReplLoop(false);
             }
             else if (c == 2)
             {
@@ -31,7 +31,7 @@
                     loadScript(opt);
                 }
                 else if (StringHelper.IsArgument(opt, "h") || StringHelper.IsArgument(opt, "help"))
-                    help(noctis);
+                    DisplayHelpInfo(noctis);
                 else if (StringHelper.IsArgument(opt, "u") || StringHelper.IsArgument(opt, "uninstall"))
                     uninstall();
                 else if (StringHelper.IsArgument(opt, "sl") || StringHelper.IsArgument(opt, "skipload"))
@@ -39,7 +39,7 @@
                     __CurrentScript = noctis;
                     args.Add(opt);
                     __ArgumentCount = args.Count;
-                    loop(true);
+                    StartReplLoop(true);
                 }
                 else if (StringHelper.IsArgument(opt, "n") || StringHelper.IsArgument(opt, "negligence"))
                 {
@@ -47,16 +47,16 @@
                     __CurrentScript = noctis;
                     args.Add(opt);
                     __ArgumentCount = args.Count;
-                    loop(true);
+                    StartReplLoop(true);
                 }
                 else if (StringHelper.IsArgument(opt, "v") || StringHelper.IsArgument(opt, "version"))
-                    displayVersion();
+                    DisplayVersionInfo();
                 else
                 {
                     __CurrentScript = noctis;
                     args.Add(opt);
                     __ArgumentCount = args.Count;
-                    loop(false);
+                    StartReplLoop(false);
                 }
             }
             else if (c == 3)
@@ -80,7 +80,7 @@
                         args.Add(opt);
                         args.Add(script);
                         __ArgumentCount = args.Count;
-                        loop(true);
+                        StartReplLoop(true);
                     }
                 }
                 else if (StringHelper.IsArgument(opt, "n") || StringHelper.IsArgument(opt, "negligence"))
@@ -97,7 +97,7 @@
                     else
                     {
                         __CurrentScript = noctis;
-                        loop(true);
+                        StartReplLoop(true);
                     }
                 }
                 else if (StringHelper.IsArgument(opt, "p") || StringHelper.IsArgument(opt, "parse"))
@@ -112,7 +112,7 @@
                             stringBuilder += (script[i]);
                     }
 
-                    parse(stringBuilder);
+                    ParseString(stringBuilder);
                 }
                 else
                 {
@@ -130,7 +130,7 @@
                         args.Add(opt);
                         args.Add(script);
                         __ArgumentCount = args.Count;
-                        loop(false);
+                        StartReplLoop(false);
                     }
                 }
             }
@@ -161,12 +161,12 @@
                     __ArgumentCount = args.Count;
 
                     __CurrentScript = noctis;
-                    loop(false);
+                    StartReplLoop(false);
                 }
             }
             else
             {
-                loop(true);
+                StartReplLoop(true);
             }
 
             gc.ClearAll();

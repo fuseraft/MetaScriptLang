@@ -9,8 +9,8 @@
         {
             System.Collections.Generic.List<string> methodLines = new();
 
-            __ExecutedTemplate = true;
-            __DontCollectMethodVars = true;
+            engine.__ExecutedTemplate = true;
+            engine.__DontCollectMethodVars = true;
             __CurrentMethodObject = m.GetObject();
 
             System.Collections.Generic.List<Variable> methodVariables = m.GetVariables();
@@ -20,25 +20,25 @@
                 if (engine.VariableExists(strings[i]))
                 {
                     if (engine.IsStringVariable(strings[i]))
-                        engine.CreateVariableString(methodVariables[i].name(), engine.GetVariableString(strings[i]));
+                        engine.CreateVariableString(methodVariables[i].SetName(), engine.GetVariableString(strings[i]));
                     else if (engine.IsNumberVariable(strings[i]))
-                        engine.CreateVariableNumber(methodVariables[i].name(), engine.GetVariableNumber(strings[i]));
+                        engine.CreateVariableNumber(methodVariables[i].SetName(), engine.GetVariableNumber(strings[i]));
                 }
                 else if (engine.MethodExists(strings[i]))
                 {
-                    parse(strings[i]);
+                    ParseString(strings[i]);
 
                     if (StringHelper.IsNumeric(__LastValue))
-                        engine.CreateVariableNumber(methodVariables[i].name(), StringHelper.StoD(__LastValue));
+                        engine.CreateVariableNumber(methodVariables[i].SetName(), StringHelper.StoD(__LastValue));
                     else
-                        engine.CreateVariableString(methodVariables[i].name(), __LastValue);
+                        engine.CreateVariableString(methodVariables[i].SetName(), __LastValue);
                 }
                 else
                 {
                     if (StringHelper.IsNumeric(strings[i]))
-                        engine.CreateVariableNumber(methodVariables[i].name(), StringHelper.StoD(strings[i]));
+                        engine.CreateVariableNumber(methodVariables[i].SetName(), StringHelper.StoD(strings[i]));
                     else
-                        engine.CreateVariableString(methodVariables[i].name(), strings[i]);
+                        engine.CreateVariableString(methodVariables[i].SetName(), strings[i]);
                 }
             }
 
@@ -99,17 +99,17 @@
             }
 
             for (int i = 0; i < (int)methodLines.Count; i++)
-                parse(methodLines[i]);
+                ParseString(methodLines[i]);
 
-            __ExecutedTemplate = false;
-            __DontCollectMethodVars = false;
+            engine.__ExecutedTemplate = false;
+            engine.__DontCollectMethodVars = false;
 
-            gc.DoGarbageCollection(); // if (!__DontCollectMethodVars)
+            gc.DoGarbageCollection(); // if (!engine.__DontCollectMethodVars)
         }
 
         void executeMethod(Method m)
         {
-            __ExecutedMethod = true;
+            engine.__ExecutedMethod = true;
             __CurrentMethodObject = m.GetObject();
 
             if (__DefiningParameterizedMethod)
@@ -147,23 +147,23 @@
                             string variableString = ("$");
                             variableString += (StringHelper.ItoS(a));
 
-                            if (words[x] == m.GetVariables()[a].name())
+                            if (words[x] == m.GetVariables()[a].SetName())
                             {
                                 found = true;
 
-                                if (m.GetVariables()[a].getString() != __Null)
-                                    newWords.Add(m.GetVariables()[a].getString());
-                                else if (m.GetVariables()[a].getNumber() != __NullNum)
-                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].getNumber()));
+                                if (m.GetVariables()[a].GetStringValue() != __Null)
+                                    newWords.Add(m.GetVariables()[a].GetStringValue());
+                                else if (m.GetVariables()[a].GetNumberValue() != __NullNum)
+                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].GetNumberValue()));
                             }
                             else if (words[x] == variableString)
                             {
                                 found = true;
 
-                                if (m.GetVariables()[a].getString() != __Null)
-                                    newWords.Add(m.GetVariables()[a].getString());
-                                else if (m.GetVariables()[a].getNumber() != __NullNum)
-                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].getNumber()));
+                                if (m.GetVariables()[a].GetStringValue() != __Null)
+                                    newWords.Add(m.GetVariables()[a].GetStringValue());
+                                else if (m.GetVariables()[a].GetNumberValue() != __NullNum)
+                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].GetNumberValue()));
                             }
                         }
 
@@ -184,14 +184,14 @@
                     methodLines.Add(freshLine);
 
                     for (int ii = 0; ii < (int)methodLines.Count; ii++)
-                        parse(methodLines[ii]);
+                        ParseString(methodLines[ii]);
                 }
             }
             else
                 for (int ii = 0; ii < m.GetMethodSize(); ii++)
-                    parse(m.GetLine(ii));
+                    ParseString(m.GetLine(ii));
 
-            __ExecutedMethod = false;
+            engine.__ExecutedMethod = false;
 
             gc.DoGarbageCollection();
         }
@@ -203,8 +203,8 @@
 
             for (int i = 0; i < n.Count; i++)
             {
-                if (__FailedNest == false)
-                    parse(n[i]);
+                if (engine.__FailedNest == false)
+                    ParseString(n[i]);
                 else
                     break;
             }

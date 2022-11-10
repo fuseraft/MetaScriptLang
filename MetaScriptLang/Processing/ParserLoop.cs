@@ -2,11 +2,12 @@
 {
     using MetaScriptLang.Data;
     using MetaScriptLang.Helpers;
+    using MetaScriptLang.IO;
 
     public partial class Parser
     {
         #region Loop
-        string getPrompt()
+        string GetReplPrompt()
         {
             string new_style = ("");
             int length = __PromptStyle.Length;
@@ -51,7 +52,7 @@
             return (new_style);
         }
 
-        void loop(bool skip)
+        void StartReplLoop(bool skip)
         {
             string s = string.Empty;
             bool active = true;
@@ -72,16 +73,16 @@
                 if (__UseCustomPrompt)
                 {
                     if (__PromptStyle == "bash")
-                        cout = System.Environment.UserName + "@" + System.Environment.MachineName + "(" + System.Environment.CurrentDirectory + ")" + "$ ";
+                        ConsoleHelper.Output = System.Environment.UserName + "@" + System.Environment.MachineName + "(" + System.Environment.CurrentDirectory + ")" + "$ ";
                     else if (__PromptStyle == "empty")
-                        doNothing();
+                        Idle();
                     else
-                        cout = getPrompt();
+                        ConsoleHelper.Output = GetReplPrompt();
                 }
                 else
-                    cout = "> ";
+                    ConsoleHelper.Output = "> ";
 
-                s = Console.ReadLine();// getline(cin, s, '\n');
+                s = ConsoleHelper.GetLine();// getline(cin, s, '\n');
 
                 if (string.IsNullOrEmpty(s))
                 {
@@ -99,12 +100,12 @@
                         gc.ClearAll();
                     }
                     else
-                        parse(s);
+                        ParseString(s);
                 }
                 else
                 {
                     string c = s;
-                    parse(StringHelper.LTrim(c));
+                    ParseString(StringHelper.LTrim(c));
                 }
             }
         }
@@ -113,24 +114,24 @@
         #region Script Runner
         void runScript()
         {
-            for (int i = 0; i < GetSSize(__CurrentScript); i++)
+            for (int i = 0; i < engine.GetScriptSize(__CurrentScript); i++)
             {
                 __CurrentLineNumber = i + 1;
 
-                if (!__GoToLabel)
-                    parse(GetSLine(__CurrentLine, i));
+                if (!engine.__GoToLabel)
+                    ParseString(engine.GetLineFromScript(__CurrentLine, i));
                 else
                 {
                     bool startParsing = false;
                     __DefiningIfStatement = false;
                     __DefiningForLoop = false;
-                    __GoToLabel = false;
+                    engine.__GoToLabel = false;
 
-                    for (int z = 0; z < GetSSize(__CurrentScript); z++)
+                    for (int z = 0; z < engine.GetScriptSize(__CurrentScript); z++)
                     {
-                        if (StringHelper.StringEndsWith(GetSLine(__CurrentScript, z), "::"))
+                        if (StringHelper.StringEndsWith(engine.GetLineFromScript(__CurrentScript, z), "::"))
                         {
-                            string s = GetSLine(__CurrentScript, z);
+                            string s = engine.GetLineFromScript(__CurrentScript, z);
                             s = StringHelper.SubtractString(s, "::");
 
                             if (s == __GoTo)
@@ -138,7 +139,7 @@
                         }
 
                         if (startParsing)
-                            parse(GetSLine(__CurrentScript, z));
+                            ParseString(engine.GetLineFromScript(__CurrentScript, z));
                     }
                 }
             }
@@ -161,7 +162,7 @@
                 {
                     if (s[0] == '\r' || s[0] == '\n')
                     {
-                        doNothing();
+                        Idle();
                     }
                     else if (s[0] == '\t')
                     {
@@ -169,11 +170,11 @@
                     }
                     else
                     {
-                        newScript.add(StringHelper.LTrim(s));
+                        newScript.AddLine(StringHelper.LTrim(s));
                     }
                 }
                 else
-                    newScript.add("");
+                    newScript.AddLine("");
             }
 
             scripts.Add(script, newScript);

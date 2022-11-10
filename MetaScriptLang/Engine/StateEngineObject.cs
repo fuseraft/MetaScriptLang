@@ -54,7 +54,7 @@
 
         public bool ObjectVariableExists(string objectName, string variableName)
         {
-            return this.objects[objectName].variableExists(variableName);
+            return this.objects[objectName].VariableExists(variableName);
         }
 
         public void CreateObjectMethod(string objectName, Method m)
@@ -114,22 +114,22 @@
 
         public string GetObjectVariableName(string objectName, string variableName)
         {
-            return this.objects[objectName].getVariable(variableName).name();
+            return this.objects[objectName].getVariable(variableName).SetName();
         }
 
         public string GetObjectVariableNameByIndex(string objectName, int index)
         {
-            return this.objects[objectName].getVariable(this.objects[objectName].getVariableName(index)).name();
+            return this.objects[objectName].getVariable(this.objects[objectName].getVariableName(index)).SetName();
         }
 
         public string GetObjectVariableString(string objectName, string variableName)
         {
-            return this.objects[objectName].getVariable(variableName).getString();
+            return this.objects[objectName].getVariable(variableName).GetStringValue();
         }
 
         public double GetObjectVariableNumber(string objectName, string variableName)
         {
-            return this.objects[objectName].getVariable(variableName).getNumber();
+            return this.objects[objectName].getVariable(variableName).GetNumberValue();
         }
 
         public void SetObjectCurrentMethod(string objectName, string methodName)

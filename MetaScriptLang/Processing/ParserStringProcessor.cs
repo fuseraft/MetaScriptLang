@@ -21,29 +21,29 @@
                         builder.Clear();
                         builder.Append(StringHelper.SubtractChars(builder.ToString(), "{"));
 
-                        if (VariableExists(builder.ToString()) && StringHelper.ZeroDots(builder.ToString()))
+                        if (engine.VariableExists(builder.ToString()) && StringHelper.ZeroDots(builder.ToString()))
                         {
-                            if (IsStringVariable(builder.ToString()))
-                                cleaned.Append(GetVariableString(builder.ToString()));
-                            else if (IsNumberVariable(builder.ToString()))
-                                cleaned.Append(StringHelper.DtoS(GetVariableNumber(builder.ToString())));
+                            if (engine.IsStringVariable(builder.ToString()))
+                                cleaned.Append(engine.GetVariableString(builder.ToString()));
+                            else if (engine.IsNumberVariable(builder.ToString()))
+                                cleaned.Append(StringHelper.DtoS(engine.GetVariableNumber(builder.ToString())));
                             else
                                 cleaned.Append("null");
                         }
                         else if (engine.MethodExists(builder.ToString()))
                         {
-                            parse(builder.ToString());
+                            ParseString(builder.ToString());
 
                             cleaned.Append(__LastValue);
                         }
                         else if (StringHelper.ContainsParameters(builder.ToString()))
                         {
-                            if (stackReady(builder.ToString()))
+                            if (IsStackReady(builder.ToString()))
                             {
-                                if (isStringStack(builder.ToString()))
-                                    cleaned.Append(getStringStack(builder.ToString()));
+                                if (IsStringStack(builder.ToString()))
+                                    cleaned.Append(GetStringStack(builder.ToString()));
                                 else
-                                    cleaned.Append(StringHelper.DtoS(getStack(builder.ToString())));
+                                    cleaned.Append(StringHelper.DtoS(GetStack(builder.ToString())));
                             }
                             else if (!StringHelper.ZeroDots(builder.ToString()))
                             {
@@ -80,11 +80,11 @@
 
                             System.Collections.Generic.List<string> listRange = StringHelper.GetBracketRange(afterBrackets);
 
-                            if (VariableExists(beforeBrackets))
+                            if (engine.VariableExists(beforeBrackets))
                             {
-                                if (IsStringVariable(beforeBrackets))
+                                if (engine.IsStringVariable(beforeBrackets))
                                 {
-                                    string tempString = GetVariableString(beforeBrackets);
+                                    string tempString = engine.GetVariableString(beforeBrackets);
 
                                     if (listRange.Count == 2)
                                     {
@@ -224,7 +224,7 @@
                             {
                                 if (engine.ObjectMethodExists(before, after))
                                 {
-                                    parse(before + "." + after);
+                                    ParseString(before + "." + after);
                                     cleaned.Append(__LastValue);
                                 }
                                 else if (engine.ObjectVariableExists(before, after))
@@ -260,15 +260,15 @@
                     else if (st[i] == 'n' && st[i - 1] == '\\') // end new-line
                         cleaned.Append('\n');
                     else if (st[i] == '\\' && st[i + 1] == 't') // begin tab
-                        doNothing();
+                        Idle();
                     else if (st[i] == 't' && st[i - 1] == '\\') // end tab
                         cleaned.Append('\t');
                     else if (st[i] == '\\' && st[i + 1] == ';') // begin semi-colon
-                        doNothing();
+                        Idle();
                     else if (st[i] == ';' && st[i - 1] == '\\') // end semi-colon
                         cleaned.Append(';');
                     else if (st[i] == '\\' && st[i + 1] == '\'') // begin apostrophe
-                        doNothing();
+                        Idle();
                     else if (st[i] == '\'' && st[i - 1] == '\\') // end apostrophe
                         cleaned.Append('\'');
                     else if (st[i] == '\\' && st[i + 1] == '{') // begin symbol

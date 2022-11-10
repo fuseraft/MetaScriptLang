@@ -142,11 +142,11 @@
                 case 3:
                     if (sValue != defaultValue)
                     {
-                        writeline(sValue);
+                        ConsoleWriteLine(sValue);
                     }
                     else
                     {
-                        writeline(StringHelper.DtoS(dValue));
+                        ConsoleWriteLine(StringHelper.DtoS(dValue));
                     }
                     break;
             }

@@ -86,15 +86,15 @@
         bool notObjectMethod(string s)
         {
             if (StringHelper.ZeroDots(s))
-                return (true);
+                return true;
             else
             {
                 string before = StringHelper.BeforeDot(s);
 
                 if (engine.ObjectExists(before))
-                    return (false);
+                    return false;
                 else
-                    return (true);
+                    return true;
             }
         }
         #endregion

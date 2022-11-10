@@ -6,26 +6,6 @@
 
     public partial class Parser
     {
-        List getDirectoryList(string before, bool filesOnly)
-        {
-            List newList = new();
-            System.Collections.Generic.List<string> dirList = new();
-            // TODO: filesOnly logic
-            dirList.AddRange(System.IO.Directory.GetFileSystemEntries(GetVariableString(before)));
-
-            for (int i = 0; i < dirList.Count; i++)
-            {
-                newList.add(dirList[i]);
-            }
-
-            if (newList.size() == 0)
-            {
-                __DefiningForLoop = false;
-            }
-
-            return newList;
-        }
-
         void app(string arg1, string arg2)
         {
             System.IO.File.AppendAllText(arg1, arg2);
