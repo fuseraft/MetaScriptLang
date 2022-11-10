@@ -95,7 +95,7 @@
                                         {
                                             if (StringHelper.StoI(rangeBegin) < StringHelper.StoI(rangeEnd))
                                             {
-                                                if ((int)tempString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
+                                                if (tempString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                                 {
                                                     for (int z = StringHelper.StoI(rangeBegin); z <= StringHelper.StoI(rangeEnd); z++)
                                                         _build += (tempString[z]);
@@ -107,7 +107,7 @@
                                             }
                                             else if (StringHelper.StoI(rangeBegin) > StringHelper.StoI(rangeEnd))
                                             {
-                                                if ((int)tempString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
+                                                if (tempString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                                 {
                                                     for (int z = StringHelper.StoI(rangeBegin); z >= StringHelper.StoI(rangeEnd); z--)
                                                         _build += (tempString[z]);
@@ -127,7 +127,7 @@
 
                                         if (StringHelper.IsNumeric(rangeBegin))
                                         {
-                                            if (StringHelper.StoI(rangeBegin) <= (int)tempString.Length - 1 && StringHelper.StoI(rangeBegin) >= 0)
+                                            if (StringHelper.StoI(rangeBegin) <= tempString.Length - 1 && StringHelper.StoI(rangeBegin) >= 0)
                                             {
                                                 cleaned.Append(tempString[StringHelper.StoI(rangeBegin)]);
                                             }
@@ -202,7 +202,7 @@
 
                                     if (StringHelper.IsNumeric(rangeBegin))
                                     {
-                                        if (StringHelper.StoI(rangeBegin) <= (int)engine.GetListSize(beforeBrackets) - 1 && StringHelper.StoI(rangeBegin) >= 0)
+                                        if (StringHelper.StoI(rangeBegin) <= engine.GetListSize(beforeBrackets) - 1 && StringHelper.StoI(rangeBegin) >= 0)
                                             cleaned.Append(engine.GetListLine(beforeBrackets, StringHelper.StoI(rangeBegin)));
                                         else
                                             ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, afterBrackets, false);
@@ -260,15 +260,15 @@
                     else if (st[i] == 'n' && st[i - 1] == '\\') // end new-line
                         cleaned.Append('\n');
                     else if (st[i] == '\\' && st[i + 1] == 't') // begin tab
-                        Idle();
+                        engine.Idle();
                     else if (st[i] == 't' && st[i - 1] == '\\') // end tab
                         cleaned.Append('\t');
                     else if (st[i] == '\\' && st[i + 1] == ';') // begin semi-colon
-                        Idle();
+                        engine.Idle();
                     else if (st[i] == ';' && st[i - 1] == '\\') // end semi-colon
                         cleaned.Append(';');
                     else if (st[i] == '\\' && st[i + 1] == '\'') // begin apostrophe
-                        Idle();
+                        engine.Idle();
                     else if (st[i] == '\'' && st[i - 1] == '\\') // end apostrophe
                         cleaned.Append('\'');
                     else if (st[i] == '\\' && st[i + 1] == '{') // begin symbol

@@ -19,12 +19,12 @@
 
             foreach (var key in this.engine.GetVariableKeys())
             {
-                if (this.engine.variables[key].CanCollect && !this.engine.__ExecutedIfStatement)
+                if (this.engine.variables[key].AutoCollect && !this.engine.__ExecutedIfStatement)
                     if (!this.engine.__DontCollectMethodVars)
-                        garbageVars.Add(this.engine.variables[key].SetName());
+                        garbageVars.Add(this.engine.variables[key].Name);
             }
 
-            for (int i = 0; i < (int)garbageVars.Count; i++)
+            for (int i = 0; i < garbageVars.Count; i++)
                 this.engine.DeleteVariable(garbageVars[i]);
 
             foreach (var key in this.engine.lists.Keys)
@@ -42,7 +42,7 @@
                     garbageObjects.Add(this.engine.objects[key].name());
             }
 
-            for (int i = 0; i < (int)garbageObjects.Count; i++)
+            for (int i = 0; i < garbageObjects.Count; i++)
                 this.engine.DeleteObject(garbageObjects[i]);
         }
 
@@ -101,7 +101,7 @@
 
             this.engine.methods.Clear();
 
-            for (int i = 0; i < (int)indestructibleMethods.Count; i++)
+            for (int i = 0; i < indestructibleMethods.Count; i++)
                 this.engine.methods.Add(indestructibleMethods[i].GetName(), indestructibleMethods[i]);
         }
 
@@ -116,7 +116,7 @@
 
             foreach (var key in this.engine.variables.Keys)
             {
-                if (this.engine.variables[key].IsLocked)
+                if (this.engine.variables[key].Locked)
                 {
                     // TODO Shallow Copy
                     indestructibleVariables.Add(this.engine.variables[key]);
@@ -126,7 +126,7 @@
             this.engine.variables.Clear();
 
             for (int i = 0; i < indestructibleVariables.Count; i++)
-                this.engine.variables.Add(indestructibleVariables[i].SetName(), indestructibleVariables[i]);
+                this.engine.variables.Add(indestructibleVariables[i].Name, indestructibleVariables[i]);
         }
     }
 }

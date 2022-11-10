@@ -35,7 +35,7 @@
         #region GC
         public bool GCCanCollectVariable(string target)
         {
-            return this.variables[target].CanCollect;
+            return this.variables[target].AutoCollect;
         }
         #endregion
 
@@ -48,7 +48,7 @@
             }
 
             __BadVarCount++;
-            return new Variable($"[bad_var#{StringHelper.ItoS(__BadVarCount)}]");
+            return Variable.Create($"[bad_var#{StringHelper.ItoS(__BadVarCount)}]");
         }
         #endregion
 
@@ -60,26 +60,14 @@
 
         public void CreateStringVariable(string name, string value)
         {
-            Variable newVariable = new(name, value);
-
-            if (__ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock)
-                newVariable.SetAutoCollect(true);
-            else
-                newVariable.SetAutoCollect(false);
-
+            Variable newVariable = Variable.Create(name, value, __ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock);
             variables.Add(name, newVariable);
             SetLastValue(value);
         }
 
         public void CreateNumberVariable(string name, double value)
         {
-            Variable newVariable = new(name, value);
-
-            if (__ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock) 
-                newVariable.SetAutoCollect(true);
-            else
-                newVariable.SetAutoCollect(false);
-
+            Variable newVariable = Variable.Create(name, value, __ExecutedTemplate || __ExecutedMethod || __ExecutedTryBlock);
             variables.Add(name, newVariable);
             SetLastValue(StringHelper.DtoS(value));
         }
@@ -127,12 +115,12 @@
 
         public string GetVariableName(string target)
         {
-            return this.variables[target].SetName();
+            return this.variables[target].Name;
         }
 
         public bool VariableWaiting(string target)
         {
-            return this.variables[target].StartWaitingForAssignment();
+            return this.variables[target].WaitingForAssignment;
         }
         #endregion
 
@@ -162,27 +150,27 @@
 
         public void SetVariableName(string target, string newName)
         {
-            this.variables[target].SetName(newName);
+            this.variables[target].Name = newName;
         }
 
         public void LockVariable(string target)
         {
-            this.variables[target].Lock();
+            this.variables[target].Locked = true;
         }
 
         public void UnlockVariable(string target)
         {
-            this.variables[target].Unlock();
+            this.variables[target].Locked = false;
         }
 
         public void SetVariableNull(string target)
         {
-            this.variables[target].SetNull();
+            this.variables[target].Nullify();
         }
 
         public void StopWaitVariable(string target)
         {
-            this.variables[target].StopWaitingForAssignment();
+            this.variables[target].WaitingForAssignment = false;
         }
         #endregion
     }

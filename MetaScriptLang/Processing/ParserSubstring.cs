@@ -25,7 +25,7 @@
                         {
                             if (StringHelper.StoI(rangeBegin) < StringHelper.StoI(rangeEnd))
                             {
-                                if ((int)variableString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
+                                if (variableString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                 {
                                     string tempString = ("");
 
@@ -39,7 +39,7 @@
                             }
                             else if (StringHelper.StoI(rangeBegin) > StringHelper.StoI(rangeEnd))
                             {
-                                if ((int)variableString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
+                                if (variableString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                 {
                                     string tempString = ("");
 
@@ -68,7 +68,7 @@
                     {
                         if (StringHelper.IsNumeric(rangeBegin))
                         {
-                            if ((int)variableString.Length - 1 >= StringHelper.StoI(rangeBegin) && StringHelper.StoI(rangeBegin) >= 0)
+                            if (variableString.Length - 1 >= StringHelper.StoI(rangeBegin) && StringHelper.StoI(rangeBegin) >= 0)
                             {
                                 string tmp_ = ("");
                                 tmp_ += (variableString[StringHelper.StoI(rangeBegin)]);
@@ -105,7 +105,7 @@
                         {
                             if (StringHelper.StoI(rangeBegin) < StringHelper.StoI(rangeEnd))
                             {
-                                if ((int)variableString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
+                                if (variableString.Length - 1 >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                 {
                                     string tempString = ("");
 
@@ -122,7 +122,7 @@
                             }
                             else if (StringHelper.StoI(rangeBegin) > StringHelper.StoI(rangeEnd))
                             {
-                                if ((int)variableString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
+                                if (variableString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                 {
                                     string tempString = ("");
 
@@ -154,7 +154,7 @@
                     {
                         if (StringHelper.IsNumeric(rangeBegin))
                         {
-                            if ((int)variableString.Length - 1 >= StringHelper.StoI(rangeBegin) && StringHelper.StoI(rangeBegin) >= 0)
+                            if (variableString.Length - 1 >= StringHelper.StoI(rangeBegin) && StringHelper.StoI(rangeBegin) >= 0)
                             {
                                 string tmp_ = ("");
                                 tmp_ += (variableString[StringHelper.StoI(rangeBegin)]);

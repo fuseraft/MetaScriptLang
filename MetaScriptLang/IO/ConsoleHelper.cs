@@ -22,5 +22,11 @@
         {
             return Console.ReadLine() ?? string.Empty;
         }
+
+        public static string RunAndCaptureOutput(string command)
+        {
+            // execute process and return result of stdout
+            return string.Empty;
+        }
     }
 }

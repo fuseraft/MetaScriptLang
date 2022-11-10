@@ -19,21 +19,21 @@
                 {
                     case 'u':
                         if (prevChar == '\\')
-                            new_style += (System.Environment.UserName);
+                            new_style += System.Environment.UserName;
                         else
                             new_style += ('u');
                         break;
 
                     case 'm':
                         if (prevChar == '\\')
-                            new_style += (System.Environment.MachineName);
+                            new_style += System.Environment.MachineName;
                         else
                             new_style += ('m');
                         break;
 
                     case 'w':
                         if (prevChar == '\\')
-                            new_style += (System.Environment.CurrentDirectory);
+                            new_style += System.Environment.CurrentDirectory;
                         else
                             new_style += ('w');
                         break;
@@ -42,7 +42,7 @@
                         break;
 
                     default:
-                        new_style += (__PromptStyle[i]);
+                        new_style += __PromptStyle[i];
                         break;
                 }
 
@@ -54,45 +54,39 @@
 
         void StartReplLoop(bool skip)
         {
-            string s = string.Empty;
             bool active = true;
 
             if (!skip)
             {
-                Crypt c = new();
-                string bigStr = string.Empty;
-
                 if (System.IO.File.Exists(__SavedVars))
-                    loadSavedVars(c, bigStr);
+                    LoadSavedVariables();
             }
 
             while (active)
             {
-                s = string.Empty;
-
                 if (__UseCustomPrompt)
                 {
                     if (__PromptStyle == "bash")
                         ConsoleHelper.Output = System.Environment.UserName + "@" + System.Environment.MachineName + "(" + System.Environment.CurrentDirectory + ")" + "$ ";
                     else if (__PromptStyle == "empty")
-                        Idle();
+                        engine.Idle();
                     else
                         ConsoleHelper.Output = GetReplPrompt();
                 }
                 else
                     ConsoleHelper.Output = "> ";
 
-                s = ConsoleHelper.GetLine();// getline(cin, s, '\n');
+                string input = ConsoleHelper.GetLine();// getline(cin, s, '\n');
 
-                if (string.IsNullOrEmpty(s))
+                if (string.IsNullOrEmpty(input))
                 {
                     continue;
                 }
 
-                if (s[0] == '\t')
-                    s = s.Replace("\t", string.Empty);
+                if (input[0] == '\t')
+                    input = input.Replace("\t", string.Empty);
 
-                if (s == "exit")
+                if (input == "exit")
                 {
                     if (!__DefiningObject && !__DefiningMethod)
                     {
@@ -100,11 +94,11 @@
                         gc.ClearAll();
                     }
                     else
-                        ParseString(s);
+                        ParseString(input);
                 }
                 else
                 {
-                    string c = s;
+                    string c = input;
                     ParseString(StringHelper.LTrim(c));
                 }
             }
@@ -162,7 +156,7 @@
                 {
                     if (s[0] == '\r' || s[0] == '\n')
                     {
-                        Idle();
+                        engine.Idle();
                     }
                     else if (s[0] == '\t')
                     {
@@ -188,11 +182,11 @@
         {
             /*string _cleaned;
 	        _cleaned = cleanstring(s);
-            for (int i = 0; i < (int)methods.Count; i++)
+            for (int i = 0; i < methods.Count; i++)
             {
                 if (command[0] == methods[i].name())
                 {
-                    if ((int)command.Count - 1 == (int)methods[i].getmethodvariables().Count)
+                    if (command.Count - 1 == methods[i].getmethodvariables().Count)
                     {
                         // work
                     }

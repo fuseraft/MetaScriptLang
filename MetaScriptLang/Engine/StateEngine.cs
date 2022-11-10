@@ -5,6 +5,8 @@
 
     public partial class StateEngine
     {
+        public void Idle() { }
+
         public void SetLastValue(string s)
         {
             __LastValue = s;
@@ -68,13 +70,13 @@
             forMethod.SetSymbol(__DefaultLoopSymbol);
 
             if (op == "<=")
-                forMethod.SetForLoopValues((int)a, (int)b);
+                forMethod.SetForLoopValues(a, b);
             else if (op == ">=")
-                forMethod.SetForLoopValues((int)a, (int)b);
+                forMethod.SetForLoopValues(a, b);
             else if (op == "<")
-                forMethod.SetForLoopValues((int)a, (int)b - 1);
+                forMethod.SetForLoopValues(a, b - 1);
             else if (op == ">")
-                forMethod.SetForLoopValues((int)a, (int)b + 1);
+                forMethod.SetForLoopValues(a, b + 1);
 
             __DefiningForLoop = true;
             forLoops.Add(forMethod);
@@ -116,7 +118,7 @@
 
             if (__DefiningNest)
             {
-                ifStatements[(int)ifStatements.Count - 1].BuildNest();
+                ifStatements[ifStatements.Count - 1].BuildNest();
                 __FailedNest = false;
             }
             else

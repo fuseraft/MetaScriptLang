@@ -97,7 +97,7 @@
         {
             for (int i = 0; i < variableSize(); i++)
             {
-                if (variables[i].SetName() == variableName)
+                if (variables[i].Name == variableName)
                     return i;
             }
 
@@ -115,7 +115,7 @@
         public string getVariableName(int index)
         {
             if (index < variables.Count)
-                return variables[index].SetName();
+                return variables[index].Name;
 
             return "[undefined]";
         }
@@ -128,7 +128,7 @@
 
         public void addVariable(Variable variable)
         {
-            if (!variable.IsNull)
+            if (!variable.Null)
                 variables.Add(variable);
         }
 
@@ -163,7 +163,7 @@
             clearVariables();
 
             for (int i = 0; i < oldVariables.Count; i++)
-                if (oldVariables[i].SetName() != variableName)
+                if (oldVariables[i].Name != variableName)
                     variables.Add(oldVariables[i]);
         }
 
@@ -186,10 +186,10 @@
 
         public Variable getVariable(string variableName)
         {
-            Variable badVariable = new ($"[bad_var#{badVariables}]", "[null]");
+            Variable badVariable = Variable.Create($"[bad_var#{badVariables}]", "[null]");
 
             for (int i = 0; i < variables.Count; i++)
-                if (variables[i].SetName() == variableName)
+                if (variables[i].Name == variableName)
                     return variables[i];
 
             badVariables++;
@@ -227,7 +227,7 @@
         public bool VariableExists(string variableName)
         {
             for (int i = 0; i < variables.Count; i++)
-                if (variables[i].SetName() == variableName)
+                if (variables[i].Name == variableName)
                     return true;
 
             return false;

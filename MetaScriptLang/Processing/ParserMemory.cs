@@ -36,7 +36,7 @@
                 {
                     System.Collections.Generic.List<string> last_parameters = StringHelper.GetParameters(__LastValue);
 
-                    for (int i = 0; i < (int)last_parameters.Count; i++)
+                    for (int i = 0; i < last_parameters.Count; i++)
                         engine.AddToList(arg1, last_parameters[i]);
                 }
                 else

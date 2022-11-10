@@ -1,82 +1,69 @@
-﻿namespace MetaScriptLang.Data
+﻿namespace MetaScriptLang.Helpers
 {
-    public class Crypt
+    public class CryptoHelper
     {
-        public Crypt() { }
-        ~Crypt() { }
-
-        public string d(string o)
+        public static string Decrypt(string o)
         {
-            return decrypt(o);
-        }
-
-        public string e(string o)
-        {
-            return encrypt(o);
-        }
-
-        private string decrypt(string o)
-        {
+            System.Text.StringBuilder ax = new();
             int l = o.Length, s = 7;
-            string ax = string.Empty;
 
             for (int i = 0; i < l; i++)
             {
                 if (s == 7)
                 {
-                    ax.Append(((char)((int)o[i] + 3)));
+                    ax.Append((char)(o[i] + 3));
                     s = 5;
                 }
                 else if (s == 5)
                 {
-                    ax.Append(((char)((int)o[i] - 1)));
+                    ax.Append((char)(o[i] - 1));
                     s = 0;
                 }
                 else if (s == 0)
                 {
-                    ax.Append(((char)((int)o[i] + 4)));
+                    ax.Append((char)(o[i] + 4));
                     s = 1;
                 }
                 else
                 {
-                    ax.Append(((char)((int)o[i] - 2)));
+                    ax.Append((char)(o[i] - 2));
                     s = 7;
                 }
             }
 
-            return (ax);
+            return ax.ToString();
         }
 
-        private string encrypt(string o)
+        public static string Encrypt(string o)
         {
+            System.Text.StringBuilder ax = new();
             int l = o.Length, s = 7;
-            string ax = string.Empty;
 
             for (int i = 0; i < l; i++)
             {
                 if (s == 7)
                 {
-                    ax.Append(((char)((int)o[i] - 3)));
+                    ax.Append((char)(o[i] - 3));
                     s = 5;
                 }
                 else if (s == 5)
                 {
-                    ax.Append(((char)((int)o[i] + 1)));
+                    ax.Append((char)(o[i] + 1));
                     s = 0;
                 }
                 else if (s == 0)
                 {
-                    ax.Append(((char)((int)o[i] - 4)));
+                    ax.Append((char)(o[i] - 4));
                     s = 1;
                 }
                 else
                 {
-                    ax.Append(((char)((int)o[i] + 2)));
+                    ax.Append((char)(o[i] + 2));
                     s = 7;
                 }
             }
 
-            return ax;
+            return ax.ToString();
         }
     }
 }

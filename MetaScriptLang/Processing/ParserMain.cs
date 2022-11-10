@@ -7,14 +7,6 @@
 
     public partial class Parser
     {
-        public string getStdout(string command)
-        {
-            // execute process and return result of stdout
-            return string.Empty;
-        }
-
-        public void Idle() { }
-
         #region Capture
         public string ParseStringAndCapture(string cmd)
         {
@@ -65,7 +57,7 @@
                             }
                             else if (parenthesis && !quoted)
                             {
-                                Idle();
+                                engine.Idle();
                             }
                             else
                             {
@@ -239,7 +231,7 @@
                     {
                         if (s == "{")
                         {
-                            Idle();
+                            engine.Idle();
                         }
                         else if (StringHelper.StringStartsWith(s, "case"))
                             mainSwitch.CreateSwitchCase(command[1]);
@@ -323,7 +315,7 @@
                             {
                                 if (s == "{")
                                 {
-                                    Idle();
+                                    engine.Idle();
                                 }
                                 else if (s == "end" || s == "}")
                                 {
@@ -411,7 +403,7 @@
                             else
                             {
                                 if (s == "{")
-                                    Idle();
+                                    engine.Idle();
                                 else if (s == "end" || s == "}")
                                 {
                                     if (__DefiningLocalWhileLoop)
@@ -482,7 +474,7 @@
                                 if (command[0] == "endif")
                                     executeNest(ifStatements[ifStatements.Count - 1].GetNest());
                                 else
-                                    ifStatements[(int)ifStatements.Count - 1].AddToNest(s);
+                                    ifStatements[ifStatements.Count - 1].AddToNest(s);
                             }
                             else
                             {
@@ -538,7 +530,7 @@
                                         engine.FailedIfStatement();
                                 }
                                 else
-                                    ifStatements[(int)ifStatements.Count - 1].AddLine(s);
+                                    ifStatements[ifStatements.Count - 1].AddLine(s);
                             }
                         }
                         else
@@ -546,7 +538,7 @@
                             if (engine.__DefiningWhileLoop)
                             {
                                 if (s == "{")
-                                    Idle();
+                                    engine.Idle();
                                 else if (command[0] == "end" || command[0] == "}")
                                 {
                                     engine.__DefiningWhileLoop = false;
@@ -739,7 +731,7 @@
                                 {
                                     __DefiningForLoop = false;
 
-                                    for (int i = 0; i < (int)forLoops.Count; i++)
+                                    for (int i = 0; i < forLoops.Count; i++)
                                         if (forLoops[i].IsForLoop())
                                             forLoop(forLoops[i]);
 
@@ -750,7 +742,7 @@
                                 else
                                 {
                                     if (s == "{")
-                                        Idle();
+                                        engine.Idle();
                                     else
                                         forLoops[forLoops.Count - 1].AddLine(s);
                                 }
@@ -923,7 +915,7 @@
                 {
                     stringContainer.AddLine(bigString.ToString());
 
-                    for (int i = 0; i < (int)stringContainer.GetSize(); i++)
+                    for (int i = 0; i < stringContainer.GetSize(); i++)
                         ParseString(stringContainer.GetLineAt(i));
                 }
             }
@@ -950,7 +942,7 @@
 
                             bool commentFound = false;
 
-                            for (int i = 0; i < (int)bigString.Length; i++)
+                            for (int i = 0; i < bigString.Length; i++)
                             {
                                 if (bigString[i] == '#')
                                     commentFound = true;
@@ -967,7 +959,7 @@
 
                             bool commentFound = false;
 
-                            for (int i = 0; i < (int)bigString.Length; i++)
+                            for (int i = 0; i < bigString.Length; i++)
                             {
                                 if (bigString[i] == '#')
                                     commentFound = true;
@@ -978,7 +970,7 @@
 
                             stringContainer.AddLine(StringHelper.LTrim(commentString));
 
-                            for (int i = 0; i < (int)stringContainer.GetSize(); i++)
+                            for (int i = 0; i < stringContainer.GetSize(); i++)
                                 ParseString(stringContainer.GetLineAt(i));
                         }
                     }
@@ -6885,7 +6877,7 @@
                             System.Collections.Generic.List<Variable> objVars = engine.GetObjectVariableList(before);
 
                             for (int i = 0; i < objVars.Count; i++)
-                                newList.Add(objVars[i].SetName());
+                                newList.Add(objVars[i].Name);
 
                             engine.SuccessfulForLoop(newList);
                         }
@@ -7039,7 +7031,7 @@
                                         {
                                             if (StringHelper.StoI(rangeBegin) < StringHelper.StoI(rangeEnd))
                                             {
-                                                if ((int)tempVarString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
+                                                if (tempVarString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                                 {
                                                     List newList = new("&l&i&s&t&");
 
@@ -7061,7 +7053,7 @@
                                             }
                                             else if (StringHelper.StoI(rangeBegin) > StringHelper.StoI(rangeEnd))
                                             {
-                                                if ((int)tempVarString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
+                                                if (tempVarString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                                 {
                                                     List newList = new("&l&i&s&t&");
 
@@ -7115,7 +7107,7 @@
 
                             __DefaultLoopSymbol = arg1;
 
-                            for (int i = 0; i < (int)args.Count; i++)
+                            for (int i = 0; i < args.Count; i++)
                                 newList.Add(args[i]);
 
                             engine.SuccessfulForLoop(newList);
@@ -7158,7 +7150,7 @@
 
                             System.Collections.Generic.List<Method> objMethods = engine.GetObjectMethodList(_b);
 
-                            for (int i = 0; i < (int)objMethods.Count; i++)
+                            for (int i = 0; i < objMethods.Count; i++)
                                 newList.Add(objMethods[i].GetName());
 
                             __DefaultLoopSymbol = arg1;
@@ -7170,8 +7162,8 @@
 
                             System.Collections.Generic.List<Variable> objVars = engine.GetObjectVariableList(_b);
 
-                            for (int i = 0; i < (int)objVars.Count; i++)
-                                newList.Add(objVars[i].SetName());
+                            for (int i = 0; i < objVars.Count; i++)
+                                newList.Add(objVars[i].Name);
 
                             __DefaultLoopSymbol = arg1;
                             engine.SuccessfulForLoop(newList);

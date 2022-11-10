@@ -1,6 +1,5 @@
 ﻿namespace MetaScriptLang.Processing
 {
-    using MetaScriptLang.Data;
     using MetaScriptLang.Helpers;
 
     public partial class Parser
@@ -13,8 +12,7 @@
         //      3 = print
         void InternalGetEnv(string arg0, string after, int mode)
         {
-            Crypt c = new();
-            string defaultValue = c.e(DateTime.Now.ToString());
+            string defaultValue = CryptoHelper.Encrypt(DateTime.Now.ToString());
             string sValue = (defaultValue);
             double dValue = 0;
 

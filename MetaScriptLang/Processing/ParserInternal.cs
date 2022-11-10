@@ -71,11 +71,11 @@
                     foreach (var key in this.variables.Keys)
                     {
                         if (variables[key].StringValue != __Null)
-                            ConsoleWrite($"{variables[key].SetName()}:\t{variables[key].StringValue}");
+                            ConsoleWrite($"{variables[key].Name}:\t{variables[key].StringValue}");
                         else if (variables[key].NumberValue != __NullNum)
-                            ConsoleWrite($"{variables[key].SetName()}:\t{StringHelper.DtoS(variables[key].NumberValue)}");
+                            ConsoleWrite($"{variables[key].Name}:\t{StringHelper.DtoS(variables[key].NumberValue)}");
                         else
-                            ConsoleWrite($"{variables[key].SetName()}:\tis_null");
+                            ConsoleWrite($"{variables[key].Name}:\tis_null");
                     }
                 }
                 else if (arg1 == "lists")
@@ -103,7 +103,7 @@
                 {
                     foreach (var key in this.constants.Keys)
                     {
-                        ConsoleWrite(this.constants[key].name());
+                        ConsoleWrite(this.constants[key].Name);
                     }
                 }
                 else if (arg1 == "os?")
@@ -123,7 +123,7 @@
 
                 System.Collections.Generic.List<string> lines = engine.GetObjectMethod(StringHelper.BeforeDot(arg1), StringHelper.AfterDot(arg1)).GetLines();
 
-                for (int i = 0; i < (int)lines.Count; i++)
+                for (int i = 0; i < lines.Count; i++)
                     method.AddLine(lines[i]);
 
                 methods.Add(method.GetName(), method);
@@ -231,13 +231,13 @@
                             {
                                 if (StringHelper.IsAlphabetical(parameters[i]))
                                 {
-                                    Variable newVariable = new("@[pm#" + StringHelper.ItoS(engine.__ParamVarCount) + "]", parameters[i]);
+                                    Variable newVariable = Variable.Create("@[pm#" + StringHelper.ItoS(engine.__ParamVarCount) + "]", parameters[i]);
                                     method.AddVariable(newVariable);
                                     engine.__ParamVarCount++;
                                 }
                                 else
                                 {
-                                    Variable newVariable = new("@[pm#" + StringHelper.ItoS(engine.__ParamVarCount) + "]", StringHelper.StoD(parameters[i]));
+                                    Variable newVariable = Variable.Create("@[pm#" + StringHelper.ItoS(engine.__ParamVarCount) + "]", StringHelper.StoD(parameters[i]));
                                     method.AddVariable(newVariable);
                                     engine.__ParamVarCount++;
                                 }
@@ -343,15 +343,15 @@
                             {
                                 if (StringHelper.IsAlphabetical(parameters[i]))
                                 {
-                                    Variable newVariable = new("@" + parameters[i], "");
-                                    newVariable.SetNull();
+                                    Variable newVariable = Variable.Create("@" + parameters[i], string.Empty);
+                                    newVariable.Nullify();
                                     method.AddVariable(newVariable);
                                     engine.__ParamVarCount++;
                                 }
                                 else
                                 {
-                                    Variable newVariable = new("@" + parameters[i], 0);
-                                    newVariable.SetNull();
+                                    Variable newVariable = Variable.Create("@" + parameters[i], 0D);
+                                    newVariable.Nullify();
                                     method.AddVariable(newVariable);
                                     engine.__ParamVarCount++;
                                 }
@@ -411,14 +411,13 @@
             {
                 string bigStr = ("");
                 // REFACTOR HERE
-                Crypt c = new();
 
                 bigStr += (System.IO.File.ReadAllText(__SavedVars));
 
                 int bigStrLength = bigStr.Length;
                 bool stop = false;
                 string varName = string.Empty;
-                bigStr = c.d(bigStr);
+                bigStr = CryptoHelper.Decrypt(bigStr);
 
                 System.Collections.Generic.List<string> varNames = new();
                 System.Collections.Generic.List<string> varValues = new();
@@ -442,26 +441,26 @@
 
                         default:
                             if (!stop)
-                                varNames[(int)varNames.Count - 1] += (bigStr[i]);
+                                varNames[varNames.Count - 1] += (bigStr[i]);
                             else
-                                varValues[(int)varValues.Count - 1] += (bigStr[i]);
+                                varValues[varValues.Count - 1] += (bigStr[i]);
                             break;
                     }
                 }
 
                 string new_saved = ("");
 
-                for (int i = 0; i < (int)varNames.Count; i++)
+                for (int i = 0; i < varNames.Count; i++)
                 {
                     if (varNames[i] != arg1)
                     {
-                        Variable newVariable = new(varNames[i], varValues[i]);
+                        Variable newVariable = Variable.Create(varNames[i], varValues[i]);
                         variables.Add(varNames[i], newVariable);
 
-                        if (i != (int)varNames.Count - 1)
-                            new_saved += (varNames[i] + "&" + varValues[i] + "#");
+                        if (i != varNames.Count - 1)
+                            new_saved += $"{varNames[i]}&{varValues[i]}#";
                         else
-                            new_saved += (varNames[i] + "&" + varValues[i]);
+                            new_saved += $"{varNames[i]}&{varValues[i]}";
                     }
                 }
 
@@ -470,7 +469,7 @@
 
                 System.IO.File.Delete(__SavedVars);
                 createFile(__SavedVars);
-                app(__SavedVars, c.e(new_saved));
+                app(__SavedVars, CryptoHelper.Encrypt(new_saved));
             }
         }
 

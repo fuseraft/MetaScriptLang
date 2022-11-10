@@ -514,6 +514,11 @@
             return Convert.ToString(i);
         }
 
+        public static string ItoS(double i)
+        {
+            return Convert.ToString((int)i);
+        }
+
         public static double StoD(string s)
         {
             return Convert.ToDouble(s);

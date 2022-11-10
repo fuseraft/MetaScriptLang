@@ -27,7 +27,7 @@
 
             ListClear(before);
 
-            for (int i = 0; i < (int)newList.Count; i++)
+            for (int i = 0; i < newList.Count; i++)
                 this.AddToList(before, newList[i]);
 
             newList.Clear();

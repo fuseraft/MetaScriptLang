@@ -21,7 +21,7 @@
             tempArgTwo = StringHelper.SubtractChars(tempArgTwo, "(");
             tempArgTwo = StringHelper.SubtractChars(tempArgTwo, ")");
 
-            for (int i = 0; i < (int)tempArgTwo.Length; i++)
+            for (int i = 0; i < tempArgTwo.Length; i++)
             {
                 if (tempArgTwo[i] == ' ')
                 {
@@ -206,7 +206,7 @@
 
             bool quoted = false;
 
-            for (int i = 0; i < (int)tempArgTwo.Length; i++)
+            for (int i = 0; i < tempArgTwo.Length; i++)
             {
                 if (tempArgTwo[i] == '\"')
                 {
@@ -392,7 +392,7 @@
                  subtractNext = false,
                  multiplyNext = false;
 
-            for (int i = 0; i < (int)contents.Count; i++)
+            for (int i = 0; i < contents.Count; i++)
             {
                 if (startOperating)
                 {
@@ -435,7 +435,7 @@
 
             if (engine.__Returning)
             {
-                for (int i = 0; i < (int)vars.Count; i++)
+                for (int i = 0; i < vars.Count; i++)
                     engine.DeleteVariable(vars[i]);
 
                 engine.__Returning = false;
@@ -458,7 +458,7 @@
             System.Collections.Generic.List<string> contents = new();
             System.Collections.Generic.List<string> vars = new();
 
-            for (int i = 0; i < (int)tempArgTwo.Length; i++)
+            for (int i = 0; i < tempArgTwo.Length; i++)
             {
                 if (tempArgTwo[i] == ' ')
                 {
@@ -699,7 +699,7 @@
                  moduloNext = false,
                  powerNext = false;
 
-            for (int i = 0; i < (int)contents.Count; i++)
+            for (int i = 0; i < contents.Count; i++)
             {
                 if (startOperating)
                 {
@@ -725,12 +725,12 @@
                     }
                     else if (moduloNext)
                     {
-                        stackValue = ((int)stackValue % (int)StringHelper.StoD(contents[i]));
+                        stackValue = (stackValue % StringHelper.StoD(contents[i]));
                         moduloNext = false;
                     }
                     else if (powerNext)
                     {
-                        stackValue = System.Math.Pow(stackValue, (int)StringHelper.StoD(contents[i]));
+                        stackValue = System.Math.Pow(stackValue, StringHelper.StoD(contents[i]));
                         powerNext = false;
                     }
 
@@ -759,7 +759,7 @@
 
             if (engine.__Returning)
             {
-                for (int i = 0; i < (int)vars.Count; i++)
+                for (int i = 0; i < vars.Count; i++)
                     engine.DeleteVariable(vars[i]);
 
                 engine.__Returning = false;

@@ -22,29 +22,14 @@
             isString_ = false;
         }
 
-        public bool ConstNumber()
-        {
-            return isNumber_;
-        }
+        public string StringValue => stringValue;
 
-        public bool ConstString()
-        {
-            return isString_;
-        }
+        public double NumberValue => numericValue;
 
-        public string getString()
-        {
-            return stringValue;
-        }
+        public string Name => constantName;
 
-        public double getNumber()
-        {
-            return numericValue;
-        }
+        public bool IsNumber => isNumber_;
 
-        public string name()
-        {
-            return constantName;
-        }
+        public bool IsString => isString_;
     }
 }

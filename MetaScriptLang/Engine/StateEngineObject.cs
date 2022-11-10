@@ -69,13 +69,13 @@
 
         public void CreateObjectVariable(string objectName, string variableName, string value)
         {
-            Variable v = new(variableName, value);
+            Variable v = Variable.Create(variableName, value);
             this.objects[objectName].addVariable(v);
         }
 
         public void CreateObjectVariable(string objectName, string variableName, double value)
         {
-            Variable v = new(variableName, value);
+            Variable v = Variable.Create(variableName, value);
 
             if (__DefiningPrivateCode)
                 v.MakePrivate();
@@ -132,12 +132,12 @@
 
         public string GetObjectVariableName(string objectName, string variableName)
         {
-            return this.objects[objectName].getVariable(variableName).SetName();
+            return this.objects[objectName].getVariable(variableName).Name;
         }
 
         public string GetObjectVariableNameByIndex(string objectName, int index)
         {
-            return this.objects[objectName].getVariable(this.objects[objectName].getVariableName(index)).SetName();
+            return this.objects[objectName].getVariable(this.objects[objectName].getVariableName(index)).Name;
         }
 
         public string GetObjectVariableString(string objectName, string variableName)

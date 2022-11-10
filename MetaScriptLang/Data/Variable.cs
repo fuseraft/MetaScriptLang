@@ -1,145 +1,120 @@
-﻿using System.Reflection.Metadata.Ecma335;
-
-namespace MetaScriptLang.Data
+﻿namespace MetaScriptLang.Data
 {
     public class Variable
     {
-        private double numericValue = -Double.MaxValue;
-        private string stringValue = string.Empty, variableName = string.Empty;
-
-        private bool autoCollect = false,
-            isPrivate_ = false,
-            isPublic_ = false,
-            isLocked = false,
-            waitToAssign = false;
-
-        public Variable(string name, bool autoCollect = false)
+        private Variable(string name, string stringValue = "[null]", double numericValue = -Double.MaxValue, bool autoCollect = false)
         {
-            Initialize(name, autoCollect);
-            SetAll(-Double.MaxValue, "[null]");
-        }
+            this.Name = name;
+            this.AutoCollect = autoCollect;
+            this.Locked = false;
+            this.WaitingForAssignment = false;
 
-        public Variable(string name, string value, bool autoCollect = false)
-            : this(name, autoCollect)
-        {
-            if (value == "null")
+            if (stringValue == "null")
             {
                 SetAll(-Double.MaxValue, "[null]");
-                waitToAssign = true;
+                this.WaitingForAssignment = true;
             }
             else
-                SetAll(-Double.MaxValue, value);
+            {
+                SetAll(numericValue, stringValue);
+            }
         }
 
-        public Variable(string name, double value, bool autoCollect = false)
-            : this(name, autoCollect)
+        public static Variable Create(string name)
         {
-            SetAll(value, "[null]");
+            return new Variable(name);
         }
 
-        public bool CanCollect => this.autoCollect;
+        public static Variable Create(string name, string value, bool autoCollect = false)
+        {
+            return new Variable(name, value, -Double.MaxValue, autoCollect);
+        }
 
-        public bool IsLocked => this.isLocked;
+        public static Variable Create(string name, double value, bool autoCollect = false)
+        {
+            return new Variable(name, "[null]", value, autoCollect);
+        }
 
-        public bool IsNull => this.StringValue == "[null]" && this.NumberValue == -Double.MaxValue;
+        //public Variable(string name, string value, bool autoCollect = false)
+        //    : this(name, value, -Double.MaxValue, autoCollect)
+        //{
+        //}
+
+        //public Variable(string name, double value, bool autoCollect = false)
+        //    : this(name, "[null]", value, autoCollect)
+        //{
+        //}
+
+        public bool AutoCollect { get; set; }
+
+        public bool Locked { get; set; }
+
+        public bool Null => this.StringValue == "[null]" && this.NumberValue == -Double.MaxValue;
 
         public string StringValue { get; set; }
 
         public double NumberValue { get; set; }
 
-        private void SetAll(double numValue, string strValue, bool autoCollect = false)
-        {
-            SetAutoCollect(autoCollect);
-            SetValue(numValue);
-            SetValue(strValue);
-        }
+        public string Name { get; set; }
 
-        public void SetAutoCollect(bool autoCollect)
-        {
-            this.autoCollect = autoCollect;
-        }
+        public bool WaitingForAssignment { get; set; }
 
-        public void SetNull()
-        {
-            SetAll(-Double.MaxValue, "[null]");
-            waitToAssign = true;
-        }
+        public bool IsPublic { get; set; } = true;
 
-        public void SetName(string name)
-        {
-            variableName = name;
-        }
-
-        public string SetName()
-        {
-            return variableName;
-        }
-
-        public bool StartWaitingForAssignment()
-        {
-            return (waitToAssign);
-        }
-
-        public void StopWaitingForAssignment()
-        {
-            waitToAssign = false;
-        }
+        public bool IsPrivate { get; set; }
 
         public void SetValue(double value)
         {
-            if (StartWaitingForAssignment())
+            if (this.WaitingForAssignment)
             {
-                numericValue = value;
-                stringValue = "[null]";
-                waitToAssign = false;
+                this.NumberValue = value;
+                this.StringValue = "[null]";
+                this.WaitingForAssignment = false;
             }
             else
             {
-                numericValue = 0.0;
-                numericValue = value;
+                this.NumberValue = 0.0;
+                this.NumberValue = value;
             }
         }
 
         public void SetValue(string value)
         {
-            if (StartWaitingForAssignment())
+            if (this.WaitingForAssignment)
             {
-                stringValue = value;
-                numericValue = -Double.MaxValue;
-                waitToAssign = false;
+                this.StringValue = value;
+                this.NumberValue = -Double.MaxValue;
+                this.WaitingForAssignment = false;
             }
             else
-                stringValue = value;
+            {
+                this.StringValue = value;
+            }
+        }
+
+        private void SetAll(double numValue, string strValue, bool autoCollect = false)
+        {
+            this.AutoCollect = autoCollect;
+            SetValue(numValue);
+            SetValue(strValue);
+        }
+
+        public void Nullify()
+        {
+            SetAll(-Double.MaxValue, "[null]");
+            this.WaitingForAssignment = true;
         }
 
         public void MakePrivate()
         {
-            isPrivate_ = true;
-            isPublic_ = false;
+            this.IsPrivate = true;
+            this.IsPublic = false;
         }
 
         public void MakePublic()
         {
-            isPublic_ = true;
-            isPrivate_ = false;
-        }
-
-        public void Initialize(string name, bool autoCollect = false)
-        {
-            variableName = name;
-            this.autoCollect = false;
-            isLocked = false;
-            waitToAssign = false;
-        }
-
-        public void Lock()
-        {
-            isLocked = true;
-        }
-
-        public void Unlock()
-        {
-            isLocked = false;
+            this.IsPrivate = false;
+            this.IsPublic = true;
         }
     }
 }
