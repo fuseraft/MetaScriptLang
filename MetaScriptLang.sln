@@ -7,6 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Metal.Core", "Metal.Core\Me
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Metal.Core.CLI", "Metal.Core.CLI\Metal.Core.CLI.csproj", "{2A7EA7A4-18C7-4FA4-80A1-5F8D7FEAA429}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5F7D7728-E606-48A0-994D-CB81C20CC3A5}"
+	ProjectSection(SolutionItems) = preProject
+		ExampleScript\helloworld.metal = ExampleScript\helloworld.metal
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetaL.Test", "MetaL.Test\MetaL.Test.csproj", "{8D9B5543-0924-4C4C-B05B-C75730B9E242}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +28,10 @@ Global
 		{2A7EA7A4-18C7-4FA4-80A1-5F8D7FEAA429}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A7EA7A4-18C7-4FA4-80A1-5F8D7FEAA429}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A7EA7A4-18C7-4FA4-80A1-5F8D7FEAA429}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D9B5543-0924-4C4C-B05B-C75730B9E242}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D9B5543-0924-4C4C-B05B-C75730B9E242}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D9B5543-0924-4C4C-B05B-C75730B9E242}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D9B5543-0924-4C4C-B05B-C75730B9E242}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
