@@ -5,7 +5,7 @@
         private List<Variable> methodVariables = new ();
         private List<string> lines = new ();
 
-        private string logicOperatorValue= string.Empty,
+        private string logicOperatorValue = string.Empty,
             methodName = string.Empty,
             objectName = string.Empty,
             symbolString = string.Empty,
@@ -130,13 +130,13 @@
 
         public void AddVariable(string value, string variableName)
         {
-            Variable newVariable = new (variableName, value);
+            Variable newVariable = Variable.Create(variableName, value);
             methodVariables.Add(newVariable);
         }
 
         public void AddVariable(double value, string variableName)
         {
-            Variable newVariable = new (variableName, value);
+            Variable newVariable = Variable.Create(variableName, value);
             methodVariables.Add(newVariable);
         }
 
@@ -301,10 +301,10 @@
             valueTwo_ = v2;
         }
 
-        public void SetForLoopValues(int a, int b)
+        public void SetForLoopValues(double a, double b)
         {
-            startValue = a;
-            stopValue = b;
+            startValue = (int)a;
+            stopValue = (int)b;
         }
 
         public void SetForListLoop(List l)

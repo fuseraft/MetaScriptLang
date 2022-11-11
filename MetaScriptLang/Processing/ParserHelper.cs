@@ -1,31 +1,33 @@
 ﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.IO;
+
     public partial class Parser
     {
-        void write(string st)
+        void ConsoleWrite(string st)
         {
             if (__CaptureParse)
                 __ParsedOutput += (cleanString(st));
             else
-                cout = cleanString(st);
+                ConsoleHelper.Output = cleanString(st);
 
-            setLastValue(st);
+            SetLastValue(st);
         }
 
-        void writeline(string st)
+        void ConsoleWriteLine(string st)
         {
-            write(st);
-            cout = System.Environment.NewLine;
+            ConsoleWrite(st);
+            ConsoleHelper.Output = System.Environment.NewLine;
         }
 
-        void displayVersion()
+        void DisplayVersionInfo()
         {
-            cout = "\r\nnoctis v0.0.1 by <scstauf@gmail.com>\r\n" + System.Environment.NewLine;
+            ConsoleHelper.Output = "\r\nnoctis v0.0.1 by <scstauf@gmail.com>\r\n" + System.Environment.NewLine;
         }
 
-        void help(string app)
+        void DisplayHelpInfo(string app)
         {
-            cout = "\r\nnoctis by <scstauf@gmail.com>" + System.Environment.NewLine + System.Environment.NewLine
+            ConsoleHelper.Output = "\r\nnoctis by <scstauf@gmail.com>" + System.Environment.NewLine + System.Environment.NewLine
                  + "usage:\t" + app + "\t\t\t// start the shell" + System.Environment.NewLine
                  + "\t" + app + " {args}\t\t// start the shell, with parameters" + System.Environment.NewLine
                  + "\t" + app + " {script}\t\t// interpret a script" + System.Environment.NewLine
@@ -37,6 +39,5 @@
                  + "\t" + app + " -p, --parse\t\t// parse a command" + System.Environment.NewLine
                  + "\t" + app + " -h, --help\t\t// display this message" + System.Environment.NewLine + System.Environment.NewLine;
         }
-
     }
 }

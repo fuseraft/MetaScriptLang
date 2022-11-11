@@ -9,22 +9,6 @@ namespace MetaScriptLang.Processing
         private bool __CaptureParse = false;
         private string __ParsedOutput = string.Empty;
 
-        private string cout 
-        {
-            set
-            {
-                Console.Write(value);
-            }
-        }
-
-        private string cerr
-        {
-            set
-            {
-                Console.Error.Write(value);
-            }
-        }
-
         System.Collections.Generic.Dictionary<string, Method> methods = new();
         System.Collections.Generic.Dictionary<string, MetaScriptLang.Data.Object> objects = new();
         System.Collections.Generic.Dictionary<string, Variable> variables = new();
@@ -86,17 +70,6 @@ namespace MetaScriptLang.Processing
         bool __DefiningPrivateCode = false;
         bool __DefiningPublicCode = false;
         bool __DefiningScript = false;
-        bool __DefiningSwitchBlock = false;
-        bool __DefiningWhileLoop = false;
-        bool __DontCollectMethodVars = false;
-        bool __ExecutedIfStatement = false;
-        bool __ExecutedMethod = false;
-        bool __ExecutedTemplate = false;
-        bool __FailedIfStatement = false;
-        bool __FailedNest = false;
-        bool __GoToLabel = false;
-        bool __InDefaultCase = false;
-        bool __Returning = false;
         bool __SkipDefaultBlock = false;
         bool __UseCustomPrompt = false;
 

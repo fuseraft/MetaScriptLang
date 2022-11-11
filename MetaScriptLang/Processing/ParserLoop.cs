@@ -1,12 +1,13 @@
-﻿using MetaScriptLang.Data;
-using System.Linq;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
+    using MetaScriptLang.IO;
+
     public partial class Parser
     {
         #region Loop
-        string getPrompt()
+        string GetReplPrompt()
         {
             string new_style = ("");
             int length = __PromptStyle.Length;
@@ -18,21 +19,21 @@ namespace MetaScriptLang.Processing
                 {
                     case 'u':
                         if (prevChar == '\\')
-                            new_style += (System.Environment.UserName);
+                            new_style += System.Environment.UserName;
                         else
                             new_style += ('u');
                         break;
 
                     case 'm':
                         if (prevChar == '\\')
-                            new_style += (System.Environment.MachineName);
+                            new_style += System.Environment.MachineName;
                         else
                             new_style += ('m');
                         break;
 
                     case 'w':
                         if (prevChar == '\\')
-                            new_style += (System.Environment.CurrentDirectory);
+                            new_style += System.Environment.CurrentDirectory;
                         else
                             new_style += ('w');
                         break;
@@ -41,7 +42,7 @@ namespace MetaScriptLang.Processing
                         break;
 
                     default:
-                        new_style += (__PromptStyle[i]);
+                        new_style += __PromptStyle[i];
                         break;
                 }
 
@@ -51,94 +52,88 @@ namespace MetaScriptLang.Processing
             return (new_style);
         }
 
-        void loop(bool skip)
+        void StartReplLoop(bool skip)
         {
-            string s = string.Empty;
             bool active = true;
 
             if (!skip)
             {
-                Crypt c = new();
-                string bigStr = string.Empty;
-
                 if (System.IO.File.Exists(__SavedVars))
-                    loadSavedVars(c, bigStr);
+                    LoadSavedVariables();
             }
 
             while (active)
             {
-                s = string.Empty;
-
                 if (__UseCustomPrompt)
                 {
                     if (__PromptStyle == "bash")
-                        cout = System.Environment.UserName + "@" + System.Environment.MachineName + "(" + System.Environment.CurrentDirectory + ")" + "$ ";
+                        ConsoleHelper.Output = System.Environment.UserName + "@" + System.Environment.MachineName + "(" + System.Environment.CurrentDirectory + ")" + "$ ";
                     else if (__PromptStyle == "empty")
-                        doNothing();
+                        engine.Idle();
                     else
-                        cout = getPrompt();
+                        ConsoleHelper.Output = GetReplPrompt();
                 }
                 else
-                    cout = "> ";
+                    ConsoleHelper.Output = "> ";
 
-                s = Console.ReadLine();// getline(cin, s, '\n');
+                string input = ConsoleHelper.GetLine();// getline(cin, s, '\n');
 
-                if (string.IsNullOrEmpty(s))
+                if (string.IsNullOrEmpty(input))
                 {
                     continue;
                 }
 
-                if (s[0] == '\t')
-                    s = s.Replace("\t", string.Empty);
+                if (input[0] == '\t')
+                    input = input.Replace("\t", string.Empty);
 
-                if (s == "exit")
+                if (input == "exit")
                 {
                     if (!__DefiningObject && !__DefiningMethod)
                     {
                         active = false;
-                        clearAll();
+                        gc.ClearAll();
                     }
                     else
-                        parse(s);
+                        ParseString(input);
                 }
                 else
                 {
-                    string c = s;
-                    parse(trimLeadingWhitespace(c));
+                    string c = input;
+                    ParseString(StringHelper.LTrim(c));
                 }
             }
         }
         #endregion
 
         #region Script Runner
-        void runScript()
+        void RunScript()
         {
-            for (int i = 0; i < GetSSize(__CurrentScript); i++)
+            for (int i = 0; i < engine.GetScriptSize(__CurrentScript); i++)
             {
                 __CurrentLineNumber = i + 1;
 
-                if (!__GoToLabel)
-                    parse(GetSLine(__CurrentLine, i));
+                if (!engine.__GoToLabel)
+                    ParseString(engine.GetLineFromScript(__CurrentLine, i));
                 else
                 {
                     bool startParsing = false;
                     __DefiningIfStatement = false;
                     __DefiningForLoop = false;
-                    __GoToLabel = false;
+                    engine.__GoToLabel = false;
 
-                    for (int z = 0; z < GetSSize(__CurrentScript); z++)
+                    for (int z = 0; z < engine.GetScriptSize(__CurrentScript); z++)
                     {
-                        if (endsWith(GetSLine(__CurrentScript, z), "::"))
+                        if (StringHelper.StringEndsWith(engine.GetLineFromScript(__CurrentScript, z), "::"))
                         {
-                            string s = GetSLine(__CurrentScript, z);
-                            s = subtractString(s, "::");
+                            string s = engine.GetLineFromScript(__CurrentScript, z);
+                            s = StringHelper.SubtractString(s, "::");
 
                             if (s == __GoTo)
                                 startParsing = true;
                         }
 
                         if (startParsing)
-                            parse(GetSLine(__CurrentScript, z));
+                            ParseString(engine.GetLineFromScript(__CurrentScript, z));
                     }
                 }
             }
@@ -146,7 +141,7 @@ namespace MetaScriptLang.Processing
             __CurrentScript = __PreviousScript;
         }
 
-        void loadScript(string script)
+        void LoadScript(string script)
         {
             string s = string.Empty;
             __CurrentScript = script;
@@ -161,7 +156,7 @@ namespace MetaScriptLang.Processing
                 {
                     if (s[0] == '\r' || s[0] == '\n')
                     {
-                        doNothing();
+                        engine.Idle();
                     }
                     else if (s[0] == '\t')
                     {
@@ -169,29 +164,29 @@ namespace MetaScriptLang.Processing
                     }
                     else
                     {
-                        newScript.add(trimLeadingWhitespace(s));
+                        newScript.AddLine(StringHelper.LTrim(s));
                     }
                 }
                 else
-                    newScript.add("");
+                    newScript.AddLine("");
             }
 
             scripts.Add(script, newScript);
 
-            runScript();
+            RunScript();
         }
         #endregion
 
         #region External Process
-        int sysExec(string s, System.Collections.Generic.List<string> command)
+        int RunExternalProcess(string s, System.Collections.Generic.List<string> command)
         {
             /*string _cleaned;
 	        _cleaned = cleanstring(s);
-            for (int i = 0; i < (int)methods.Count; i++)
+            for (int i = 0; i < methods.Count; i++)
             {
                 if (command[0] == methods[i].name())
                 {
-                    if ((int)command.Count - 1 == (int)methods[i].getmethodvariables().Count)
+                    if (command.Count - 1 == methods[i].getmethodvariables().Count)
                     {
                         // work
                     }

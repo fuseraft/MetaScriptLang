@@ -8,30 +8,30 @@
 
         ~StringContainer()
         {
-            clear();
+            Clear();
         }
 
-        public void clear()
+        public void Clear()
         {
             strings.Clear();
         }
 
-        public void add(string line)
+        public void AddLine(string line)
         {
             strings.Add(line);
         }
 
-        System.Collections.Generic.List<string> get()
+        System.Collections.Generic.List<string> GetLines()
         {
             return strings;
         }
 
-        public int size()
+        public int GetSize()
         {
             return strings.Count;
         }
 
-        public string at(int index)
+        public string GetLineAt(int index)
         {
             if (index < strings.Count)
                 return strings[index];

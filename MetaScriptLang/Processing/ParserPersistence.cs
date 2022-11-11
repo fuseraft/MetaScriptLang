@@ -1,16 +1,12 @@
-﻿using MetaScriptLang.Data;
-using System.IO;
-using System.Linq;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Helpers;
+
     public partial class Parser
     {
-        void saveVariable(string variableName)
+        void SaveVariable(string variableName)
         {
-            Crypt c = new();
-
-            System.IO.File.AppendAllText(__SavedVars, c.e(variableName) + Environment.NewLine);
+            System.IO.File.AppendAllText(__SavedVars, CryptoHelper.Encrypt(variableName) + Environment.NewLine);
         }
     }
 }

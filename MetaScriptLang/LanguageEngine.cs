@@ -2,7 +2,7 @@
 
 namespace MetaScriptLang
 {
-    public class Engine
+    public class LanguageEngine
     {
         public int Run(int c, params string[] v)
         {

@@ -9,36 +9,36 @@
         {
             System.Collections.Generic.List<string> methodLines = new();
 
-            __ExecutedTemplate = true;
-            __DontCollectMethodVars = true;
+            engine.__ExecutedTemplate = true;
+            engine.__DontCollectMethodVars = true;
             __CurrentMethodObject = m.GetObject();
 
             System.Collections.Generic.List<Variable> methodVariables = m.GetVariables();
 
-            for (int i = 0; i < (int)methodVariables.Count; i++)
+            for (int i = 0; i < methodVariables.Count; i++)
             {
-                if (VExists(strings[i]))
+                if (engine.VariableExists(strings[i]))
                 {
-                    if (isString(strings[i]))
-                        CreateVString(methodVariables[i].name(), GetVString(strings[i]));
-                    else if (isNumber(strings[i]))
-                        CreateVNumber(methodVariables[i].name(), GetVNumber(strings[i]));
+                    if (engine.IsStringVariable(strings[i]))
+                        engine.CreateStringVariable(methodVariables[i].Name, engine.GetVariableString(strings[i]));
+                    else if (engine.IsNumberVariable(strings[i]))
+                        engine.CreateNumberVariable(methodVariables[i].Name, engine.GetVariableNumber(strings[i]));
                 }
-                else if (MExists(strings[i]))
+                else if (engine.MethodExists(strings[i]))
                 {
-                    parse(strings[i]);
+                    ParseString(strings[i]);
 
                     if (StringHelper.IsNumeric(__LastValue))
-                        CreateVNumber(methodVariables[i].name(), stod(__LastValue));
+                        engine.CreateNumberVariable(methodVariables[i].Name, StringHelper.StoD(__LastValue));
                     else
-                        CreateVString(methodVariables[i].name(), __LastValue);
+                        engine.CreateStringVariable(methodVariables[i].Name, __LastValue);
                 }
                 else
                 {
                     if (StringHelper.IsNumeric(strings[i]))
-                        CreateVNumber(methodVariables[i].name(), stod(strings[i]));
+                        engine.CreateNumberVariable(methodVariables[i].Name, StringHelper.StoD(strings[i]));
                     else
-                        CreateVString(methodVariables[i].name(), strings[i]);
+                        engine.CreateStringVariable(methodVariables[i].Name, strings[i]);
                 }
             }
 
@@ -64,14 +64,14 @@
 
                 System.Collections.Generic.List<string> newWords = new();
 
-                for (int x = 0; x < (int)words.Count; x++)
+                for (int x = 0; x < words.Count; x++)
                 {
                     bool found = false;
 
-                    for (int a = 0; a < (int)strings.Count; a++)
+                    for (int a = 0; a < strings.Count; a++)
                     {
                         string variableString = ("$");
-                        variableString += (itos(a));
+                        variableString += (StringHelper.ItoS(a));
 
                         if (words[x] == variableString)
                         {
@@ -87,36 +87,36 @@
 
                 string freshLine = ("");
 
-                for (int b = 0; b<(int)newWords.Count; b++)
+                for (int b = 0; b<newWords.Count; b++)
                 {
                     freshLine += (newWords[b]);
 
-                    if (b != (int) newWords.Count - 1)
+                    if (b !=  newWords.Count - 1)
                         freshLine += (' ');
                 }
 
                 methodLines.Add(freshLine);
             }
 
-            for (int i = 0; i < (int)methodLines.Count; i++)
-                parse(methodLines[i]);
+            for (int i = 0; i < methodLines.Count; i++)
+                ParseString(methodLines[i]);
 
-            __ExecutedTemplate = false;
-            __DontCollectMethodVars = false;
+            engine.__ExecutedTemplate = false;
+            engine.__DontCollectMethodVars = false;
 
-            collectGarbage(); // if (!__DontCollectMethodVars)
+            gc.DoGarbageCollection(); // if (!engine.__DontCollectMethodVars)
         }
 
         void executeMethod(Method m)
         {
-            __ExecutedMethod = true;
+            engine.__ExecutedMethod = true;
             __CurrentMethodObject = m.GetObject();
 
             if (__DefiningParameterizedMethod)
             {
                 System.Collections.Generic.List<string> methodLines = new();
 
-                for (int i = 0; i < (int)m.GetMethodSize(); i++)
+                for (int i = 0; i < m.GetMethodSize(); i++)
                 {
                     string line = m.GetLine(i);
                     string word = ("");
@@ -138,32 +138,32 @@
 
                     System.Collections.Generic.List<string> newWords = new();
 
-                    for (int x = 0; x < (int)words.Count; x++)
+                    for (int x = 0; x < words.Count; x++)
                     {
                         bool found = false;
 
-                        for (int a = 0; a < (int)m.GetVariables().Count; a++)
+                        for (int a = 0; a < m.GetVariables().Count; a++)
                         {
                             string variableString = ("$");
-                            variableString += (itos(a));
+                            variableString += (StringHelper.ItoS(a));
 
-                            if (words[x] == m.GetVariables()[a].name())
+                            if (words[x] == m.GetVariables()[a].Name)
                             {
                                 found = true;
 
-                                if (m.GetVariables()[a].getString() != __Null)
-                                    newWords.Add(m.GetVariables()[a].getString());
-                                else if (m.GetVariables()[a].getNumber() != __NullNum)
-                                    newWords.Add(dtos(m.GetVariables()[a].getNumber()));
+                                if (m.GetVariables()[a].StringValue != __Null)
+                                    newWords.Add(m.GetVariables()[a].StringValue);
+                                else if (m.GetVariables()[a].NumberValue != __NullNum)
+                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].NumberValue));
                             }
                             else if (words[x] == variableString)
                             {
                                 found = true;
 
-                                if (m.GetVariables()[a].getString() != __Null)
-                                    newWords.Add(m.GetVariables()[a].getString());
-                                else if (m.GetVariables()[a].getNumber() != __NullNum)
-                                    newWords.Add(dtos(m.GetVariables()[a].getNumber()));
+                                if (m.GetVariables()[a].StringValue != __Null)
+                                    newWords.Add(m.GetVariables()[a].StringValue);
+                                else if (m.GetVariables()[a].NumberValue != __NullNum)
+                                    newWords.Add(StringHelper.DtoS(m.GetVariables()[a].NumberValue));
                             }
                         }
 
@@ -173,27 +173,27 @@
 
                     string freshLine = ("");
 
-                    for (int b = 0; b < (int)newWords.Count; b++)
+                    for (int b = 0; b < newWords.Count; b++)
                     {
                         freshLine += (newWords[b]);
 
-                        if (b != (int)newWords.Count - 1)
+                        if (b != newWords.Count - 1)
                             freshLine += (' ');
                     }
 
                     methodLines.Add(freshLine);
 
-                    for (int ii = 0; ii < (int)methodLines.Count; ii++)
-                        parse(methodLines[ii]);
+                    for (int ii = 0; ii < methodLines.Count; ii++)
+                        ParseString(methodLines[ii]);
                 }
             }
             else
                 for (int ii = 0; ii < m.GetMethodSize(); ii++)
-                    parse(m.GetLine(ii));
+                    ParseString(m.GetLine(ii));
 
-            __ExecutedMethod = false;
+            engine.__ExecutedMethod = false;
 
-            collectGarbage();
+            gc.DoGarbageCollection();
         }
 
         void executeNest(MetaScriptLang.Data.SwitchCase n)
@@ -203,8 +203,8 @@
 
             for (int i = 0; i < n.Count; i++)
             {
-                if (__FailedNest == false)
-                    parse(n[i]);
+                if (engine.__FailedNest == false)
+                    ParseString(n[i]);
                 else
                     break;
             }

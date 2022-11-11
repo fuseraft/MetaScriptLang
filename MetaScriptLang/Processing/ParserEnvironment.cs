@@ -1,7 +1,7 @@
-﻿using MetaScriptLang.Data;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Helpers;
+
     public partial class Parser
     {
 
@@ -12,8 +12,7 @@ namespace MetaScriptLang.Processing
         //      3 = print
         void InternalGetEnv(string arg0, string after, int mode)
         {
-            Crypt c = new();
-            string defaultValue = c.e(DateTime.Now.ToString());
+            string defaultValue = CryptoHelper.Encrypt(DateTime.Now.ToString());
             string sValue = (defaultValue);
             double dValue = 0;
 
@@ -111,41 +110,41 @@ namespace MetaScriptLang.Processing
                 case 0:
                     if (sValue != defaultValue)
                     {
-                        CreateVString(arg0, sValue);
+                        engine.CreateStringVariable(arg0, sValue);
                     }
                     else
                     {
-                        CreateVNumber(arg0, dValue);
+                        engine.CreateNumberVariable(arg0, dValue);
                     }
                     break;
                 case 1:
                     if (sValue != defaultValue)
                     {
-                        SetVString(arg0, sValue);
+                        engine.SetVariableString(arg0, sValue);
                     }
                     else
                     {
-                        SetVNumber(arg0, dValue);
+                        engine.SetVariableNumber(arg0, dValue);
                     }
                     break;
                 case 2:
                     if (sValue != defaultValue)
                     {
-                        setLastValue(sValue);
+                        SetLastValue(sValue);
                     }
                     else
                     {
-                        setLastValue(dtos(dValue));
+                        SetLastValue(StringHelper.DtoS(dValue));
                     }
                     break;
                 case 3:
                     if (sValue != defaultValue)
                     {
-                        writeline(sValue);
+                        ConsoleWriteLine(sValue);
                     }
                     else
                     {
-                        writeline(dtos(dValue));
+                        ConsoleWriteLine(StringHelper.DtoS(dValue));
                     }
                     break;
             }

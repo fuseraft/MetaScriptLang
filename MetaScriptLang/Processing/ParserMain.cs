@@ -2,22 +2,16 @@
 {
     using MetaScriptLang.Data;
     using MetaScriptLang.Helpers;
+    using MetaScriptLang.IO;
     using MetaScriptLang.Logging;
 
     public partial class Parser
     {
-        public string getStdout(string command)
-        {
-            // execute process and return result of stdout
-            return string.Empty;
-        }
-        public void doNothing() { }
-
         #region Capture
-        public string getParsedOutput(string cmd)
+        public string ParseStringAndCapture(string cmd)
         {
             __CaptureParse = true;
-            parse(cmd);
+            ParseString(cmd);
             string ret = __ParsedOutput;
             __ParsedOutput = string.Empty;
             __CaptureParse = false;
@@ -30,7 +24,7 @@
         /**
             The heart of it all. Parse a string and send for interpretation.
         **/
-        public void parse(string s)
+        public void ParseString(string s)
         {
             System.Collections.Generic.List<string> command = new(); // a tokenized command container
             int length = s.Length, //	length of the line
@@ -63,7 +57,7 @@
                             }
                             else if (parenthesis && !quoted)
                             {
-                                doNothing();
+                                engine.Idle();
                             }
                             else
                             {
@@ -169,7 +163,7 @@
                             if (!__IsCommented)
                             {
                                 broken = true;
-                                stringContainer.add(bigString.ToString());
+                                stringContainer.AddLine(bigString.ToString());
                                 bigString.Clear();
                                 count = 0;
                                 command.Clear();
@@ -214,7 +208,7 @@
                         // args[0], args[1], ..., args[n-1]
                         if (command[i].Contains("args") && command[i] != "args.size")
                         {
-                            System.Collections.Generic.List<string> parameters = getBracketRange(command[i]);
+                            System.Collections.Generic.List<string> parameters = StringHelper.GetBracketRange(command[i]);
 
                             if (StringHelper.IsNumeric(parameters[0]))
                             {
@@ -226,47 +220,47 @@
                                         command[i] = args[Convert.ToInt32(parameters[0])];
                                 }
                                 else
-                                    error(ErrorLogger.OUT_OF_BOUNDS, command[i], false);
+                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, command[i], false);
                             }
                             else
-                                error(ErrorLogger.OUT_OF_BOUNDS, command[i], false);
+                                ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, command[i], false);
                         }
                     }
 
-                    if (__DefiningSwitchBlock)
+                    if (engine.__DefiningSwitchBlock)
                     {
                         if (s == "{")
                         {
-                            doNothing();
+                            engine.Idle();
                         }
-                        else if (startsWith(s, "case"))
+                        else if (StringHelper.StringStartsWith(s, "case"))
                             mainSwitch.CreateSwitchCase(command[1]);
                         else if (s == "default")
-                            __InDefaultCase = true;
+                            engine.__InDefaultCase = true;
                         else if (s == "end" || s == "}")
                         {
                             string switch_value = string.Empty;
 
-                            if (isString(__SwitchVarName))
-                                switch_value = GetVString(__SwitchVarName);
-                            else if (isNumber(__SwitchVarName))
-                                switch_value = dtos(GetVNumber(__SwitchVarName));
+                            if (engine.IsStringVariable(__SwitchVarName))
+                                switch_value = engine.GetVariableString(__SwitchVarName);
+                            else if (engine.IsNumberVariable(__SwitchVarName))
+                                switch_value = StringHelper.DtoS(engine.GetVariableNumber(__SwitchVarName));
                             else
                                 switch_value = string.Empty;
 
                             SwitchCase rightCase = mainSwitch.FindSwitchCase(switch_value);
 
-                            __InDefaultCase = false;
-                            __DefiningSwitchBlock = false;
+                            engine.__InDefaultCase = false;
+                            engine.__DefiningSwitchBlock = false;
 
                             for (int i = 0; i < rightCase.Count; i++)
-                                parse(rightCase[i]);
+                                ParseString(rightCase[i]);
 
                             mainSwitch.Clear();
                         }
                         else
                         {
-                            if (__InDefaultCase)
+                            if (engine.__InDefaultCase)
                                 mainSwitch.AddToDefaultSwitchCase(s);
                             else
                                 mainSwitch.AddToCurrentSwitchCase(s);
@@ -280,7 +274,7 @@
                             __CurrentModule = string.Empty;
                         }
                         else
-                            ModAddLine(__CurrentModule, s);
+                            engine.AddLineToModule(__CurrentModule, s);
                     }
                     else if (__DefiningScript)
                     {
@@ -306,22 +300,22 @@
                             if (s == "caught")
                             {
                                 __SkipCatchBlock = false;
-                                parse("caught");
+                                ParseString("caught");
                             }
                         }
                         else if (__DefiningMethod)
                         {
-                            if (contains(s, "while"))
+                            if (StringHelper.ContainsString(s, "while"))
                                 __DefiningLocalWhileLoop = true;
 
-                            if (contains(s, "switch"))
+                            if (StringHelper.ContainsString(s, "switch"))
                                 __DefiningLocalSwitchBlock = true;
 
                             if (__DefiningParameterizedMethod)
                             {
                                 if (s == "{")
                                 {
-                                    doNothing();
+                                    engine.Idle();
                                 }
                                 else if (s == "end" || s == "}")
                                 {
@@ -330,18 +324,18 @@
                                         __DefiningLocalWhileLoop = false;
 
                                         if (__DefiningObject)
-                                            SetOMAddLineToCurrentMethod(__CurrentObject, s);
+                                            engine.AddLineToObjectMethod(__CurrentObject, s);
                                         else
-                                            methods[CurrentMethodName].AddLine(s);
+                                            methods[engine.CurrentMethodName].AddLine(s);
                                     }
                                     else if (__DefiningLocalSwitchBlock)
                                     {
                                         __DefiningLocalSwitchBlock = false;
 
                                         if (__DefiningObject)
-                                            SetOMAddLineToCurrentMethod(__CurrentObject, s);
+                                            engine.AddLineToObjectMethod(__CurrentObject, s);
                                         else
-                                            methods[CurrentMethodName].AddLine(s);
+                                            methods[engine.CurrentMethodName].AddLine(s);
                                     }
                                     else
                                     {
@@ -377,12 +371,12 @@
 
                                     for (int z = 0; z < words.Count; z++)
                                     {
-                                        if (VExists(words[z]))
+                                        if (engine.VariableExists(words[z]))
                                         {
-                                            if (isString(words[z]))
-                                                freshLine += (GetVString(words[z]));
-                                            else if (isNumber(words[z]))
-                                                freshLine += (dtos(GetVNumber(words[z])));
+                                            if (engine.IsStringVariable(words[z]))
+                                                freshLine += (engine.GetVariableString(words[z]));
+                                            else if (engine.IsNumberVariable(words[z]))
+                                                freshLine += (StringHelper.DtoS(engine.GetVariableNumber(words[z])));
                                         }
                                         else
                                             freshLine += (words[z]);
@@ -393,23 +387,23 @@
 
                                     if (__DefiningObject)
                                     {
-                                        SetOMAddLineToCurrentMethod(__CurrentObject, freshLine);
+                                        engine.AddLineToObjectMethod(__CurrentObject, freshLine);
 
                                         if (__DefiningPublicCode)
-                                            SetOPublic(__CurrentObject);
+                                            engine.SetObjectAsPublic(__CurrentObject);
                                         else if (__DefiningPrivateCode)
-                                            SetOPrivate(__CurrentObject);
+                                            engine.SetObjectAsPrivate(__CurrentObject);
                                         else
-                                            SetOPublic(__CurrentObject);
+                                            engine.SetObjectAsPublic(__CurrentObject);
                                     }
                                     else
-                                        methods[CurrentMethodName].AddLine(freshLine);
+                                        methods[engine.CurrentMethodName].AddLine(freshLine);
                                 }
                             }
                             else
                             {
                                 if (s == "{")
-                                    doNothing();
+                                    engine.Idle();
                                 else if (s == "end" || s == "}")
                                 {
                                     if (__DefiningLocalWhileLoop)
@@ -419,7 +413,7 @@
                                         if (__DefiningObject)
                                             objects[__CurrentObject].addToCurrentMethod(s);
                                         else
-                                            methods[CurrentMethodName].AddLine(s);
+                                            methods[engine.CurrentMethodName].AddLine(s);
                                     }
                                     else if (__DefiningLocalSwitchBlock)
                                     {
@@ -428,7 +422,7 @@
                                         if (__DefiningObject)
                                             objects[__CurrentObject].addToCurrentMethod(s);
                                         else
-                                            methods[CurrentMethodName].AddLine(s);
+                                            methods[engine.CurrentMethodName].AddLine(s);
                                     }
                                     else
                                     {
@@ -468,7 +462,7 @@
                                                 objects[__CurrentObject].setPublic();
                                         }
                                         else
-                                            methods[CurrentMethodName].AddLine(s);
+                                            methods[engine.CurrentMethodName].AddLine(s);
                                     }
                                 }
                             }
@@ -480,7 +474,7 @@
                                 if (command[0] == "endif")
                                     executeNest(ifStatements[ifStatements.Count - 1].GetNest());
                                 else
-                                    ifStatements[(int)ifStatements.Count - 1].AddToNest(s);
+                                    ifStatements[ifStatements.Count - 1].AddToNest(s);
                             }
                             else
                             {
@@ -489,17 +483,17 @@
                                     __DefiningNest = true;
 
                                     if (size == 4)
-                                        threeSpace("if", command[1], command[2], command[3], s, command);
+                                        ParseThreeSpaceString("if", command[1], command[2], command[3], s, command);
                                     else
                                     {
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                         __DefiningNest = false;
                                     }
                                 }
                                 else if (command[0] == "endif")
                                 {
                                     __DefiningIfStatement = false;
-                                    __ExecutedIfStatement = true;
+                                    engine.__ExecutedIfStatement = true;
 
                                     for (int i = 0; i < ifStatements.Count; i++)
                                     {
@@ -507,57 +501,57 @@
                                         {
                                             executeMethod(ifStatements[i]);
 
-                                            if (__FailedIfStatement == false)
+                                            if (engine.__FailedIfStatement == false)
                                                 break;
                                         }
                                     }
 
-                                    __ExecutedIfStatement = false;
+                                    engine.__ExecutedIfStatement = false;
 
                                     ifStatements.Clear();
 
                                     __IfStatementCount = 0;
-                                    __FailedIfStatement = false;
+                                    engine.__FailedIfStatement = false;
                                 }
                                 else if (command[0] == "elsif" || command[0] == "elif")
                                 {
                                     if (size == 4)
-                                        threeSpace("if", command[1], command[2], command[3], s, command);
+                                        ParseThreeSpaceString("if", command[1], command[2], command[3], s, command);
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (s == "else")
-                                    threeSpace("if", "true", "==", "true", "if true == true", command);
+                                    ParseThreeSpaceString("if", "true", "==", "true", "if true == true", command);
                                 else if (s == "failif")
                                 {
-                                    if (__FailedIfStatement == true)
-                                        setTrueIf();
+                                    if (engine.__FailedIfStatement == true)
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
-                                    ifStatements[(int)ifStatements.Count - 1].AddLine(s);
+                                    ifStatements[ifStatements.Count - 1].AddLine(s);
                             }
                         }
                         else
                         {
-                            if (__DefiningWhileLoop)
+                            if (engine.__DefiningWhileLoop)
                             {
                                 if (s == "{")
-                                    doNothing();
+                                    engine.Idle();
                                 else if (command[0] == "end" || command[0] == "}")
                                 {
-                                    __DefiningWhileLoop = false;
+                                    engine.__DefiningWhileLoop = false;
 
                                     string v1 = whileLoops[whileLoops.Count - 1].FirstValue(),
                                            v2 = whileLoops[whileLoops.Count - 1].SecondValue(),
                                            op = whileLoops[whileLoops.Count - 1].LogicalOperator();
 
-                                    if (VExists(v1) && VExists(v2))
+                                    if (engine.VariableExists(v1) && engine.VariableExists(v2))
                                     {
                                         if (op == "==")
                                         {
-                                            while (GetVNumber(v1) == GetVNumber(v2))
+                                            while (engine.GetVariableNumber(v1) == engine.GetVariableNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -571,7 +565,7 @@
                                         }
                                         else if (op == "<")
                                         {
-                                            while (GetVNumber(v1) < GetVNumber(v2))
+                                            while (engine.GetVariableNumber(v1) < engine.GetVariableNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -585,7 +579,7 @@
                                         }
                                         else if (op == ">")
                                         {
-                                            while (GetVNumber(v1) > GetVNumber(v2))
+                                            while (engine.GetVariableNumber(v1) > engine.GetVariableNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -599,7 +593,7 @@
                                         }
                                         else if (op == "<=")
                                         {
-                                            while (GetVNumber(v1) <= GetVNumber(v2))
+                                            while (engine.GetVariableNumber(v1) <= engine.GetVariableNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -613,7 +607,7 @@
                                         }
                                         else if (op == ">=")
                                         {
-                                            while (GetVNumber(v1) >= GetVNumber(v2))
+                                            while (engine.GetVariableNumber(v1) >= engine.GetVariableNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -627,7 +621,7 @@
                                         }
                                         else if (op == "!=")
                                         {
-                                            while (GetVNumber(v1) != GetVNumber(v2))
+                                            while (engine.GetVariableNumber(v1) != engine.GetVariableNumber(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -640,11 +634,11 @@
                                             __WhileLoopCount = 0;
                                         }
                                     }
-                                    else if (VExists(v1))
+                                    else if (engine.VariableExists(v1))
                                     {
                                         if (op == "==")
                                         {
-                                            while (GetVNumber(v1) == stoi(v2))
+                                            while (engine.GetVariableNumber(v1) == StringHelper.StoI(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -658,7 +652,7 @@
                                         }
                                         else if (op == "<")
                                         {
-                                            while (GetVNumber(v1) < stoi(v2))
+                                            while (engine.GetVariableNumber(v1) < StringHelper.StoI(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -672,7 +666,7 @@
                                         }
                                         else if (op == ">")
                                         {
-                                            while (GetVNumber(v1) > stoi(v2))
+                                            while (engine.GetVariableNumber(v1) > StringHelper.StoI(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -686,7 +680,7 @@
                                         }
                                         else if (op == "<=")
                                         {
-                                            while (GetVNumber(v1) <= stoi(v2))
+                                            while (engine.GetVariableNumber(v1) <= StringHelper.StoI(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -700,7 +694,7 @@
                                         }
                                         else if (op == ">=")
                                         {
-                                            while (GetVNumber(v1) >= stoi(v2))
+                                            while (engine.GetVariableNumber(v1) >= StringHelper.StoI(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -714,7 +708,7 @@
                                         }
                                         else if (op == "!=")
                                         {
-                                            while (GetVNumber(v1) != stoi(v2))
+                                            while (engine.GetVariableNumber(v1) != StringHelper.StoI(v2))
                                             {
                                                 whileLoop(whileLoops[whileLoops.Count - 1]);
 
@@ -737,7 +731,7 @@
                                 {
                                     __DefiningForLoop = false;
 
-                                    for (int i = 0; i < (int)forLoops.Count; i++)
+                                    for (int i = 0; i < forLoops.Count; i++)
                                         if (forLoops[i].IsForLoop())
                                             forLoop(forLoops[i]);
 
@@ -748,7 +742,7 @@
                                 else
                                 {
                                     if (s == "{")
-                                        doNothing();
+                                        engine.Idle();
                                     else
                                         forLoops[forLoops.Count - 1].AddLine(s);
                                 }
@@ -759,36 +753,36 @@
                                 {
                                     if (notStandardZeroSpace(command[0]))
                                     {
-                                        string before = (beforeDot(s)), after = (afterDot(s));
+                                        string before = (StringHelper.BeforeDot(s)), after = (StringHelper.AfterDot(s));
 
                                         if (before.Length != 0 && after.Length != 0)
                                         {
-                                            if (OExists(before) && after.Length != 0)
+                                            if (engine.ObjectExists(before) && after.Length != 0)
                                             {
-                                                if (containsParameters(after))
+                                                if (StringHelper.ContainsParameters(after))
                                                 {
-                                                    s = subtractChar(s, "\"");
+                                                    s = StringHelper.SubtractChars(s, "\"");
 
-                                                    if (OMExists(before, beforeParameters(after)))
-                                                        executeTemplate(GetOM(before, beforeParameters(after)), getParameters(after));
+                                                    if (engine.ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
+                                                        executeTemplate(engine.GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(after));
                                                     else
-                                                        sysExec(s, command);
+                                                        RunExternalProcess(s, command);
                                                 }
-                                                else if (OMExists(before, after))
-                                                    executeMethod(GetOM(before, after));
-                                                else if (OVExists(before, after))
+                                                else if (engine.ObjectMethodExists(before, after))
+                                                    executeMethod(engine.GetObjectMethod(before, after));
+                                                else if (engine.ObjectVariableExists(before, after))
                                                 {
-                                                    if (GetOVString(before, after) != __Null)
-                                                        writeline(GetOVString(before, after));
-                                                    else if (GetOVNumber(before, after) != __NullNum)
-                                                        writeline(dtos(GetOVNumber(before, after)));
+                                                    if (engine.GetObjectVariableString(before, after) != __Null)
+                                                        ConsoleWriteLine(engine.GetObjectVariableString(before, after));
+                                                    else if (engine.GetObjectVariableNumber(before, after) != __NullNum)
+                                                        ConsoleWriteLine(StringHelper.DtoS(engine.GetObjectVariableNumber(before, after)));
                                                     else
-                                                        error(ErrorLogger.IS_NULL, string.Empty, false);
+                                                        ErrorLogger.Error(ErrorLogger.IS_NULL, string.Empty, false);
                                                 }
                                                 else if (after == "clear")
-                                                    ClearO(before);
+                                                    engine.ClearObject(before);
                                                 else
-                                                    error(ErrorLogger.UNDEFINED, string.Empty, false);
+                                                    ErrorLogger.Error(ErrorLogger.UNDEFINED, string.Empty, false);
                                             }
                                             else
                                             {
@@ -796,66 +790,66 @@
                                                 {
                                                     InternalGetEnv(string.Empty, after, 3);
                                                 }
-                                                else if (VExists(before))
+                                                else if (engine.VariableExists(before))
                                                 {
                                                     if (after == "clear")
-                                                        parse(before + " = __Null");
+                                                        ParseString(before + " = __Null");
                                                 }
-                                                else if (LExists(before))
+                                                else if (engine.ListExists(before))
                                                 {
                                                     // REFACTOR HERE
                                                     if (after == "clear")
-                                                        LClear(before);
+                                                        engine.ListClear(before);
                                                     else if (after == "sort")
-                                                        LSort(before);
+                                                        engine.ListSort(before);
                                                     else if (after == "reverse")
-                                                        LReverse(before);
+                                                        engine.ListReverse(before);
                                                     else if (after == "revert")
-                                                        LRevert(before);
+                                                        engine.ListRevert(before);
                                                 }
                                                 else if (before == "self")
                                                 {
-                                                    if (__ExecutedMethod)
-                                                        executeMethod(GetOM(__CurrentMethodObject, after));
+                                                    if (engine.__ExecutedMethod)
+                                                        executeMethod(engine.GetObjectMethod(__CurrentMethodObject, after));
                                                 }
                                                 else
-                                                    sysExec(s, command);
+                                                    RunExternalProcess(s, command);
                                             }
                                         }
-                                        else if (endsWith(s, "::"))
+                                        else if (StringHelper.StringEndsWith(s, "::"))
                                         {
                                             if (__CurrentScript != string.Empty)
                                             {
-                                                string newMark = subtractString(s, "::");
-                                                SetSMark(__CurrentScript, newMark);
+                                                string newMark = StringHelper.SubtractString(s, "::");
+                                                engine.SetScriptMark(__CurrentScript, newMark);
                                             }
                                         }
-                                        else if (MExists(s))
-                                            executeMethod(GetM(s));
-                                        else if (startsWith(s, "[") && endsWith(s, "]"))
+                                        else if (engine.MethodExists(s))
+                                            executeMethod(engine.GetMethod(s));
+                                        else if (StringHelper.StringStartsWith(s, "[") && StringHelper.StringEndsWith(s, "]"))
                                         {
                                             InternalCreateModule(s);
                                         }
                                         else
                                         {
-                                            s = subtractChar(s, "\"");
+                                            s = StringHelper.SubtractChars(s, "\"");
 
-                                            if (MExists(beforeParameters(s)))
-                                                executeTemplate(GetM(beforeParameters(s)), getParameters(s));
+                                            if (engine.MethodExists(StringHelper.BeforeParameters(s)))
+                                                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(s)), StringHelper.GetParameters(s));
                                             else
-                                                sysExec(s, command);
+                                                RunExternalProcess(s, command);
                                         }
                                     }
                                     else
-                                        zeroSpace(command[0], s, command);
+                                        ParseZeroSpaceString(command[0], s, command);
                                 }
                                 else if (size == 2)
                                 {
                                     if (notStandardOneSpace(command[0]))
-                                        sysExec(s, command);
+                                        RunExternalProcess(s, command);
                                     else
                                     {
-                                        oneSpace(command[0], command[1], s, command);
+                                        ParseOneSpaceString(command[0], command[1], s, command);
                                     }
                                 }
                                 else if (size == 3)
@@ -872,57 +866,57 @@
                                             MemRedefine(command[1], command[2]);
                                         else if (command[0] == "loop")
                                         {
-                                            if (containsParameters(command[2]))
+                                            if (StringHelper.ContainsParameters(command[2]))
                                             {
                                                 __DefaultLoopSymbol = command[2];
-                                                __DefaultLoopSymbol = subtractChar(__DefaultLoopSymbol, "(");
-                                                __DefaultLoopSymbol = subtractChar(__DefaultLoopSymbol, ")");
+                                                __DefaultLoopSymbol = StringHelper.SubtractChars(__DefaultLoopSymbol, "(");
+                                                __DefaultLoopSymbol = StringHelper.SubtractChars(__DefaultLoopSymbol, ")");
 
-                                                oneSpace(command[0], command[1], subtractString(s, command[2]), command);
+                                                ParseOneSpaceString(command[0], command[1], StringHelper.SubtractString(s, command[2]), command);
                                                 __DefaultLoopSymbol = "$";
                                             }
                                             else
-                                                sysExec(s, command);
+                                                RunExternalProcess(s, command);
                                         }
                                         else
-                                            sysExec(s, command);
+                                            RunExternalProcess(s, command);
                                     }
                                     else
-                                        twoSpace(command[0], command[1], command[2], s, command);
+                                        ParseTwoSpaceString(command[0], command[1], command[2], s, command);
                                 }
                                 else if (size == 4)
-                                    threeSpace(command[0], command[1], command[2], command[3], s, command);
+                                    ParseThreeSpaceString(command[0], command[1], command[2], command[3], s, command);
                                 else if (size == 5)
                                 {
                                     if (command[0] == "for")
                                     {
-                                        if (containsParameters(command[4]))
+                                        if (StringHelper.ContainsParameters(command[4]))
                                         {
                                             __DefaultLoopSymbol = command[4];
-                                            __DefaultLoopSymbol = subtractChar(__DefaultLoopSymbol, "(");
-                                            __DefaultLoopSymbol = subtractChar(__DefaultLoopSymbol, ")");
+                                            __DefaultLoopSymbol = StringHelper.SubtractChars(__DefaultLoopSymbol, "(");
+                                            __DefaultLoopSymbol = StringHelper.SubtractChars(__DefaultLoopSymbol, ")");
 
-                                            threeSpace(command[0], command[1], command[2], command[3], subtractString(s, command[4]), command);
+                                            ParseThreeSpaceString(command[0], command[1], command[2], command[3], StringHelper.SubtractString(s, command[4]), command);
                                             __DefaultLoopSymbol = "$";
                                         }
                                         else
-                                            sysExec(s, command);
+                                            RunExternalProcess(s, command);
                                     }
                                     else
-                                        sysExec(s, command);
+                                        RunExternalProcess(s, command);
                                 }
                                 else
-                                    sysExec(s, command);
+                                    RunExternalProcess(s, command);
                             }
                         }
                     }
                 }
                 else
                 {
-                    stringContainer.add(bigString.ToString());
+                    stringContainer.AddLine(bigString.ToString());
 
-                    for (int i = 0; i < (int)stringContainer.size(); i++)
-                        parse(stringContainer.at(i));
+                    for (int i = 0; i < stringContainer.GetSize(); i++)
+                        ParseString(stringContainer.GetLineAt(i));
                 }
             }
             else
@@ -948,7 +942,7 @@
 
                             bool commentFound = false;
 
-                            for (int i = 0; i < (int)bigString.Length; i++)
+                            for (int i = 0; i < bigString.Length; i++)
                             {
                                 if (bigString[i] == '#')
                                     commentFound = true;
@@ -957,7 +951,7 @@
                                     commentString += (bigString[i]);
                             }
 
-                            parse(trimLeadingWhitespace(commentString));
+                            ParseString(StringHelper.LTrim(commentString));
                         }
                         else
                         {
@@ -965,7 +959,7 @@
 
                             bool commentFound = false;
 
-                            for (int i = 0; i < (int)bigString.Length; i++)
+                            for (int i = 0; i < bigString.Length; i++)
                             {
                                 if (bigString[i] == '#')
                                     commentFound = true;
@@ -974,10 +968,10 @@
                                     commentString += (bigString[i]);
                             }
 
-                            stringContainer.add(trimLeadingWhitespace(commentString));
+                            stringContainer.AddLine(StringHelper.LTrim(commentString));
 
-                            for (int i = 0; i < (int)stringContainer.size(); i++)
-                                parse(stringContainer.at(i));
+                            for (int i = 0; i < stringContainer.GetSize(); i++)
+                                ParseString(stringContainer.GetLineAt(i));
                         }
                     }
                 }
@@ -986,7 +980,7 @@
         #endregion
 
         #region Zero Space
-        public void zeroSpace(string arg0, string s, System.Collections.Generic.List<string> command)
+        public void ParseZeroSpaceString(string arg0, string s, System.Collections.Generic.List<string> command)
         {
             if (arg0 == "pass")
             {
@@ -997,7 +991,7 @@
                 string to_remove = "remove ";
                 to_remove += __ErrorVarName;
 
-                parse(to_remove);
+                ParseString(to_remove);
 
                 __ExecutedTryBlock = false;
                 __RaiseCatchBlock = false;
@@ -1005,20 +999,20 @@
                 __ErrorVarName = string.Empty;
             }
             else if (arg0 == "clear_methods!")
-                clearMethods();
+                gc.ClearMethods();
             else if (arg0 == "clear_objects!")
-                clearObjects();
+                gc.ClearObjects();
             else if (arg0 == "clear_variables!")
-                clearVariables();
+                gc.ClearVariables();
             else if (arg0 == "clear_lists!")
-                clearLists();
+                gc.ClearLists();
             else if (arg0 == "clear_all!")
-                clearAll();
+                gc.ClearAll();
             else if (arg0 == "clear_constants!")
-                clearConstants();
+                gc.ClearConstants();
             else if (arg0 == "exit")
             {
-                clearAll();
+                gc.ClearAll();
                 System.Environment.Exit(0);
             }
             else if (arg0 == "break" || arg0 == "leave!")
@@ -1026,30 +1020,30 @@
             else if (arg0 == "no_methods?")
             {
                 if (noMethods())
-                    __true();
+                    engine.SetLastValueAsTrue();
                 else
-                    __false();
+                    engine.SetLastValueAsFalse();
             }
             else if (arg0 == "no_objects?")
             {
                 if (noObjects())
-                    __true();
+                    engine.SetLastValueAsTrue();
                 else
-                    __false();
+                    engine.SetLastValueAsFalse();
             }
             else if (arg0 == "no_variables?")
             {
                 if (noVariables())
-                    __true();
+                    engine.SetLastValueAsTrue();
                 else
-                    __false();
+                    engine.SetLastValueAsFalse();
             }
             else if (arg0 == "no_lists?")
             {
                 if (noLists())
-                    __true();
+                    engine.SetLastValueAsTrue();
                 else
-                    __false();
+                    engine.SetLastValueAsFalse();
             }
             else if (arg0 == "end" || arg0 == "}")
             {
@@ -1060,7 +1054,7 @@
                 __CurrentObject = string.Empty;
             }
             else if (arg0 == "parser")
-                loop(false);
+                StartReplLoop(false);
             else if (arg0 == "private")
             {
                 __DefiningPrivateCode = true;
@@ -1075,49 +1069,49 @@
                 __ExecutedTryBlock = true;
             else if (arg0 == "failif")
             {
-                if (__FailedIfStatement == true)
-                    setTrueIf();
+                if (engine.__FailedIfStatement == true)
+                    engine.SuccessfulIfStatement();
                 else
-                    setFalseIf();
+                    engine.FailedIfStatement();
             }
             else
-                sysExec(s, command);
+                RunExternalProcess(s, command);
         }
         #endregion
 
         #region One Space
-        void oneSpace(string arg0, string arg1, string s, System.Collections.Generic.List<string> command)
+        void ParseOneSpaceString(string arg0, string arg1, string s, System.Collections.Generic.List<string> command)
         {
-            string before = (beforeDot(arg1)), after = (afterDot(arg1));
+            string before = (StringHelper.BeforeDot(arg1)), after = (StringHelper.AfterDot(arg1));
 
-            if (contains(arg1, "self."))
+            if (StringHelper.ContainsString(arg1, "self."))
             {
-                arg1 = replace(arg1, "self", __CurrentMethodObject);
+                arg1 = StringHelper.ReplaceString(arg1, "self", __CurrentMethodObject);
             }
 
             if (arg0 == "return")
             {
                 if (!InternalReturn(arg0, arg1, before, after))
-                    oneSpace("return", arg1, "return " + arg1, command);
+                    ParseOneSpaceString("return", arg1, "return " + arg1, command);
             }
             else if (arg0 == "switch")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    __DefiningSwitchBlock = true;
+                    engine.__DefiningSwitchBlock = true;
                     __SwitchVarName = arg1;
                 }
                 else
-                    error(ErrorLogger.VAR_UNDEFINED, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, arg1, false);
             }
             else if (arg0 == "goto")
             {
                 if (__CurrentScript != string.Empty)
                 {
-                    if (GetSMarkExists(__CurrentScript, arg1))
+                    if (engine.ScriptMarkExists(__CurrentScript, arg1))
                     {
                         __GoTo = arg1;
-                        __GoToLabel = true;
+                        engine.__GoToLabel = true;
                     }
                 }
             }
@@ -1125,46 +1119,46 @@
             {
                 string tmpValue = string.Empty;
                 // if arg1 is a variable
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
                     // can we can assume that arg1 belongs to an object?
-                    if (!zeroDots(arg1))
+                    if (!StringHelper.ZeroDots(arg1))
                     {
-                        string objName = beforeDot(arg1), varName = afterDot(arg1);
-                        Variable tmpVar = GetOV(objName, varName);
+                        string objName = StringHelper.BeforeDot(arg1), varName = StringHelper.AfterDot(arg1);
+                        Variable tmpVar = engine.GetObjectVariable(objName, varName);
 
-                        if (isString(tmpVar))
+                        if (engine.IsStringVariable(tmpVar))
                         {
-                            tmpValue = tmpVar.getString();
+                            tmpValue = tmpVar.StringValue;
                         }
-                        else if (isNumber(tmpVar))
+                        else if (engine.IsNumberVariable(tmpVar))
                         {
-                            tmpValue = dtos(tmpVar.getNumber());
+                            tmpValue = StringHelper.DtoS(tmpVar.NumberValue);
                         }
                         else
                         {
-                            error(ErrorLogger.IS_NULL, arg1, true);
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, true);
                         }
                     }
                     else
                     {
-                        if (isString(arg1))
+                        if (engine.IsStringVariable(arg1))
                         {
-                            tmpValue = GetVString(arg1);
+                            tmpValue = engine.GetVariableString(arg1);
                         }
-                        else if (isNumber(arg1))
+                        else if (engine.IsNumberVariable(arg1))
                         {
-                            tmpValue = Convert.ToString(GetVNumber(arg1));
+                            tmpValue = Convert.ToString(engine.GetVariableNumber(arg1));
                         }
                         else
                         {
-                            error(ErrorLogger.IS_NULL, arg1, true);
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, true);
                         }
                     }
                 }
                 else
                 {
-                    if (StringHelper.IsNumeric(arg1) || isTrue(arg1) || isFalse(arg1))
+                    if (StringHelper.IsNumeric(arg1) || StringHelper.IsTrueString(arg1) || StringHelper.IsFalseString(arg1))
                     {
                         tmpValue = arg1;
                     }
@@ -1172,30 +1166,30 @@
                     {
                         string tmpCode = string.Empty;
 
-                        if (startsWith(arg1, "(\"") && endsWith(arg1, "\")"))
+                        if (StringHelper.StringStartsWith(arg1, "(\"") && StringHelper.StringEndsWith(arg1, "\")"))
                         {
-                            tmpCode = getInner(arg1, 2, arg1.Length - 3);
+                            tmpCode = StringHelper.GetInnerString(arg1, 2, arg1.Length - 3);
                         }
                         else
                         {
                             tmpCode = arg1;
                         }
 
-                        tmpValue = getParsedOutput(tmpCode);
+                        tmpValue = ParseStringAndCapture(tmpCode);
                     }
                 }
 
-                if (isTrue(tmpValue))
+                if (StringHelper.IsTrueString(tmpValue))
                 {
-                    setTrueIf();
+                    engine.SuccessfulIfStatement();
                 }
-                else if (isFalse(tmpValue))
+                else if (StringHelper.IsFalseString(tmpValue))
                 {
-                    setFalseIf();
+                    engine.FailedIfStatement();
                 }
                 else
                 {
-                    error(ErrorLogger.INVALID_OP, arg1, true);
+                    ErrorLogger.Error(ErrorLogger.INVALID_OP, arg1, true);
                 }
             }
             else if (arg0 == "prompt")
@@ -1225,88 +1219,88 @@
             }
             else if (arg0 == "err" || arg0 == "error")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (isString(arg1))
-                        cerr = GetVString(arg1) + System.Environment.NewLine;
-                    else if (isNumber(arg1))
-                        cerr = GetVNumber(arg1) + System.Environment.NewLine;
+                    if (engine.IsStringVariable(arg1))
+                        ConsoleHelper.Error = engine.GetVariableString(arg1) + System.Environment.NewLine;
+                    else if (engine.IsNumberVariable(arg1))
+                        ConsoleHelper.Error = engine.GetVariableNumber(arg1) + System.Environment.NewLine;
                     else
-                        error(ErrorLogger.IS_NULL, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
                 }
                 else
-                    cerr = arg1 + System.Environment.NewLine;
+                    ConsoleHelper.Error = arg1 + System.Environment.NewLine;
             }
             else if (arg0 == "delay")
             {
                 if (StringHelper.IsNumeric(arg1))
-                    delay(stoi(arg1));
+                    delay(StringHelper.StoI(arg1));
                 else
-                    error(ErrorLogger.CONV_ERR, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.CONV_ERR, arg1, false);
             }
             else if (arg0 == "loop")
-                threeSpace("for", "var", "in", arg1, "for var in " + arg1, command); // REFACTOR HERE
+                ParseThreeSpaceString("for", "var", "in", arg1, "for var in " + arg1, command); // REFACTOR HERE
             else if (arg0 == "for" && arg1 == "infinity")
-                successfulFor();
+                engine.SuccessfulForLoop();
             else if (arg0 == "remove")
             {
-                if (containsParameters(arg1))
+                if (StringHelper.ContainsParameters(arg1))
                 {
-                    System.Collections.Generic.List<string> parameters = getParameters(arg1);
+                    System.Collections.Generic.List<string> parameters = StringHelper.GetParameters(arg1);
 
                     for (int i = 0; i < parameters.Count; i++)
                     {
-                        if (VExists(parameters[i]))
-                            DeleteV(parameters[i]);
-                        else if (LExists(parameters[i]))
-                            DeleteL(parameters[i]);
-                        else if (OExists(parameters[i]))
-                            DeleteO(parameters[i]);
-                        else if (MExists(parameters[i]))
-                            DeleteM(parameters[i]);
+                        if (engine.VariableExists(parameters[i]))
+                            engine.DeleteVariable(parameters[i]);
+                        else if (engine.ListExists(parameters[i]))
+                            engine.DeleteList(parameters[i]);
+                        else if (engine.ObjectExists(parameters[i]))
+                            engine.DeleteObject(parameters[i]);
+                        else if (engine.MethodExists(parameters[i]))
+                            engine.DeleteMethod(parameters[i]);
                         else
-                            error(ErrorLogger.TARGET_UNDEFINED, parameters[i], false);
+                            ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, parameters[i], false);
                     }
                 }
-                else if (VExists(arg1))
-                    DeleteV(arg1);
-                else if (LExists(arg1))
-                    DeleteL(arg1);
-                else if (OExists(arg1))
-                    DeleteO(arg1);
-                else if (MExists(arg1))
-                    DeleteM(arg1);
+                else if (engine.VariableExists(arg1))
+                    engine.DeleteVariable(arg1);
+                else if (engine.ListExists(arg1))
+                    engine.DeleteList(arg1);
+                else if (engine.ObjectExists(arg1))
+                    engine.DeleteObject(arg1);
+                else if (engine.MethodExists(arg1))
+                    engine.DeleteMethod(arg1);
                 else
-                    error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
             }
             else if (arg0 == "see_string")
             {
-                if (VExists(arg1))
-                    write(GetVString(arg1));
+                if (engine.VariableExists(arg1))
+                    ConsoleWrite(engine.GetVariableString(arg1));
                 else
-                    error(ErrorLogger.VAR_UNDEFINED, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, arg1, false);
             }
             else if (arg0 == "see_number")
             {
-                if (VExists(arg1))
-                    write(dtos(GetVNumber(arg1)));
+                if (engine.VariableExists(arg1))
+                    ConsoleWrite(StringHelper.DtoS(engine.GetVariableNumber(arg1)));
                 else
-                    error(ErrorLogger.VAR_UNDEFINED, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, arg1, false);
             }
             else if (arg0 == "__begin__")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (isString(arg1))
+                    if (engine.IsStringVariable(arg1))
                     {
-                        if (!System.IO.File.Exists(GetVString(arg1)))
+                        if (!System.IO.File.Exists(engine.GetVariableString(arg1)))
                         {
-                            createFile(GetVString(arg1));
+                            createFile(engine.GetVariableString(arg1));
                             __DefiningScript = true;
-                            __CurrentScriptName = GetVString(arg1);
+                            __CurrentScriptName = engine.GetVariableString(arg1);
                         }
                         else
-                            error(ErrorLogger.FILE_EXISTS, GetVString(arg1), false);
+                            ErrorLogger.Error(ErrorLogger.FILE_EXISTS, engine.GetVariableString(arg1), false);
                     }
                 }
                 else if (!System.IO.File.Exists(arg1))
@@ -1316,7 +1310,7 @@
                     __CurrentScriptName = arg1;
                 }
                 else
-                    error(ErrorLogger.FILE_EXISTS, arg1, false);
+                    ErrorLogger.Error(ErrorLogger.FILE_EXISTS, arg1, false);
             }
             else if (arg0 == "encrypt" || arg0 == "decrypt")
             {
@@ -1338,23 +1332,23 @@
             {
                 if (System.IO.File.Exists(arg1))
                 {
-                    if (isScript(arg1))
+                    if (StringHelper.IsScript(arg1))
                     {
                         __PreviousScript = __CurrentScript;
-                        loadScript(arg1);
+                        LoadScript(arg1);
                     }
                     else
-                        error(ErrorLogger.BAD_LOAD, arg1, true);
+                        ErrorLogger.Error(ErrorLogger.BAD_LOAD, arg1, true);
                 }
-                else if (ModExists(arg1))
+                else if (engine.ModuleExists(arg1))
                 {
-                    System.Collections.Generic.List<string> lines = ModGetLines(arg1);
+                    System.Collections.Generic.List<string> lines = engine.GetModuleLines(arg1);
 
                     for (int i = 0; i < lines.Count; i++)
-                        parse(lines[i]);
+                        ParseString(lines[i]);
                 }
                 else
-                    error(ErrorLogger.BAD_LOAD, arg1, true);
+                    ErrorLogger.Error(ErrorLogger.BAD_LOAD, arg1, true);
             }
             else if (arg0 == "say" || arg0 == "stdout" || arg0 == "out" || arg0 == "print" || arg0 == "println")
             {
@@ -1362,17 +1356,17 @@
             }
             else if (arg0 == "cd" || arg0 == "chdir")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (isString(arg1))
+                    if (engine.IsStringVariable(arg1))
                     {
-                        if (System.IO.Directory.Exists(GetVString(arg1)))
-                            System.Environment.CurrentDirectory = (GetVString(arg1));
+                        if (System.IO.Directory.Exists(engine.GetVariableString(arg1)))
+                            System.Environment.CurrentDirectory = (engine.GetVariableString(arg1));
                         else
-                            error(ErrorLogger.READ_FAIL, GetVString(arg1), false);
+                            ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(arg1), false);
                     }
                     else
-                        error(ErrorLogger.NULL_STRING, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.NULL_STRING, arg1, false);
                 }
                 else
                 {
@@ -1386,60 +1380,60 @@
             }
             else if (arg0 == "list")
             {
-                if (LExists(arg1))
-                    LClear(arg1);
+                if (engine.ListExists(arg1))
+                    engine.ListClear(arg1);
                 else
                 {
                     List newList = new(arg1);
 
-                    if (__ExecutedTemplate || __ExecutedMethod)
-                        newList.collect();
+                    if (engine.__ExecutedTemplate || engine.__ExecutedMethod)
+                        newList.SetAutoCollect(true);
                     else
-                        newList.dontCollect();
+                        newList.SetAutoCollect(false);
 
                     lists.Add(arg1, newList);
                 }
             }
             else if (arg0 == "!")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (isString(arg1))
-                        parse(GetVString(arg1));
+                    if (engine.IsStringVariable(arg1))
+                        ParseString(engine.GetVariableString(arg1));
                     else
-                        error(ErrorLogger.IS_NULL, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
                 }
                 else
-                    parse(arg1);
+                    ParseString(arg1);
             }
             else if (arg0 == "?")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (isString(arg1))
-                        sysExec(GetVString(arg1), command);
+                    if (engine.IsStringVariable(arg1))
+                        RunExternalProcess(engine.GetVariableString(arg1), command);
                     else
-                        error(ErrorLogger.IS_NULL, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
                 }
                 else
-                    sysExec(arg1, command);
+                    RunExternalProcess(arg1, command);
             }
             else if (arg0 == "init_dir" || arg0 == "initial_directory")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (isString(arg1))
+                    if (engine.IsStringVariable(arg1))
                     {
-                        if (System.IO.Directory.Exists(GetVString(arg1)))
+                        if (System.IO.Directory.Exists(engine.GetVariableString(arg1)))
                         {
-                            __InitialDirectory = GetVString(arg1);
+                            __InitialDirectory = engine.GetVariableString(arg1);
                             System.Environment.CurrentDirectory = (__InitialDirectory);
                         }
                         else
-                            error(ErrorLogger.READ_FAIL, __InitialDirectory, false);
+                            ErrorLogger.Error(ErrorLogger.READ_FAIL, __InitialDirectory, false);
                     }
                     else
-                        error(ErrorLogger.NULL_STRING, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.NULL_STRING, arg1, false);
                 }
                 else
                 {
@@ -1455,91 +1449,91 @@
                         System.Environment.CurrentDirectory = (__InitialDirectory);
                     }
                     else
-                        error(ErrorLogger.READ_FAIL, __InitialDirectory, false);
+                        ErrorLogger.Error(ErrorLogger.READ_FAIL, __InitialDirectory, false);
                 }
             }
             else if (arg0 == "method?")
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (OMExists(before, after))
-                        __true();
+                    if (engine.ObjectMethodExists(before, after))
+                        engine.SetLastValueAsTrue();
                     else
-                        __false();
+                        engine.SetLastValueAsFalse();
                 }
                 else
                 {
-                    if (MExists(arg1))
-                        __true();
+                    if (engine.MethodExists(arg1))
+                        engine.SetLastValueAsTrue();
                     else
-                        __false();
+                        engine.SetLastValueAsFalse();
                 }
             }
             else if (arg0 == "object?")
             {
-                if (OExists(arg1))
-                    __true();
+                if (engine.ObjectExists(arg1))
+                    engine.SetLastValueAsTrue();
                 else
-                    __false();
+                    engine.SetLastValueAsFalse();
             }
             else if (arg0 == "variable?")
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (OMExists(before, after))
-                        __true();
+                    if (engine.ObjectMethodExists(before, after))
+                        engine.SetLastValueAsTrue();
                     else
-                        __false();
+                        engine.SetLastValueAsFalse();
                 }
                 else
                 {
-                    if (VExists(arg1))
-                        __true();
+                    if (engine.VariableExists(arg1))
+                        engine.SetLastValueAsTrue();
                     else
-                        __false();
+                        engine.SetLastValueAsFalse();
                 }
             }
             else if (arg0 == "list?")
             {
-                if (LExists(arg1))
-                    __true();
+                if (engine.ListExists(arg1))
+                    engine.SetLastValueAsTrue();
                 else
-                    __false();
+                    engine.SetLastValueAsFalse();
             }
             else if (arg0 == "directory?")
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (OMExists(before, after))
+                    if (engine.ObjectMethodExists(before, after))
                     {
-                        if (System.IO.Directory.Exists(GetOVString(before, after)))
-                            __true();
+                        if (System.IO.Directory.Exists(engine.GetObjectVariableString(before, after)))
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
-                        error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
                 }
                 else
                 {
-                    if (VExists(arg1))
+                    if (engine.VariableExists(arg1))
                     {
-                        if (isString(arg1))
+                        if (engine.IsStringVariable(arg1))
                         {
-                            if (System.IO.Directory.Exists(GetVString(arg1)))
-                                __true();
+                            if (System.IO.Directory.Exists(engine.GetVariableString(arg1)))
+                                engine.SetLastValueAsTrue();
                             else
-                                __false();
+                                engine.SetLastValueAsFalse();
                         }
                         else
-                            error(ErrorLogger.NULL_STRING, arg1, false);
+                            ErrorLogger.Error(ErrorLogger.NULL_STRING, arg1, false);
                     }
                     else
                     {
                         if (System.IO.Directory.Exists(arg1))
-                            __true();
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                 }
             }
@@ -1547,80 +1541,80 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (OMExists(before, after))
+                    if (engine.ObjectMethodExists(before, after))
                     {
-                        if (System.IO.File.Exists(GetOVString(before, after)))
-                            __true();
+                        if (System.IO.File.Exists(engine.GetObjectVariableString(before, after)))
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
-                        error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
                 }
                 else
                 {
-                    if (VExists(arg1))
+                    if (engine.VariableExists(arg1))
                     {
-                        if (isString(arg1))
+                        if (engine.IsStringVariable(arg1))
                         {
-                            if (System.IO.File.Exists(GetVString(arg1)))
-                                __true();
+                            if (System.IO.File.Exists(engine.GetVariableString(arg1)))
+                                engine.SetLastValueAsTrue();
                             else
-                                __false();
+                                engine.SetLastValueAsFalse();
                         }
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
                     {
                         if (System.IO.File.Exists(arg1))
-                            __true();
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                 }
             }
             else if (arg0 == "collect?")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (GCCanCollectV(arg1))
-                        __true();
+                    if (engine.GCCanCollectVariable(arg1))
+                        engine.SetLastValueAsTrue();
                     else
-                        __false();
+                        engine.SetLastValueAsFalse();
                 }
                 else
-                    cout = "under construction..." + System.Environment.NewLine;
+                    ConsoleHelper.Output = "under construction..." + System.Environment.NewLine;
             }
             else if (arg0 == "number?")
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (OMExists(before, after))
+                    if (engine.ObjectMethodExists(before, after))
                     {
-                        if (GetOVNumber(before, after) != __NullNum)
-                            __true();
+                        if (engine.GetObjectVariableNumber(before, after) != __NullNum)
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
-                        error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
                 }
                 else
                 {
-                    if (VExists(arg1))
+                    if (engine.VariableExists(arg1))
                     {
-                        if (isNumber(arg1))
-                            __true();
+                        if (engine.IsNumberVariable(arg1))
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
                     {
                         if (StringHelper.IsNumeric(arg1))
-                            __true();
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                 }
             }
@@ -1628,31 +1622,31 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (OMExists(before, after))
+                    if (engine.ObjectMethodExists(before, after))
                     {
-                        if (GetOVString(before, after) != __Null)
-                            __true();
+                        if (engine.GetObjectVariableString(before, after) != __Null)
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
-                        error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
                 }
                 else
                 {
-                    if (VExists(arg1))
+                    if (engine.VariableExists(arg1))
                     {
-                        if (isString(arg1))
-                            __true();
+                        if (engine.IsStringVariable(arg1))
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
                     {
                         if (StringHelper.IsNumeric(arg1))
-                            __false();
+                            engine.SetLastValueAsFalse();
                         else
-                            __true();
+                            engine.SetLastValueAsTrue();
                     }
                 }
             }
@@ -1660,40 +1654,40 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (OMExists(before, after))
+                    if (engine.ObjectMethodExists(before, after))
                     {
-                        if (isUpper(GetOVString(before, after)))
-                            __true();
+                        if (StringHelper.IsUppercase(engine.GetObjectVariableString(before, after)))
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
-                        error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
                 }
                 else
                 {
-                    if (VExists(arg1))
+                    if (engine.VariableExists(arg1))
                     {
-                        if (isString(arg1))
+                        if (engine.IsStringVariable(arg1))
                         {
-                            if (isUpper(GetVString(arg1)))
-                                __true();
+                            if (StringHelper.IsUppercase(engine.GetVariableString(arg1)))
+                                engine.SetLastValueAsTrue();
                             else
-                                __false();
+                                engine.SetLastValueAsFalse();
                         }
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
                     {
                         if (StringHelper.IsNumeric(arg1))
-                            __false();
+                            engine.SetLastValueAsFalse();
                         else
                         {
-                            if (isUpper(arg1))
-                                __true();
+                            if (StringHelper.IsUppercase(arg1))
+                                engine.SetLastValueAsTrue();
                             else
-                                __false();
+                                engine.SetLastValueAsFalse();
                         }
                     }
                 }
@@ -1702,40 +1696,40 @@
             {
                 if (before.Length != 0 && after.Length != 0)
                 {
-                    if (OMExists(before, after))
+                    if (engine.ObjectMethodExists(before, after))
                     {
-                        if (isLower(GetOVString(before, after)))
-                            __true();
+                        if (StringHelper.IsLowercase(engine.GetObjectVariableString(before, after)))
+                            engine.SetLastValueAsTrue();
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
-                        error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.TARGET_UNDEFINED, arg1, false);
                 }
                 else
                 {
-                    if (VExists(arg1))
+                    if (engine.VariableExists(arg1))
                     {
-                        if (isString(arg1))
+                        if (engine.IsStringVariable(arg1))
                         {
-                            if (isLower(GetVString(arg1)))
-                                __true();
+                            if (StringHelper.IsLowercase(engine.GetVariableString(arg1)))
+                                engine.SetLastValueAsTrue();
                             else
-                                __false();
+                                engine.SetLastValueAsFalse();
                         }
                         else
-                            __false();
+                            engine.SetLastValueAsFalse();
                     }
                     else
                     {
                         if (StringHelper.IsNumeric(arg1))
-                            __false();
+                            engine.SetLastValueAsFalse();
                         else
                         {
-                            if (isLower(arg1))
-                                __true();
+                            if (StringHelper.IsLowercase(arg1))
+                                engine.SetLastValueAsTrue();
                             else
-                                __false();
+                                engine.SetLastValueAsFalse();
                         }
                     }
                 }
@@ -1746,14 +1740,14 @@
             }
             else if (arg0 == "template")
             {
-                if (MExists(arg1))
-                    error(ErrorLogger.METHOD_DEFINED, arg1, false);
+                if (engine.MethodExists(arg1))
+                    ErrorLogger.Error(ErrorLogger.METHOD_DEFINED, arg1, false);
                 else
                 {
-                    if (containsParameters(arg1))
+                    if (StringHelper.ContainsParameters(arg1))
                     {
-                        System.Collections.Generic.List<string> parameters = getParameters(arg1);
-                        Method method = new(beforeParameters(arg1), true);
+                        System.Collections.Generic.List<string> parameters = StringHelper.GetParameters(arg1);
+                        Method method = new(StringHelper.BeforeParameters(arg1), true);
 
                         method.SetTemplateSize(parameters.Count);
 
@@ -1765,17 +1759,17 @@
             }
             else if (arg0 == "lock")
             {
-                if (VExists(arg1))
-                    SetVLock(arg1);
-                else if (MExists(arg1))
-                    SetMLock(arg1);
+                if (engine.VariableExists(arg1))
+                    engine.LockVariable(arg1);
+                else if (engine.MethodExists(arg1))
+                    engine.LockMethod(arg1);
             }
             else if (arg0 == "unlock")
             {
-                if (VExists(arg1))
-                    SetVUnlock(arg1);
-                else if (MExists(arg1))
-                    SetMUnlock(arg1);
+                if (engine.VariableExists(arg1))
+                    engine.UnlockVariable(arg1);
+                else if (engine.MethodExists(arg1))
+                    engine.UnlockMethod(arg1);
             }
             else if (arg0 == "method" || arg0 == "[method]")
             {
@@ -1791,131 +1785,131 @@
             }
             else if (arg0 == "fpush")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (isString(arg1))
+                    if (engine.IsStringVariable(arg1))
                     {
-                        if (!System.IO.File.Exists(GetVString(arg1)))
-                            createFile(GetVString(arg1));
+                        if (!System.IO.File.Exists(engine.GetVariableString(arg1)))
+                            createFile(engine.GetVariableString(arg1));
                         else
-                            error(ErrorLogger.FILE_EXISTS, GetVString(arg1), false);
+                            ErrorLogger.Error(ErrorLogger.FILE_EXISTS, engine.GetVariableString(arg1), false);
                     }
                     else
-                        error(ErrorLogger.NULL_STRING, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.NULL_STRING, arg1, false);
                 }
                 else
                 {
                     if (!System.IO.File.Exists(arg1))
                         createFile(arg1);
                     else
-                        error(ErrorLogger.FILE_EXISTS, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.FILE_EXISTS, arg1, false);
                 }
             }
             else if (arg0 == "fpop")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (isString(arg1))
+                    if (engine.IsStringVariable(arg1))
                     {
-                        if (System.IO.File.Exists(GetVString(arg1)))
-                            System.IO.File.Delete(GetVString(arg1));
+                        if (System.IO.File.Exists(engine.GetVariableString(arg1)))
+                            System.IO.File.Delete(engine.GetVariableString(arg1));
                         else
-                            error(ErrorLogger.FILE_NOT_FOUND, GetVString(arg1), false);
+                            ErrorLogger.Error(ErrorLogger.FILE_NOT_FOUND, engine.GetVariableString(arg1), false);
                     }
                     else
-                        error(ErrorLogger.NULL_STRING, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.NULL_STRING, arg1, false);
                 }
                 else
                 {
                     if (System.IO.File.Exists(arg1))
                         System.IO.File.Delete(arg1);
                     else
-                        error(ErrorLogger.FILE_NOT_FOUND, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.FILE_NOT_FOUND, arg1, false);
                 }
             }
             else if (arg0 == "dpush")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (isString(arg1))
+                    if (engine.IsStringVariable(arg1))
                     {
-                        if (!System.IO.Directory.Exists(GetVString(arg1)))
-                            System.IO.Directory.CreateDirectory(GetVString(arg1));
+                        if (!System.IO.Directory.Exists(engine.GetVariableString(arg1)))
+                            System.IO.Directory.CreateDirectory(engine.GetVariableString(arg1));
                         else
-                            error(ErrorLogger.DIR_EXISTS, GetVString(arg1), false);
+                            ErrorLogger.Error(ErrorLogger.DIR_EXISTS, engine.GetVariableString(arg1), false);
                     }
                     else
-                        error(ErrorLogger.NULL_STRING, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.NULL_STRING, arg1, false);
                 }
                 else
                 {
                     if (!System.IO.Directory.Exists(arg1))
                         System.IO.Directory.CreateDirectory(arg1);
                     else
-                        error(ErrorLogger.DIR_EXISTS, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.DIR_EXISTS, arg1, false);
                 }
             }
             else if (arg0 == "dpop")
             {
-                if (VExists(arg1))
+                if (engine.VariableExists(arg1))
                 {
-                    if (isString(arg1))
+                    if (engine.IsStringVariable(arg1))
                     {
-                        if (System.IO.Directory.Exists(GetVString(arg1)))
-                            System.IO.Directory.Delete(GetVString(arg1));
+                        if (System.IO.Directory.Exists(engine.GetVariableString(arg1)))
+                            System.IO.Directory.Delete(engine.GetVariableString(arg1));
                         else
-                            error(ErrorLogger.DIR_NOT_FOUND, GetVString(arg1), false);
+                            ErrorLogger.Error(ErrorLogger.DIR_NOT_FOUND, engine.GetVariableString(arg1), false);
                     }
                     else
-                        error(ErrorLogger.NULL_STRING, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.NULL_STRING, arg1, false);
                 }
                 else
                 {
                     if (System.IO.Directory.Exists(arg1))
                         System.IO.Directory.Delete(arg1);
                     else
-                        error(ErrorLogger.DIR_NOT_FOUND, arg1, false);
+                        ErrorLogger.Error(ErrorLogger.DIR_NOT_FOUND, arg1, false);
                 }
             }
             else
-                sysExec(s, command);
+                RunExternalProcess(s, command);
         }
         #endregion
 
         #region Two Space
-        void twoSpace(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
+        void ParseTwoSpaceString(string arg0, string arg1, string arg2, string s, System.Collections.Generic.List<string> command)
         {
             string last_val = string.Empty;
 
-            if (contains(arg2, "self."))
-                arg2 = replace(arg2, "self", __CurrentMethodObject);
+            if (StringHelper.ContainsString(arg2, "self."))
+                arg2 = StringHelper.ReplaceString(arg2, "self", __CurrentMethodObject);
 
-            if (contains(arg0, "self."))
-                arg0 = replace(arg0, "self", __CurrentMethodObject);
+            if (StringHelper.ContainsString(arg0, "self."))
+                arg0 = StringHelper.ReplaceString(arg0, "self", __CurrentMethodObject);
 
-            if (VExists(arg0))
+            if (engine.VariableExists(arg0))
             {
                 initializeVariable(arg0, arg1, arg2, s, command);
             }
-            else if (LExists(arg0) || LExists(beforeBrackets(arg0)))
+            else if (engine.ListExists(arg0) || engine.ListExists(StringHelper.BeforeBrackets(arg0)))
             {
                 initializeListValues(arg0, arg1, arg2, s, command);
             }
             else
             {
-                if (startsWith(arg0, "@") && zeroDots(arg0))
+                if (StringHelper.StringStartsWith(arg0, "@") && StringHelper.ZeroDots(arg0))
                 {
                     createGlobalVariable(arg0, arg1, arg2, s, command);
                 }
-                else if (startsWith(arg0, "@") && !zeroDots(arg2))
+                else if (StringHelper.StringStartsWith(arg0, "@") && !StringHelper.ZeroDots(arg2))
                 {
                     createObjectVariable(arg0, arg1, arg2, s, command);
                 }
-                else if (!OExists(arg0) && OExists(arg2))
+                else if (!engine.ObjectExists(arg0) && engine.ObjectExists(arg2))
                 {
-                    CopyObject(arg0, arg1, arg2, s, command);
+                    engine.CopyObject(arg0, arg1, arg2, s, command);
                 }
-                else if (isUpperConstant(arg0))
+                else if (StringHelper.IsUppercaseConstant(arg0))
                 {
                     createConstant(arg0, arg1, arg2, s, command);
                 }
@@ -1928,25 +1922,25 @@
         #endregion
 
         #region Three Space
-        void threeSpace(string arg0, string arg1, string arg2, string arg3, string s, System.Collections.Generic.List<string> command)
+        void ParseThreeSpaceString(string arg0, string arg1, string arg2, string arg3, string s, System.Collections.Generic.List<string> command)
         {
             // isNumber(arg3)
             // isString(arg3)
 
             if (arg0 == "object")
             {
-                if (OExists(arg1))
+                if (engine.ObjectExists(arg1))
                 {
                     __DefiningObject = true;
                     __CurrentObject = arg1;
                 }
                 else
                 {
-                    if (OExists(arg3))
+                    if (engine.ObjectExists(arg3))
                     {
                         if (arg2 == "=")
                         {
-                            System.Collections.Generic.List<Method> objectMethods = GetOMList(arg3);
+                            System.Collections.Generic.List<Method> objectMethods = engine.GetObjectMethodList(arg3);
                             Object newObject = new(arg1);
 
                             for (int i = 0; i < objectMethods.Count; i++)
@@ -1963,28 +1957,28 @@
                             objectMethods.Clear();
                         }
                         else
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
                     }
                     else
-                        error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3, false);
+                        ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3, false);
                 }
             }
             else if (arg0 == "unless")
             {
-                if (LExists(arg3))
+                if (engine.ListExists(arg3))
                 {
                     if (arg2 == "in")
                     {
                         string testString = ("[none]");
 
-                        if (VExists(arg1))
+                        if (engine.VariableExists(arg1))
                         {
-                            if (isString(arg1))
-                                testString = GetVString(arg1);
-                            else if (isNumber(arg1))
-                                testString = dtos(GetVNumber(arg1));
+                            if (engine.IsStringVariable(arg1))
+                                testString = engine.GetVariableString(arg1);
+                            else if (engine.IsNumberVariable(arg1))
+                                testString = StringHelper.DtoS(engine.GetVariableNumber(arg1));
                             else
-                                error(ErrorLogger.IS_NULL, arg1, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
                         }
                         else
                             testString = arg1;
@@ -1992,1057 +1986,1057 @@
                         if (testString != "[none]")
                         {
                             bool elementFound = false;
-                            for (int i = 0; i < GetLSize(arg3); i++)
+                            for (int i = 0; i < engine.GetListSize(arg3); i++)
                             {
-                                if (GetLLine(arg3, i) == testString)
+                                if (engine.GetListLine(arg3, i) == testString)
                                 {
                                     elementFound = true;
-                                    setFalseIf();
-                                    __LastValue = itos(i);
+                                    engine.FailedIfStatement();
+                                    __LastValue = StringHelper.ItoS(i);
                                     break;
                                 }
                             }
 
                             if (!elementFound)
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
-                            setTrueIf();
+                            engine.SuccessfulIfStatement();
                     }
                 }
-                else if (VExists(arg1) && VExists(arg3))
+                else if (engine.VariableExists(arg1) && engine.VariableExists(arg3))
                 {
-                    if (isString(arg1) && isString(arg3))
+                    if (engine.IsStringVariable(arg1) && engine.IsStringVariable(arg3))
                     {
                         if (arg2 == "==")
                         {
-                            if (GetVString(arg1) == GetVString(arg3))
-                                setFalseIf();
+                            if (engine.GetVariableString(arg1) == engine.GetVariableString(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (GetVString(arg1) != GetVString(arg3))
-                                setFalseIf();
+                            if (engine.GetVariableString(arg1) != engine.GetVariableString(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == ">")
                         {
-                            if (GetVString(arg1).Length > GetVString(arg3).Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg1).Length > engine.GetVariableString(arg3).Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "<")
                         {
-                            if (GetVString(arg1).Length < GetVString(arg3).Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg1).Length < engine.GetVariableString(arg3).Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (GetVString(arg1).Length <= GetVString(arg3).Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg1).Length <= engine.GetVariableString(arg3).Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (GetVString(arg1).Length >= GetVString(arg3).Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg1).Length >= engine.GetVariableString(arg3).Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "contains")
                         {
-                            if (contains(GetVString(arg1), GetVString(arg3)))
-                                setFalseIf();
+                            if (StringHelper.ContainsString(engine.GetVariableString(arg1), engine.GetVariableString(arg3)))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "ends_with")
                         {
-                            if (endsWith(GetVString(arg1), GetVString(arg3)))
-                                setFalseIf();
+                            if (StringHelper.StringEndsWith(engine.GetVariableString(arg1), engine.GetVariableString(arg3)))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "begins_with")
                         {
-                            if (startsWith(GetVString(arg1), GetVString(arg3)))
-                                setFalseIf();
+                            if (StringHelper.StringStartsWith(engine.GetVariableString(arg1), engine.GetVariableString(arg3)))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
-                    else if (isNumber(arg1) && isNumber(arg3))
+                    else if (engine.IsNumberVariable(arg1) && engine.IsNumberVariable(arg3))
                     {
                         if (arg2 == "==")
                         {
-                            if (GetVNumber(arg1) == GetVNumber(arg3))
-                                setFalseIf();
+                            if (engine.GetVariableNumber(arg1) == engine.GetVariableNumber(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (GetVNumber(arg1) != GetVNumber(arg3))
-                                setFalseIf();
+                            if (engine.GetVariableNumber(arg1) != engine.GetVariableNumber(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == ">")
                         {
-                            if (GetVNumber(arg1) > GetVNumber(arg3))
-                                setFalseIf();
+                            if (engine.GetVariableNumber(arg1) > engine.GetVariableNumber(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (GetVNumber(arg1) >= GetVNumber(arg3))
-                                setFalseIf();
+                            if (engine.GetVariableNumber(arg1) >= engine.GetVariableNumber(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "<")
                         {
-                            if (GetVNumber(arg1) < GetVNumber(arg3))
-                                setFalseIf();
+                            if (engine.GetVariableNumber(arg1) < engine.GetVariableNumber(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (GetVNumber(arg1) <= GetVNumber(arg3))
-                                setFalseIf();
+                            if (engine.GetVariableNumber(arg1) <= engine.GetVariableNumber(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                     else
                     {
-                        error(ErrorLogger.CONV_ERR, s, false);
-                        setTrueIf();
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                        engine.SuccessfulIfStatement();
                     }
                 }
-                else if ((VExists(arg1) && !VExists(arg3)) && !MExists(arg3) && notObjectMethod(arg3) && !containsParameters(arg3))
+                else if ((engine.VariableExists(arg1) && !engine.VariableExists(arg3)) && !engine.MethodExists(arg3) && notObjectMethod(arg3) && !StringHelper.ContainsParameters(arg3))
                 {
-                    if (isNumber(arg1))
+                    if (engine.IsNumberVariable(arg1))
                     {
                         if (StringHelper.IsNumeric(arg3))
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVNumber(arg1) == stod(arg3))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) == StringHelper.StoD(arg3))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVNumber(arg1) != stod(arg3))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) != StringHelper.StoD(arg3))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVNumber(arg1) > stod(arg3))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) > StringHelper.StoD(arg3))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVNumber(arg1) < stod(arg3))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) < StringHelper.StoD(arg3))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVNumber(arg1) >= stod(arg3))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) >= StringHelper.StoD(arg3))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVNumber(arg1) <= stod(arg3))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) <= StringHelper.StoD(arg3))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else if (arg3 == "number?")
                         {
                             if (arg2 == "==")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else if (arg2 == "!=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                     else
                     {
                         if (arg3 == "string?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else if (arg2 == "!=")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setTrueIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                         }
                         else if (arg3 == "number?")
                         {
-                            if (isNumber(arg1))
+                            if (engine.IsNumberVariable(arg1))
                             {
                                 if (arg2 == "==")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else if (arg2 == "!=")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setTrueIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                         }
                         else if (arg3 == "uppercase?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isUpper(GetVString(arg1)))
-                                        setFalseIf();
+                                    if (StringHelper.IsUppercase(engine.GetVariableString(arg1)))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isUpper(GetVString(arg1)))
-                                        setTrueIf();
+                                    if (StringHelper.IsUppercase(engine.GetVariableString(arg1)))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setTrueIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
                                 {
-                                    if (isUpper(arg2))
-                                        setTrueIf();
+                                    if (StringHelper.IsUppercase(arg2))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                         }
                         else if (arg3 == "lowercase?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isLower(GetVString(arg1)))
-                                        setFalseIf();
+                                    if (StringHelper.IsLowercase(engine.GetVariableString(arg1)))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isLower(GetVString(arg1)))
-                                        setTrueIf();
+                                    if (StringHelper.IsLowercase(engine.GetVariableString(arg1)))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setTrueIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
                                 {
-                                    if (isLower(arg2))
-                                        setTrueIf();
+                                    if (StringHelper.IsLowercase(arg2))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                         }
                         else if (arg3 == "file?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
-                                if (System.IO.File.Exists(GetVString(arg1)))
+                                if (System.IO.File.Exists(engine.GetVariableString(arg1)))
                                 {
                                     if (arg2 == "==")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else if (arg2 == "!=")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                                 else
                                 {
                                     if (arg2 == "!=")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.IS_NULL, arg1, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else if (arg3 == "directory?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
-                                if (System.IO.Directory.Exists(GetVString(arg1)))
+                                if (System.IO.Directory.Exists(engine.GetVariableString(arg1)))
                                 {
                                     if (arg2 == "==")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else if (arg2 == "!=")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                                 else
                                 {
                                     if (arg2 == "!=")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.IS_NULL, arg1, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVString(arg1) == arg3)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1) == arg3)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVString(arg1) != arg3)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1) != arg3)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVString(arg1).Length > arg3.Length)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1).Length > arg3.Length)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVString(arg1).Length < arg3.Length)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1).Length < arg3.Length)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVString(arg1).Length >= arg3.Length)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1).Length >= arg3.Length)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVString(arg1).Length <= arg3.Length)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1).Length <= arg3.Length)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "contains")
                             {
-                                if (contains(GetVString(arg1), arg3))
-                                    setFalseIf();
+                                if (StringHelper.ContainsString(engine.GetVariableString(arg1), arg3))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "ends_with")
                             {
-                                if (endsWith(GetVString(arg1), arg3))
-                                    setFalseIf();
+                                if (StringHelper.StringEndsWith(engine.GetVariableString(arg1), arg3))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "begins_with")
                             {
-                                if (startsWith(GetVString(arg1), arg3))
-                                    setFalseIf();
+                                if (StringHelper.StringStartsWith(engine.GetVariableString(arg1), arg3))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                     }
                 }
-                else if ((VExists(arg1) && !VExists(arg3)) && !MExists(arg3) && notObjectMethod(arg3) && containsParameters(arg3))
+                else if ((engine.VariableExists(arg1) && !engine.VariableExists(arg3)) && !engine.MethodExists(arg3) && notObjectMethod(arg3) && StringHelper.ContainsParameters(arg3))
                 {
                     string stackValue = string.Empty;
 
-                    if (isStringStack(arg3))
-                        stackValue = getStringStack(arg3);
-                    else if (stackReady(arg3))
-                        stackValue = dtos(getStack(arg3));
+                    if (IsStringStack(arg3))
+                        stackValue = GetStringStack(arg3);
+                    else if (IsStackReady(arg3))
+                        stackValue = StringHelper.DtoS(GetStack(arg3));
                     else
                         stackValue = arg3;
 
-                    if (isNumber(arg1))
+                    if (engine.IsNumberVariable(arg1))
                     {
                         if (StringHelper.IsNumeric(stackValue))
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVNumber(arg1) == stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) == StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVNumber(arg1) != stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) != StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVNumber(arg1) > stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) > StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVNumber(arg1) < stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) < StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVNumber(arg1) >= stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) >= StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVNumber(arg1) <= stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg1) <= StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else if (stackValue == "number?")
                         {
                             if (arg2 == "==")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else if (arg2 == "!=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                     else
                     {
                         if (stackValue == "string?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else if (arg2 == "!=")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setTrueIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                         }
                         else if (stackValue == "number?")
                         {
-                            if (isNumber(arg1))
+                            if (engine.IsNumberVariable(arg1))
                             {
                                 if (arg2 == "==")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else if (arg2 == "!=")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setTrueIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                         }
                         else if (stackValue == "uppercase?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isUpper(GetVString(arg1)))
-                                        setFalseIf();
+                                    if (StringHelper.IsUppercase(engine.GetVariableString(arg1)))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isUpper(GetVString(arg1)))
-                                        setTrueIf();
+                                    if (StringHelper.IsUppercase(engine.GetVariableString(arg1)))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setTrueIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
                                 {
-                                    if (isUpper(arg2))
-                                        setTrueIf();
+                                    if (StringHelper.IsUppercase(arg2))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                         }
                         else if (stackValue == "lowercase?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isLower(GetVString(arg1)))
-                                        setFalseIf();
+                                    if (StringHelper.IsLowercase(engine.GetVariableString(arg1)))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isLower(GetVString(arg1)))
-                                        setTrueIf();
+                                    if (StringHelper.IsLowercase(engine.GetVariableString(arg1)))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setTrueIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
                                 {
-                                    if (isLower(arg2))
-                                        setTrueIf();
+                                    if (StringHelper.IsLowercase(arg2))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                         }
                         else if (stackValue == "file?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
-                                if (System.IO.File.Exists(GetVString(arg1)))
+                                if (System.IO.File.Exists(engine.GetVariableString(arg1)))
                                 {
                                     if (arg2 == "==")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else if (arg2 == "!=")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                                 else
                                 {
                                     if (arg2 == "!=")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.IS_NULL, arg1, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else if (stackValue == "directory?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
-                                if (System.IO.Directory.Exists(GetVString(arg1)))
+                                if (System.IO.Directory.Exists(engine.GetVariableString(arg1)))
                                 {
                                     if (arg2 == "==")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else if (arg2 == "!=")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                                 else
                                 {
                                     if (arg2 == "!=")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.IS_NULL, arg1, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVString(arg1) == stackValue)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1) == stackValue)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVString(arg1) != stackValue)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1) != stackValue)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVString(arg1).Length > stackValue.Length)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1).Length > stackValue.Length)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVString(arg1).Length < stackValue.Length)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1).Length < stackValue.Length)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVString(arg1).Length >= stackValue.Length)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1).Length >= stackValue.Length)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVString(arg1).Length <= stackValue.Length)
-                                    setFalseIf();
+                                if (engine.GetVariableString(arg1).Length <= stackValue.Length)
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "contains")
                             {
-                                if (contains(GetVString(arg1), stackValue))
-                                    setFalseIf();
+                                if (StringHelper.ContainsString(engine.GetVariableString(arg1), stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "ends_with")
                             {
-                                if (endsWith(GetVString(arg1), stackValue))
-                                    setFalseIf();
+                                if (StringHelper.StringEndsWith(engine.GetVariableString(arg1), stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "begins_with")
                             {
-                                if (startsWith(GetVString(arg1), stackValue))
-                                    setFalseIf();
+                                if (StringHelper.StringStartsWith(engine.GetVariableString(arg1), stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                     }
                 }
-                else if ((!VExists(arg1) && VExists(arg3)) && !MExists(arg1) && notObjectMethod(arg1) && !containsParameters(arg1))
+                else if ((!engine.VariableExists(arg1) && engine.VariableExists(arg3)) && !engine.MethodExists(arg1) && notObjectMethod(arg1) && !StringHelper.ContainsParameters(arg1))
                 {
-                    if (isNumber(arg3))
+                    if (engine.IsNumberVariable(arg3))
                     {
                         if (StringHelper.IsNumeric(arg1))
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVNumber(arg3) == stod(arg1))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) == StringHelper.StoD(arg1))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVNumber(arg3) != stod(arg1))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) != StringHelper.StoD(arg1))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVNumber(arg3) > stod(arg1))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) > StringHelper.StoD(arg1))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVNumber(arg3) < stod(arg1))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) < StringHelper.StoD(arg1))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVNumber(arg3) >= stod(arg1))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) >= StringHelper.StoD(arg1))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVNumber(arg3) <= stod(arg1))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) <= StringHelper.StoD(arg1))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                     else
                     {
                         if (arg2 == "==")
                         {
-                            if (GetVString(arg3) == arg1)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3) == arg1)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (GetVString(arg3) != arg1)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3) != arg1)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == ">")
                         {
-                            if (GetVString(arg3).Length > arg1.Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3).Length > arg1.Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "<")
                         {
-                            if (GetVString(arg3).Length < arg1.Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3).Length < arg1.Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (GetVString(arg3).Length >= arg1.Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3).Length >= arg1.Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (GetVString(arg3).Length <= arg1.Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3).Length <= arg1.Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                 }
-                else if ((!VExists(arg1) && VExists(arg3)) && !MExists(arg1) && notObjectMethod(arg1) && containsParameters(arg1))
+                else if ((!engine.VariableExists(arg1) && engine.VariableExists(arg3)) && !engine.MethodExists(arg1) && notObjectMethod(arg1) && StringHelper.ContainsParameters(arg1))
                 {
                     string stackValue = string.Empty;
 
-                    if (isStringStack(arg1))
-                        stackValue = getStringStack(arg1);
-                    else if (stackReady(arg1))
-                        stackValue = dtos(getStack(arg1));
+                    if (IsStringStack(arg1))
+                        stackValue = GetStringStack(arg1);
+                    else if (IsStackReady(arg1))
+                        stackValue = StringHelper.DtoS(GetStack(arg1));
                     else
                         stackValue = arg1;
 
-                    if (isNumber(arg3))
+                    if (engine.IsNumberVariable(arg3))
                     {
                         if (StringHelper.IsNumeric(stackValue))
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVNumber(arg3) == stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) == StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVNumber(arg3) != stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) != StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVNumber(arg3) > stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) > StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVNumber(arg3) < stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) < StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVNumber(arg3) >= stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) >= StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVNumber(arg3) <= stod(stackValue))
-                                    setFalseIf();
+                                if (engine.GetVariableNumber(arg3) <= StringHelper.StoD(stackValue))
+                                    engine.FailedIfStatement();
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                     else
                     {
                         if (arg2 == "==")
                         {
-                            if (GetVString(arg3) == stackValue)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3) == stackValue)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (GetVString(arg3) != stackValue)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3) != stackValue)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == ">")
                         {
-                            if (GetVString(arg3).Length > stackValue.Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3).Length > stackValue.Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "<")
                         {
-                            if (GetVString(arg3).Length < stackValue.Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3).Length < stackValue.Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (GetVString(arg3).Length >= stackValue.Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3).Length >= stackValue.Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (GetVString(arg3).Length <= stackValue.Length)
-                                setFalseIf();
+                            if (engine.GetVariableString(arg3).Length <= stackValue.Length)
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                 }
-                else if (containsParameters(arg1) || containsParameters(arg3))
+                else if (StringHelper.ContainsParameters(arg1) || StringHelper.ContainsParameters(arg3))
                 {
-                    if (containsParameters(arg1) && containsParameters(arg3))
+                    if (StringHelper.ContainsParameters(arg1) && StringHelper.ContainsParameters(arg3))
                     {
-                        if (!zeroDots(arg1) && !zeroDots(arg3))
+                        if (!StringHelper.ZeroDots(arg1) && !StringHelper.ZeroDots(arg3))
                         {
-                            string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1)),
-                           arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
+                            string arg1before = (StringHelper.BeforeDot(arg1)), arg1after = (StringHelper.AfterDot(arg1)),
+                           arg3before = (StringHelper.BeforeDot(arg3)), arg3after = (StringHelper.AfterDot(arg3));
 
                             string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (OExists(arg1before) && OExists(arg3before))
+                            if (engine.ObjectExists(arg1before) && engine.ObjectExists(arg3before))
                             {
-                                if (OMExists(arg1before, beforeParameters(arg1after)))
-                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
+                                if (engine.ObjectMethodExists(arg1before, StringHelper.BeforeParameters(arg1after)))
+                                    executeTemplate(engine.GetObjectMethod(arg1before, StringHelper.BeforeParameters(arg1after)), StringHelper.GetParameters(arg1after));
 
                                 arg1Result = __LastValue;
                                 
-                                if (OMExists(arg3before, beforeParameters(arg3after)))
-                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
+                                if (engine.ObjectMethodExists(arg3before, StringHelper.BeforeParameters(arg3after)))
+                                    executeTemplate(engine.GetObjectMethod(arg3before, StringHelper.BeforeParameters(arg3after)), StringHelper.GetParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
@@ -3050,50 +3044,50 @@
                                 {
                                     if (arg2 == "==")
                                     {
-                                        if (stod(arg1Result) == stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
-                                        if (stod(arg1Result) != stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "<")
                                     {
-                                        if (stod(arg1Result) < stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == ">")
                                     {
-                                        if (stod(arg1Result) > stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "<=")
                                     {
-                                        if (stod(arg1Result) <= stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == ">=")
                                     {
-                                        if (stod(arg1Result) >= stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                                 else
@@ -3101,50 +3095,50 @@
                                     if (arg2 == "==")
                                     {
                                         if (arg1Result == arg3Result)
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
                                         if (arg1Result != arg3Result)
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                             }
                             else
                             {
-                                if (!OExists(arg1before))
-                                    error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
+                                if (!engine.ObjectExists(arg1before))
+                                    ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
 
-                                if (!OExists(arg3before))
-                                    error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
+                                if (!engine.ObjectExists(arg3before))
+                                    ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
 
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             }
                         }
-                        else if (!zeroDots(arg1) && zeroDots(arg3))
+                        else if (!StringHelper.ZeroDots(arg1) && StringHelper.ZeroDots(arg3))
                         {
-                            string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1));
+                            string arg1before = (StringHelper.BeforeDot(arg1)), arg1after = (StringHelper.AfterDot(arg1));
 
                             string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (OExists(arg1before))
+                            if (engine.ObjectExists(arg1before))
                             {
-                                if (OMExists(arg1before, beforeParameters(arg1after)))
-                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
+                                if (engine.ObjectMethodExists(arg1before, StringHelper.BeforeParameters(arg1after)))
+                                    executeTemplate(engine.GetObjectMethod(arg1before, StringHelper.BeforeParameters(arg1after)), StringHelper.GetParameters(arg1after));
 
                                 arg1Result = __LastValue;
 
-                                if (MExists(beforeParameters(arg3)))
-                                    executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
+                                if (engine.MethodExists(StringHelper.BeforeParameters(arg3)))
+                                    executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg3)), StringHelper.GetParameters(arg3));
 
                                 arg3Result = __LastValue;
 
@@ -3152,50 +3146,50 @@
                                 {
                                     if (arg2 == "==")
                                     {
-                                        if (stod(arg1Result) == stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
-                                        if (stod(arg1Result) != stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "<")
                                     {
-                                        if (stod(arg1Result) < stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == ">")
                                     {
-                                        if (stod(arg1Result) > stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "<=")
                                     {
-                                        if (stod(arg1Result) <= stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == ">=")
                                     {
-                                        if (stod(arg1Result) >= stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                                 else
@@ -3203,45 +3197,45 @@
                                     if (arg2 == "==")
                                     {
                                         if (arg1Result == arg3Result)
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
                                         if (arg1Result != arg3Result)
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
-                        else if (zeroDots(arg1) && !zeroDots(arg3))
+                        else if (StringHelper.ZeroDots(arg1) && !StringHelper.ZeroDots(arg3))
                         {
-                            string arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
+                            string arg3before = (StringHelper.BeforeDot(arg3)), arg3after = (StringHelper.AfterDot(arg3));
 
                             string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (OExists(arg3before))
+                            if (engine.ObjectExists(arg3before))
                             {
-                                if (OMExists(arg3before, beforeParameters(arg3after)))
-                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
+                                if (engine.ObjectMethodExists(arg3before, StringHelper.BeforeParameters(arg3after)))
+                                    executeTemplate(engine.GetObjectMethod(arg3before, StringHelper.BeforeParameters(arg3after)), StringHelper.GetParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
-                                if (MExists(beforeParameters(arg1)))
-                                    executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
+                                if (engine.MethodExists(StringHelper.BeforeParameters(arg1)))
+                                    executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg1)), StringHelper.GetParameters(arg1));
 
                                 arg1Result = __LastValue;
 
@@ -3249,50 +3243,50 @@
                                 {
                                     if (arg2 == "==")
                                     {
-                                        if (stod(arg1Result) == stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
-                                        if (stod(arg1Result) != stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "<")
                                     {
-                                        if (stod(arg1Result) < stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == ">")
                                     {
-                                        if (stod(arg1Result) > stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "<=")
                                     {
-                                        if (stod(arg1Result) <= stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == ">=")
                                     {
-                                        if (stod(arg1Result) >= stod(arg3Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                                 else
@@ -3300,41 +3294,41 @@
                                     if (arg2 == "==")
                                     {
                                         if (arg1Result == arg3Result)
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
                                         if (arg1Result != arg3Result)
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
                             string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (MExists(beforeParameters(arg1)))
-                                executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
+                            if (engine.MethodExists(StringHelper.BeforeParameters(arg1)))
+                                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg1)), StringHelper.GetParameters(arg1));
 
                             arg1Result = __LastValue;
 
-                            if (MExists(beforeParameters(arg3)))
-                                executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
+                            if (engine.MethodExists(StringHelper.BeforeParameters(arg3)))
+                                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg3)), StringHelper.GetParameters(arg3));
 
                             arg3Result = __LastValue;
 
@@ -3342,50 +3336,50 @@
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (stod(arg1Result) == stod(arg3Result))
-                                        setFalseIf();
+                                    if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (stod(arg1Result) != stod(arg3Result))
-                                        setFalseIf();
+                                    if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else if (arg2 == "<")
                                 {
-                                    if (stod(arg1Result) < stod(arg3Result))
-                                        setFalseIf();
+                                    if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else if (arg2 == ">")
                                 {
-                                    if (stod(arg1Result) > stod(arg3Result))
-                                        setFalseIf();
+                                    if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else if (arg2 == "<=")
                                 {
-                                    if (stod(arg1Result) <= stod(arg3Result))
-                                        setFalseIf();
+                                    if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else if (arg2 == ">=")
                                 {
-                                    if (stod(arg1Result) >= stod(arg3Result))
-                                        setFalseIf();
+                                    if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setTrueIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.SuccessfulIfStatement();
                                 }
                             }
                             else
@@ -3393,55 +3387,55 @@
                                 if (arg2 == "==")
                                 {
                                     if (arg1Result == arg3Result)
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
                                     if (arg1Result != arg3Result)
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setTrueIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.SuccessfulIfStatement();
                                 }
                             }
                         }
                     }
-                    else if (containsParameters(arg1) && !containsParameters(arg3))
+                    else if (StringHelper.ContainsParameters(arg1) && !StringHelper.ContainsParameters(arg3))
                     {
                         string arg1Result = string.Empty, arg3Result = string.Empty;
 
                         bool pass = true;
 
-                        if (zeroDots(arg1))
+                        if (StringHelper.ZeroDots(arg1))
                         {
-                            if (MExists(beforeParameters(arg1)))
+                            if (engine.MethodExists(StringHelper.BeforeParameters(arg1)))
                             {
-                                executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
+                                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg1)), StringHelper.GetParameters(arg1));
 
                                 arg1Result = __LastValue;
 
-                                if (MExists(arg3))
+                                if (engine.MethodExists(arg3))
                                 {
-                                    parse(arg3);
+                                    ParseString(arg3);
                                     arg3Result = __LastValue;
                                 }
-                                else if (VExists(arg3))
+                                else if (engine.VariableExists(arg3))
                                 {
-                                    if (isString(arg3))
-                                        arg3Result = GetVString(arg3);
-                                    else if (isNumber(arg3))
-                                        arg3Result = dtos(GetVNumber(arg3));
+                                    if (engine.IsStringVariable(arg3))
+                                        arg3Result = engine.GetVariableString(arg3);
+                                    else if (engine.IsNumberVariable(arg3))
+                                        arg3Result = StringHelper.DtoS(engine.GetVariableNumber(arg3));
                                     else
                                     {
                                         pass = false;
-                                        error(ErrorLogger.IS_NULL, arg3, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg3, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                                 else
@@ -3453,50 +3447,50 @@
                                     {
                                         if (arg2 == "==")
                                         {
-                                            if (stod(arg1Result) == stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
-                                            if (stod(arg1Result) != stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "<")
                                         {
-                                            if (stod(arg1Result) < stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == ">")
                                         {
-                                            if (stod(arg1Result) > stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "<=")
                                         {
-                                            if (stod(arg1Result) <= stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == ">=")
                                         {
-                                            if (stod(arg1Result) >= stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setTrueIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.SuccessfulIfStatement();
                                         }
                                     }
                                     else
@@ -3504,60 +3498,60 @@
                                         if (arg2 == "==")
                                         {
                                             if (arg1Result == arg3Result)
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
                                             if (arg1Result != arg3Result)
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setTrueIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.SuccessfulIfStatement();
                                         }
                                     }
                                 }
                                 else
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.METHOD_UNDEFINED, beforeParameters(arg1), false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, StringHelper.BeforeParameters(arg1), false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
-                            string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1));
+                            string arg1before = (StringHelper.BeforeDot(arg1)), arg1after = (StringHelper.AfterDot(arg1));
 
-                            if (OExists(arg1before))
+                            if (engine.ObjectExists(arg1before))
                             {
-                                if (OMExists(arg1before, beforeParameters(arg1after)))
-                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
+                                if (engine.ObjectMethodExists(arg1before, StringHelper.BeforeParameters(arg1after)))
+                                    executeTemplate(engine.GetObjectMethod(arg1before, StringHelper.BeforeParameters(arg1after)), StringHelper.GetParameters(arg1after));
 
                                 arg1Result = __LastValue;
 
-                                if (VExists(arg3))
+                                if (engine.VariableExists(arg3))
                                 {
-                                    if (isString(arg3))
-                                        arg3Result = GetVString(arg3);
-                                    else if (isNumber(arg3))
-                                        arg3Result = dtos(GetVNumber(arg3));
+                                    if (engine.IsStringVariable(arg3))
+                                        arg3Result = engine.GetVariableString(arg3);
+                                    else if (engine.IsNumberVariable(arg3))
+                                        arg3Result = StringHelper.DtoS(engine.GetVariableNumber(arg3));
                                     else
                                     {
                                         pass = false;
-                                        error(ErrorLogger.IS_NULL, arg3, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg3, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
-                                else if (MExists(arg3))
+                                else if (engine.MethodExists(arg3))
                                 {
-                                    parse(arg3);
+                                    ParseString(arg3);
 
                                     arg3Result = __LastValue;
                                 }
@@ -3570,50 +3564,50 @@
                                     {
                                         if (arg2 == "==")
                                         {
-                                            if (stod(arg1Result) == stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
-                                            if (stod(arg1Result) != stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "<")
                                         {
-                                            if (stod(arg1Result) < stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == ">")
                                         {
-                                            if (stod(arg1Result) > stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "<=")
                                         {
-                                            if (stod(arg1Result) <= stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == ">=")
                                         {
-                                            if (stod(arg1Result) >= stod(arg3Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setTrueIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.SuccessfulIfStatement();
                                         }
                                     }
                                     else
@@ -3621,62 +3615,62 @@
                                         if (arg2 == "==")
                                         {
                                             if (arg1Result == arg3Result)
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
                                             if (arg1Result != arg3Result)
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setTrueIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.SuccessfulIfStatement();
                                         }
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                     }
-                    else if (!containsParameters(arg1) && containsParameters(arg3))
+                    else if (!StringHelper.ContainsParameters(arg1) && StringHelper.ContainsParameters(arg3))
                     {
                         string arg1Result = string.Empty, arg3Result = string.Empty;
 
                         bool pass = true;
 
-                        if (zeroDots(arg3))
+                        if (StringHelper.ZeroDots(arg3))
                         {
-                            if (MExists(beforeParameters(arg3)))
+                            if (engine.MethodExists(StringHelper.BeforeParameters(arg3)))
                             {
-                                executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
+                                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg3)), StringHelper.GetParameters(arg3));
 
                                 arg3Result = __LastValue;
 
-                                if (MExists(arg1))
+                                if (engine.MethodExists(arg1))
                                 {
-                                    parse(arg1);
+                                    ParseString(arg1);
                                     arg1Result = __LastValue;
                                 }
-                                else if (VExists(arg1))
+                                else if (engine.VariableExists(arg1))
                                 {
-                                    if (isString(arg1))
-                                        arg1Result = GetVString(arg1);
-                                    else if (isNumber(arg1))
-                                        arg1Result = dtos(GetVNumber(arg1));
+                                    if (engine.IsStringVariable(arg1))
+                                        arg1Result = engine.GetVariableString(arg1);
+                                    else if (engine.IsNumberVariable(arg1))
+                                        arg1Result = StringHelper.DtoS(engine.GetVariableNumber(arg1));
                                     else
                                     {
                                         pass = false;
-                                        error(ErrorLogger.IS_NULL, arg1, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                                 else
@@ -3688,50 +3682,50 @@
                                     {
                                         if (arg2 == "==")
                                         {
-                                            if (stod(arg3Result) == stod(arg1Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg3Result) == StringHelper.StoD(arg1Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
-                                            if (stod(arg3Result) != stod(arg1Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg3Result) != StringHelper.StoD(arg1Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "<")
                                         {
-                                            if (stod(arg3Result) < stod(arg1Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg3Result) < StringHelper.StoD(arg1Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == ">")
                                         {
-                                            if (stod(arg3Result) > stod(arg1Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg3Result) > StringHelper.StoD(arg1Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "<=")
                                         {
-                                            if (stod(arg3Result) <= stod(arg1Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg3Result) <= StringHelper.StoD(arg1Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == ">=")
                                         {
-                                            if (stod(arg3Result) >= stod(arg1Result))
-                                                setFalseIf();
+                                            if (StringHelper.StoD(arg3Result) >= StringHelper.StoD(arg1Result))
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setTrueIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.SuccessfulIfStatement();
                                         }
                                     }
                                     else
@@ -3739,57 +3733,57 @@
                                         if (arg2 == "==")
                                         {
                                             if (arg3Result == arg1Result)
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
                                             if (arg3Result != arg1Result)
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                             else
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setTrueIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.SuccessfulIfStatement();
                                         }
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.METHOD_UNDEFINED, beforeParameters(arg3), false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, StringHelper.BeforeParameters(arg3), false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
-                            string arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
+                            string arg3before = (StringHelper.BeforeDot(arg3)), arg3after = (StringHelper.AfterDot(arg3));
 
-                            if (OExists(arg3before))
+                            if (engine.ObjectExists(arg3before))
                             {
-                                if (OMExists(arg3before, beforeParameters(arg3after)))
-                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
+                                if (engine.ObjectMethodExists(arg3before, StringHelper.BeforeParameters(arg3after)))
+                                    executeTemplate(engine.GetObjectMethod(arg3before, StringHelper.BeforeParameters(arg3after)), StringHelper.GetParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
-                                if (VExists(arg1))
+                                if (engine.VariableExists(arg1))
                                 {
-                                    if (isString(arg1))
-                                        arg1Result = GetVString(arg1);
-                                    else if (isNumber(arg3))
-                                        arg1Result = dtos(GetVNumber(arg1));
+                                    if (engine.IsStringVariable(arg1))
+                                        arg1Result = engine.GetVariableString(arg1);
+                                    else if (engine.IsNumberVariable(arg3))
+                                        arg1Result = StringHelper.DtoS(engine.GetVariableNumber(arg1));
                                     else
                                     {
-                                        error(ErrorLogger.IS_NULL, arg1, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
-                                else if (MExists(arg1))
+                                else if (engine.MethodExists(arg1))
                                 {
-                                    parse(arg1);
+                                    ParseString(arg1);
 
                                     arg1Result = __LastValue;
                                 }
@@ -3800,50 +3794,50 @@
                                 {
                                     if (arg2 == "==")
                                     {
-                                        if (stod(arg3Result) == stod(arg1Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg3Result) == StringHelper.StoD(arg1Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
-                                        if (stod(arg3Result) != stod(arg1Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg3Result) != StringHelper.StoD(arg1Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "<")
                                     {
-                                        if (stod(arg3Result) < stod(arg1Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg3Result) < StringHelper.StoD(arg1Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == ">")
                                     {
-                                        if (stod(arg3Result) > stod(arg1Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg3Result) > StringHelper.StoD(arg1Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "<=")
                                     {
-                                        if (stod(arg3Result) <= stod(arg1Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg3Result) <= StringHelper.StoD(arg1Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == ">=")
                                     {
-                                        if (stod(arg3Result) >= stod(arg1Result))
-                                            setFalseIf();
+                                        if (StringHelper.StoD(arg3Result) >= StringHelper.StoD(arg1Result))
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                                 else
@@ -3851,71 +3845,71 @@
                                     if (arg2 == "==")
                                     {
                                         if (arg3Result == arg1Result)
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
                                         if (arg3Result != arg1Result)
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                         else
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setTrueIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.SuccessfulIfStatement();
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                     }
                 }
-                else if ((MExists(arg1) && arg3 != "method?") || MExists(arg3))
+                else if ((engine.MethodExists(arg1) && arg3 != "method?") || engine.MethodExists(arg3))
                 {
                     string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                    if (MExists(arg1))
+                    if (engine.MethodExists(arg1))
                     {
-                        parse(arg1);
+                        ParseString(arg1);
                         arg1Result = __LastValue;
                     }
-                    else if (VExists(arg1))
+                    else if (engine.VariableExists(arg1))
                     {
-                        if (isString(arg1))
-                            arg1Result = GetVString(arg1);
-                        else if (isNumber(arg1))
-                            arg1Result = dtos(GetVNumber(arg1));
+                        if (engine.IsStringVariable(arg1))
+                            arg1Result = engine.GetVariableString(arg1);
+                        else if (engine.IsNumberVariable(arg1))
+                            arg1Result = StringHelper.DtoS(engine.GetVariableNumber(arg1));
                         else
                         {
-                            error(ErrorLogger.IS_NULL, arg1, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                     else
                         arg1Result = arg1;
 
-                    if (MExists(arg3))
+                    if (engine.MethodExists(arg3))
                     {
-                        parse(arg3);
+                        ParseString(arg3);
                         arg3Result = __LastValue;
                     }
-                    else if (VExists(arg3))
+                    else if (engine.VariableExists(arg3))
                     {
-                        if (isString(arg3))
-                            arg3Result = GetVString(arg3);
-                        else if (isNumber(arg3))
-                            arg3Result = dtos(GetVNumber(arg3));
+                        if (engine.IsStringVariable(arg3))
+                            arg3Result = engine.GetVariableString(arg3);
+                        else if (engine.IsNumberVariable(arg3))
+                            arg3Result = StringHelper.DtoS(engine.GetVariableNumber(arg3));
                         else
                         {
-                            error(ErrorLogger.IS_NULL, arg3, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, arg3, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                     else
@@ -3925,50 +3919,50 @@
                     {
                         if (arg2 == "==")
                         {
-                            if (stod(arg1Result) == stod(arg3Result))
-                                setFalseIf();
+                            if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (stod(arg1Result) != stod(arg3Result))
-                                setFalseIf();
+                            if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "<")
                         {
-                            if (stod(arg1Result) < stod(arg3Result))
-                                setFalseIf();
+                            if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == ">")
                         {
-                            if (stod(arg1Result) > stod(arg3Result))
-                                setFalseIf();
+                            if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (stod(arg1Result) <= stod(arg3Result))
-                                setFalseIf();
+                            if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (stod(arg1Result) >= stod(arg3Result))
-                                setFalseIf();
+                            if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                     else
@@ -3976,21 +3970,21 @@
                         if (arg2 == "==")
                         {
                             if (arg1Result == arg3Result)
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
                             if (arg1Result != arg3Result)
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                 }
@@ -3998,234 +3992,234 @@
                 {
                     if (arg3 == "object?")
                     {
-                        if (OExists(arg1))
+                        if (engine.ObjectExists(arg1))
                         {
                             if (arg2 == "==")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else if (arg2 == "!=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else if (arg2 == "!=")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                     }
                     else if (arg3 == "variable?")
                     {
-                        if (VExists(arg1))
+                        if (engine.VariableExists(arg1))
                         {
                             if (arg2 == "==")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else if (arg2 == "!=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else if (arg2 == "!")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                     }
                     else if (arg3 == "method?")
                     {
-                        if (MExists(arg1))
+                        if (engine.MethodExists(arg1))
                         {
                             if (arg2 == "==")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else if (arg2 == "!=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else if (arg2 == "!=")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                     }
                     else if (arg3 == "list?")
                     {
-                        if (LExists(arg1))
+                        if (engine.ListExists(arg1))
                         {
                             if (arg2 == "==")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else if (arg2 == "!=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else if (arg2 == "!=")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setTrueIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.SuccessfulIfStatement();
                             }
                         }
                     }
                     else if (arg2 == "==")
                     {
                         if (arg1 == arg3)
-                            setFalseIf();
+                            engine.FailedIfStatement();
                         else
-                            setTrueIf();
+                            engine.SuccessfulIfStatement();
                     }
                     else if (arg2 == "!=")
                     {
                         if (arg1 != arg3)
-                            setFalseIf();
+                            engine.FailedIfStatement();
                         else
-                            setTrueIf();
+                            engine.SuccessfulIfStatement();
                     }
                     else if (arg2 == ">")
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) > stod(arg3))
-                                setFalseIf();
+                            if (StringHelper.StoD(arg1) > StringHelper.StoD(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
                         {
                             if (arg1.Length > arg3.Length)
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                     }
                     else if (arg2 == "<")
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) < stod(arg3))
-                                setFalseIf();
+                            if (StringHelper.StoD(arg1) < StringHelper.StoD(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
                         {
                             if (arg1.Length < arg3.Length)
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                     }
                     else if (arg2 == ">=")
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) >= stod(arg3))
-                                setFalseIf();
+                            if (StringHelper.StoD(arg1) >= StringHelper.StoD(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setTrueIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.SuccessfulIfStatement();
                         }
                     }
                     else if (arg2 == "<=")
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) <= stod(arg3))
-                                setFalseIf();
+                            if (StringHelper.StoD(arg1) <= StringHelper.StoD(arg3))
+                                engine.FailedIfStatement();
                             else
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else if (arg2 == "begins_with")
                     {
-                        if (startsWith(arg1, arg3))
-                            setFalseIf();
+                        if (StringHelper.StringStartsWith(arg1, arg3))
+                            engine.FailedIfStatement();
                         else
-                            setTrueIf();
+                            engine.SuccessfulIfStatement();
                     }
                     else if (arg2 == "ends_with")
                     {
-                        if (endsWith(arg1, arg3))
-                            setFalseIf();
+                        if (StringHelper.StringEndsWith(arg1, arg3))
+                            engine.FailedIfStatement();
                         else
-                            setTrueIf();
+                            engine.SuccessfulIfStatement();
                     }
                     else if (arg2 == "contains")
                     {
-                        if (contains(arg1, arg3))
-                            setFalseIf();
+                        if (StringHelper.ContainsString(arg1, arg3))
+                            engine.FailedIfStatement();
                         else
-                            setTrueIf();
+                            engine.SuccessfulIfStatement();
                     }
                     else
                     {
-                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                        setTrueIf();
+                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                        engine.SuccessfulIfStatement();
                     }
                 }
             }
             else if (arg0 == "if")
             {
-                if (LExists(arg3))
+                if (engine.ListExists(arg3))
                 {
                     if (arg2 == "in")
                     {
                         string testString = ("[none]");
 
-                        if (VExists(arg1))
+                        if (engine.VariableExists(arg1))
                         {
-                            if (isString(arg1))
-                                testString = GetVString(arg1);
-                            else if (isNumber(arg1))
-                                testString = dtos(GetVNumber(arg1));
+                            if (engine.IsStringVariable(arg1))
+                                testString = engine.GetVariableString(arg1);
+                            else if (engine.IsNumberVariable(arg1))
+                                testString = StringHelper.DtoS(engine.GetVariableNumber(arg1));
                             else
-                                error(ErrorLogger.IS_NULL, arg1, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
                         }
                         else
                             testString = arg1;
@@ -4233,38 +4227,38 @@
                         if (testString != "[none]")
                         {
                             bool elementFound = false;
-                            for (int i = 0; i < GetLSize(arg3); i++)
+                            for (int i = 0; i < engine.GetListSize(arg3); i++)
                             {
-                                if (GetLLine(arg3, i) == testString)
+                                if (engine.GetListLine(arg3, i) == testString)
                                 {
                                     elementFound = true;
-                                    setTrueIf();
-                                    __LastValue = itos(i);
+                                    engine.SuccessfulIfStatement();
+                                    __LastValue = StringHelper.ItoS(i);
                                     break;
                                 }
                             }
 
                             if (!elementFound)
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
-                            setFalseIf();
+                            engine.FailedIfStatement();
                     }
                 }
-                else if (LExists(arg1) && arg3 != "list?")
+                else if (engine.ListExists(arg1) && arg3 != "list?")
                 {
                     if (arg2 == "contains")
                     {
                         string testString = ("[none]");
 
-                        if (VExists(arg3))
+                        if (engine.VariableExists(arg3))
                         {
-                            if (isString(arg3))
-                                testString = GetVString(arg3);
-                            else if (isNumber(arg3))
-                                testString = dtos(GetVNumber(arg3));
+                            if (engine.IsStringVariable(arg3))
+                                testString = engine.GetVariableString(arg3);
+                            else if (engine.IsNumberVariable(arg3))
+                                testString = StringHelper.DtoS(engine.GetVariableNumber(arg3));
                             else
-                                error(ErrorLogger.IS_NULL, arg3, false);
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg3, false);
                         }
                         else
                             testString = arg3;
@@ -4272,1057 +4266,1057 @@
                         if (testString != "[none]")
                         {
                             bool elementFound = false;
-                            for (int i = 0; i < GetLSize(arg1); i++)
+                            for (int i = 0; i < engine.GetListSize(arg1); i++)
                             {
-                                if (GetLLine(arg1, i) == testString)
+                                if (engine.GetListLine(arg1, i) == testString)
                                 {
                                     elementFound = true;
-                                    setTrueIf();
-                                    __LastValue = itos(i);
+                                    engine.SuccessfulIfStatement();
+                                    __LastValue = StringHelper.ItoS(i);
                                     break;
                                 }
                             }
 
                             if (!elementFound)
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
-                            setFalseIf();
+                            engine.FailedIfStatement();
                     }
                 }
-                else if (VExists(arg1) && VExists(arg3))
+                else if (engine.VariableExists(arg1) && engine.VariableExists(arg3))
                 {
-                    if (isString(arg1) && isString(arg3))
+                    if (engine.IsStringVariable(arg1) && engine.IsStringVariable(arg3))
                     {
                         if (arg2 == "==")
                         {
-                            if (GetVString(arg1) == GetVString(arg3))
-                                setTrueIf();
+                            if (engine.GetVariableString(arg1) == engine.GetVariableString(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (GetVString(arg1) != GetVString(arg3))
-                                setTrueIf();
+                            if (engine.GetVariableString(arg1) != engine.GetVariableString(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == ">")
                         {
-                            if (GetVString(arg1).Length > GetVString(arg3).Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg1).Length > engine.GetVariableString(arg3).Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "<")
                         {
-                            if (GetVString(arg1).Length < GetVString(arg3).Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg1).Length < engine.GetVariableString(arg3).Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (GetVString(arg1).Length <= GetVString(arg3).Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg1).Length <= engine.GetVariableString(arg3).Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (GetVString(arg1).Length >= GetVString(arg3).Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg1).Length >= engine.GetVariableString(arg3).Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "contains")
                         {
-                            if (contains(GetVString(arg1), GetVString(arg3)))
-                                setTrueIf();
+                            if (StringHelper.ContainsString(engine.GetVariableString(arg1), engine.GetVariableString(arg3)))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "ends_with")
                         {
-                            if (endsWith(GetVString(arg1), GetVString(arg3)))
-                                setTrueIf();
+                            if (StringHelper.StringEndsWith(engine.GetVariableString(arg1), engine.GetVariableString(arg3)))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "begins_with")
                         {
-                            if (startsWith(GetVString(arg1), GetVString(arg3)))
-                                setTrueIf();
+                            if (StringHelper.StringStartsWith(engine.GetVariableString(arg1), engine.GetVariableString(arg3)))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.FailedIfStatement();
                         }
                     }
-                    else if (isNumber(arg1) && isNumber(arg3))
+                    else if (engine.IsNumberVariable(arg1) && engine.IsNumberVariable(arg3))
                     {
                         if (arg2 == "==")
                         {
-                            if (GetVNumber(arg1) == GetVNumber(arg3))
-                                setTrueIf();
+                            if (engine.GetVariableNumber(arg1) == engine.GetVariableNumber(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (GetVNumber(arg1) != GetVNumber(arg3))
-                                setTrueIf();
+                            if (engine.GetVariableNumber(arg1) != engine.GetVariableNumber(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == ">")
                         {
-                            if (GetVNumber(arg1) > GetVNumber(arg3))
-                                setTrueIf();
+                            if (engine.GetVariableNumber(arg1) > engine.GetVariableNumber(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (GetVNumber(arg1) >= GetVNumber(arg3))
-                                setTrueIf();
+                            if (engine.GetVariableNumber(arg1) >= engine.GetVariableNumber(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "<")
                         {
-                            if (GetVNumber(arg1) < GetVNumber(arg3))
-                                setTrueIf();
+                            if (engine.GetVariableNumber(arg1) < engine.GetVariableNumber(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (GetVNumber(arg1) <= GetVNumber(arg3))
-                                setTrueIf();
+                            if (engine.GetVariableNumber(arg1) <= engine.GetVariableNumber(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else
                     {
-                        error(ErrorLogger.CONV_ERR, s, false);
-                        setFalseIf();
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                        engine.FailedIfStatement();
                     }
                 }
-                else if ((VExists(arg1) && !VExists(arg3)) && !MExists(arg3) && notObjectMethod(arg3) && !containsParameters(arg3))
+                else if ((engine.VariableExists(arg1) && !engine.VariableExists(arg3)) && !engine.MethodExists(arg3) && notObjectMethod(arg3) && !StringHelper.ContainsParameters(arg3))
                 {
-                    if (isNumber(arg1))
+                    if (engine.IsNumberVariable(arg1))
                     {
                         if (StringHelper.IsNumeric(arg3))
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVNumber(arg1) == stod(arg3))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) == StringHelper.StoD(arg3))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVNumber(arg1) != stod(arg3))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) != StringHelper.StoD(arg3))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVNumber(arg1) > stod(arg3))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) > StringHelper.StoD(arg3))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVNumber(arg1) < stod(arg3))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) < StringHelper.StoD(arg3))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVNumber(arg1) >= stod(arg3))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) >= StringHelper.StoD(arg3))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVNumber(arg1) <= stod(arg3))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) <= StringHelper.StoD(arg3))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else if (arg3 == "number?")
                         {
                             if (arg2 == "==")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else if (arg2 == "!=")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else
                     {
                         if (arg3 == "string?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else if (arg2 == "!=")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setFalseIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                         }
                         else if (arg3 == "number?")
                         {
-                            if (isNumber(arg1))
+                            if (engine.IsNumberVariable(arg1))
                             {
                                 if (arg2 == "==")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else if (arg2 == "!=")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setFalseIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                         }
                         else if (arg3 == "uppercase?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isUpper(GetVString(arg1)))
-                                        setTrueIf();
+                                    if (StringHelper.IsUppercase(engine.GetVariableString(arg1)))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isUpper(GetVString(arg1)))
-                                        setFalseIf();
+                                    if (StringHelper.IsUppercase(engine.GetVariableString(arg1)))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setFalseIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
                                 {
-                                    if (isUpper(arg2))
-                                        setFalseIf();
+                                    if (StringHelper.IsUppercase(arg2))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                         }
                         else if (arg3 == "lowercase?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isLower(GetVString(arg1)))
-                                        setTrueIf();
+                                    if (StringHelper.IsLowercase(engine.GetVariableString(arg1)))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isLower(GetVString(arg1)))
-                                        setFalseIf();
+                                    if (StringHelper.IsLowercase(engine.GetVariableString(arg1)))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setFalseIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
                                 {
-                                    if (isLower(arg2))
-                                        setFalseIf();
+                                    if (StringHelper.IsLowercase(arg2))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                         }
                         else if (arg3 == "file?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
-                                if (System.IO.File.Exists(GetVString(arg1)))
+                                if (System.IO.File.Exists(engine.GetVariableString(arg1)))
                                 {
                                     if (arg2 == "==")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else if (arg2 == "!=")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
                                 {
                                     if (arg2 == "!=")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.IS_NULL, arg1, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else if (arg3 == "dir?" || arg3 == "directory?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
-                                if (System.IO.Directory.Exists(GetVString(arg1)))
+                                if (System.IO.Directory.Exists(engine.GetVariableString(arg1)))
                                 {
                                     if (arg2 == "==")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else if (arg2 == "!=")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
                                 {
                                     if (arg2 == "!=")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.IS_NULL, arg1, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVString(arg1) == arg3)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1) == arg3)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVString(arg1) != arg3)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1) != arg3)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVString(arg1).Length > arg3.Length)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1).Length > arg3.Length)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVString(arg1).Length < arg3.Length)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1).Length < arg3.Length)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVString(arg1).Length >= arg3.Length)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1).Length >= arg3.Length)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVString(arg1).Length <= arg3.Length)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1).Length <= arg3.Length)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "contains")
                             {
-                                if (contains(GetVString(arg1), arg3))
-                                    setTrueIf();
+                                if (StringHelper.ContainsString(engine.GetVariableString(arg1), arg3))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "ends_with")
                             {
-                                if (endsWith(GetVString(arg1), arg3))
-                                    setTrueIf();
+                                if (StringHelper.StringEndsWith(engine.GetVariableString(arg1), arg3))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "begins_with")
                             {
-                                if (startsWith(GetVString(arg1), arg3))
-                                    setTrueIf();
+                                if (StringHelper.StringStartsWith(engine.GetVariableString(arg1), arg3))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                     }
                 }
-                else if ((VExists(arg1) && !VExists(arg3)) && !MExists(arg3) && notObjectMethod(arg3) && containsParameters(arg3))
+                else if ((engine.VariableExists(arg1) && !engine.VariableExists(arg3)) && !engine.MethodExists(arg3) && notObjectMethod(arg3) && StringHelper.ContainsParameters(arg3))
                 {
                     string stackValue = string.Empty;
 
-                    if (isStringStack(arg3))
-                        stackValue = getStringStack(arg3);
-                    else if (stackReady(arg3))
-                        stackValue = dtos(getStack(arg3));
+                    if (IsStringStack(arg3))
+                        stackValue = GetStringStack(arg3);
+                    else if (IsStackReady(arg3))
+                        stackValue = StringHelper.DtoS(GetStack(arg3));
                     else
                         stackValue = arg3;
 
-                    if (isNumber(arg1))
+                    if (engine.IsNumberVariable(arg1))
                     {
                         if (StringHelper.IsNumeric(stackValue))
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVNumber(arg1) == stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) == StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVNumber(arg1) != stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) != StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVNumber(arg1) > stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) > StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVNumber(arg1) < stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) < StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVNumber(arg1) >= stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) >= StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVNumber(arg1) <= stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg1) <= StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else if (stackValue == "number?")
                         {
                             if (arg2 == "==")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else if (arg2 == "!=")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else
                     {
                         if (stackValue == "string?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else if (arg2 == "!=")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setFalseIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                         }
                         else if (stackValue == "number?")
                         {
-                            if (isNumber(arg1))
+                            if (engine.IsNumberVariable(arg1))
                             {
                                 if (arg2 == "==")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else if (arg2 == "!=")
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setFalseIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
-                                    setTrueIf();
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                         }
                         else if (stackValue == "uppercase?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isUpper(GetVString(arg1)))
-                                        setTrueIf();
+                                    if (StringHelper.IsUppercase(engine.GetVariableString(arg1)))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isUpper(GetVString(arg1)))
-                                        setFalseIf();
+                                    if (StringHelper.IsUppercase(engine.GetVariableString(arg1)))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setFalseIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
                                 {
-                                    if (isUpper(arg2))
-                                        setFalseIf();
+                                    if (StringHelper.IsUppercase(arg2))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                         }
                         else if (stackValue == "lower?" || stackValue == "lowercase?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (isLower(GetVString(arg1)))
-                                        setTrueIf();
+                                    if (StringHelper.IsLowercase(engine.GetVariableString(arg1)))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (isLower(GetVString(arg1)))
-                                        setFalseIf();
+                                    if (StringHelper.IsLowercase(engine.GetVariableString(arg1)))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setFalseIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
                                 if (arg2 == "!=")
                                 {
-                                    if (isLower(arg2))
-                                        setFalseIf();
+                                    if (StringHelper.IsLowercase(arg2))
+                                        engine.FailedIfStatement();
                                     else
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                 }
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                         }
                         else if (stackValue == "file?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
-                                if (System.IO.File.Exists(GetVString(arg1)))
+                                if (System.IO.File.Exists(engine.GetVariableString(arg1)))
                                 {
                                     if (arg2 == "==")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else if (arg2 == "!=")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
                                 {
                                     if (arg2 == "!=")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.IS_NULL, arg1, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else if (stackValue == "directory?")
                         {
-                            if (isString(arg1))
+                            if (engine.IsStringVariable(arg1))
                             {
-                                if (System.IO.Directory.Exists(GetVString(arg1)))
+                                if (System.IO.Directory.Exists(engine.GetVariableString(arg1)))
                                 {
                                     if (arg2 == "==")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else if (arg2 == "!=")
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
                                 {
                                     if (arg2 == "!=")
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.IS_NULL, arg1, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVString(arg1) == stackValue)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1) == stackValue)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVString(arg1) != stackValue)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1) != stackValue)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVString(arg1).Length > stackValue.Length)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1).Length > stackValue.Length)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVString(arg1).Length < stackValue.Length)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1).Length < stackValue.Length)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVString(arg1).Length >= stackValue.Length)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1).Length >= stackValue.Length)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVString(arg1).Length <= stackValue.Length)
-                                    setTrueIf();
+                                if (engine.GetVariableString(arg1).Length <= stackValue.Length)
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "contains")
                             {
-                                if (contains(GetVString(arg1), stackValue))
-                                    setTrueIf();
+                                if (StringHelper.ContainsString(engine.GetVariableString(arg1), stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "ends_with")
                             {
-                                if (endsWith(GetVString(arg1), stackValue))
-                                    setTrueIf();
+                                if (StringHelper.StringEndsWith(engine.GetVariableString(arg1), stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "begins_with")
                             {
-                                if (startsWith(GetVString(arg1), stackValue))
-                                    setTrueIf();
+                                if (StringHelper.StringStartsWith(engine.GetVariableString(arg1), stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                     }
                 }
-                else if ((!VExists(arg1) && VExists(arg3)) && !MExists(arg1) && notObjectMethod(arg1) && !containsParameters(arg1))
+                else if ((!engine.VariableExists(arg1) && engine.VariableExists(arg3)) && !engine.MethodExists(arg1) && notObjectMethod(arg1) && !StringHelper.ContainsParameters(arg1))
                 {
-                    if (isNumber(arg3))
+                    if (engine.IsNumberVariable(arg3))
                     {
                         if (StringHelper.IsNumeric(arg1))
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVNumber(arg3) == stod(arg1))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) == StringHelper.StoD(arg1))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVNumber(arg3) != stod(arg1))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) != StringHelper.StoD(arg1))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVNumber(arg3) > stod(arg1))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) > StringHelper.StoD(arg1))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVNumber(arg3) < stod(arg1))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) < StringHelper.StoD(arg1))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVNumber(arg3) >= stod(arg1))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) >= StringHelper.StoD(arg1))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVNumber(arg3) <= stod(arg1))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) <= StringHelper.StoD(arg1))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else
                     {
                         if (arg2 == "==")
                         {
-                            if (GetVString(arg3) == arg1)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3) == arg1)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (GetVString(arg3) != arg1)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3) != arg1)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == ">")
                         {
-                            if (GetVString(arg3).Length > arg1.Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3).Length > arg1.Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "<")
                         {
-                            if (GetVString(arg3).Length < arg1.Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3).Length < arg1.Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (GetVString(arg3).Length >= arg1.Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3).Length >= arg1.Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (GetVString(arg3).Length <= arg1.Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3).Length <= arg1.Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.FailedIfStatement();
                         }
                     }
                 }
-                else if ((!VExists(arg1) && VExists(arg3)) && !MExists(arg1) && notObjectMethod(arg1) && containsParameters(arg1))
+                else if ((!engine.VariableExists(arg1) && engine.VariableExists(arg3)) && !engine.MethodExists(arg1) && notObjectMethod(arg1) && StringHelper.ContainsParameters(arg1))
                 {
                     string stackValue = string.Empty;
 
-                    if (isStringStack(arg1))
-                        stackValue = getStringStack(arg1);
-                    else if (stackReady(arg1))
-                        stackValue = dtos(getStack(arg1));
+                    if (IsStringStack(arg1))
+                        stackValue = GetStringStack(arg1);
+                    else if (IsStackReady(arg1))
+                        stackValue = StringHelper.DtoS(GetStack(arg1));
                     else
                         stackValue = arg1;
 
-                    if (isNumber(arg3))
+                    if (engine.IsNumberVariable(arg3))
                     {
                         if (StringHelper.IsNumeric(stackValue))
                         {
                             if (arg2 == "==")
                             {
-                                if (GetVNumber(arg3) == stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) == StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "!=")
                             {
-                                if (GetVNumber(arg3) != stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) != StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">")
                             {
-                                if (GetVNumber(arg3) > stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) > StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<")
                             {
-                                if (GetVNumber(arg3) < stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) < StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == ">=")
                             {
-                                if (GetVNumber(arg3) >= stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) >= StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else if (arg2 == "<=")
                             {
-                                if (GetVNumber(arg3) <= stod(stackValue))
-                                    setTrueIf();
+                                if (engine.GetVariableNumber(arg3) <= StringHelper.StoD(stackValue))
+                                    engine.SuccessfulIfStatement();
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else
                     {
                         if (arg2 == "==")
                         {
-                            if (GetVString(arg3) == stackValue)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3) == stackValue)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (GetVString(arg3) != stackValue)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3) != stackValue)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == ">")
                         {
-                            if (GetVString(arg3).Length > stackValue.Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3).Length > stackValue.Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "<")
                         {
-                            if (GetVString(arg3).Length < stackValue.Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3).Length < stackValue.Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (GetVString(arg3).Length >= stackValue.Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3).Length >= stackValue.Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (GetVString(arg3).Length <= stackValue.Length)
-                                setTrueIf();
+                            if (engine.GetVariableString(arg3).Length <= stackValue.Length)
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.FailedIfStatement();
                         }
                     }
                 }
-                else if (containsParameters(arg1) || containsParameters(arg3))
+                else if (StringHelper.ContainsParameters(arg1) || StringHelper.ContainsParameters(arg3))
                 {
-                    if (containsParameters(arg1) && containsParameters(arg3))
+                    if (StringHelper.ContainsParameters(arg1) && StringHelper.ContainsParameters(arg3))
                     {
-                        if (!zeroDots(arg1) && !zeroDots(arg3))
+                        if (!StringHelper.ZeroDots(arg1) && !StringHelper.ZeroDots(arg3))
                         {
-                            string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1)),
-                                arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
+                            string arg1before = (StringHelper.BeforeDot(arg1)), arg1after = (StringHelper.AfterDot(arg1)),
+                                arg3before = (StringHelper.BeforeDot(arg3)), arg3after = (StringHelper.AfterDot(arg3));
 
                             string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (OExists(arg1before) && OExists(arg3before))
+                            if (engine.ObjectExists(arg1before) && engine.ObjectExists(arg3before))
                             {
-                                if (OMExists(arg1before, beforeParameters(arg1after)))
-                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
+                                if (engine.ObjectMethodExists(arg1before, StringHelper.BeforeParameters(arg1after)))
+                                    executeTemplate(engine.GetObjectMethod(arg1before, StringHelper.BeforeParameters(arg1after)), StringHelper.GetParameters(arg1after));
 
                                 arg1Result = __LastValue;
 
-                                if (OMExists(arg3before, beforeParameters(arg3after)))
-                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
+                                if (engine.ObjectMethodExists(arg3before, StringHelper.BeforeParameters(arg3after)))
+                                    executeTemplate(engine.GetObjectMethod(arg3before, StringHelper.BeforeParameters(arg3after)), StringHelper.GetParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
@@ -5330,50 +5324,50 @@
                                 {
                                     if (arg2 == "==")
                                     {
-                                        if (stod(arg1Result) == stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
-                                        if (stod(arg1Result) != stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "<")
                                     {
-                                        if (stod(arg1Result) < stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == ">")
                                     {
-                                        if (stod(arg1Result) > stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "<=")
                                     {
-                                        if (stod(arg1Result) <= stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == ">=")
                                     {
-                                        if (stod(arg1Result) >= stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
@@ -5381,50 +5375,50 @@
                                     if (arg2 == "==")
                                     {
                                         if (arg1Result == arg3Result)
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
                                         if (arg1Result != arg3Result)
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                             }
                             else
                             {
-                                if (!OExists(arg1before))
-                                    error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
+                                if (!engine.ObjectExists(arg1before))
+                                    ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
 
-                                if (!OExists(arg3before))
-                                    error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
+                                if (!engine.ObjectExists(arg3before))
+                                    ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
 
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             }
                         }
-                        else if (!zeroDots(arg1) && zeroDots(arg3))
+                        else if (!StringHelper.ZeroDots(arg1) && StringHelper.ZeroDots(arg3))
                         {
-                            string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1));
+                            string arg1before = (StringHelper.BeforeDot(arg1)), arg1after = (StringHelper.AfterDot(arg1));
 
                             string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (OExists(arg1before))
+                            if (engine.ObjectExists(arg1before))
                             {
-                                if (OMExists(arg1before, beforeParameters(arg1after)))
-                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
+                                if (engine.ObjectMethodExists(arg1before, StringHelper.BeforeParameters(arg1after)))
+                                    executeTemplate(engine.GetObjectMethod(arg1before, StringHelper.BeforeParameters(arg1after)), StringHelper.GetParameters(arg1after));
 
                                 arg1Result = __LastValue;
 
-                                if (MExists(beforeParameters(arg3)))
-                                    executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
+                                if (engine.MethodExists(StringHelper.BeforeParameters(arg3)))
+                                    executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg3)), StringHelper.GetParameters(arg3));
 
                                 arg3Result = __LastValue;
 
@@ -5432,50 +5426,50 @@
                                 {
                                     if (arg2 == "==")
                                     {
-                                        if (stod(arg1Result) == stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
-                                        if (stod(arg1Result) != stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "<")
                                     {
-                                        if (stod(arg1Result) < stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == ">")
                                     {
-                                        if (stod(arg1Result) > stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "<=")
                                     {
-                                        if (stod(arg1Result) <= stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == ">=")
                                     {
-                                        if (stod(arg1Result) >= stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
@@ -5483,45 +5477,45 @@
                                     if (arg2 == "==")
                                     {
                                         if (arg1Result == arg3Result)
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
                                         if (arg1Result != arg3Result)
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
+                                engine.FailedIfStatement();
                             }
                         }
-                        else if (zeroDots(arg1) && !zeroDots(arg3))
+                        else if (StringHelper.ZeroDots(arg1) && !StringHelper.ZeroDots(arg3))
                         {
-                            string arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
+                            string arg3before = (StringHelper.BeforeDot(arg3)), arg3after = (StringHelper.AfterDot(arg3));
 
                             string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (OExists(arg3before))
+                            if (engine.ObjectExists(arg3before))
                             {
-                                if (OMExists(arg3before, beforeParameters(arg3after)))
-                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
+                                if (engine.ObjectMethodExists(arg3before, StringHelper.BeforeParameters(arg3after)))
+                                    executeTemplate(engine.GetObjectMethod(arg3before, StringHelper.BeforeParameters(arg3after)), StringHelper.GetParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
-                                if (MExists(beforeParameters(arg1)))
-                                    executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
+                                if (engine.MethodExists(StringHelper.BeforeParameters(arg1)))
+                                    executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg1)), StringHelper.GetParameters(arg1));
 
                                 arg1Result = __LastValue;
 
@@ -5529,50 +5523,50 @@
                                 {
                                     if (arg2 == "==")
                                     {
-                                        if (stod(arg1Result) == stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
-                                        if (stod(arg1Result) != stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "<")
                                     {
-                                        if (stod(arg1Result) < stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == ">")
                                     {
-                                        if (stod(arg1Result) > stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "<=")
                                     {
-                                        if (stod(arg1Result) <= stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == ">=")
                                     {
-                                        if (stod(arg1Result) >= stod(arg3Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
@@ -5580,41 +5574,41 @@
                                     if (arg2 == "==")
                                     {
                                         if (arg1Result == arg3Result)
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
                                         if (arg1Result != arg3Result)
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
                             string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                            if (MExists(beforeParameters(arg1)))
-                                executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
+                            if (engine.MethodExists(StringHelper.BeforeParameters(arg1)))
+                                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg1)), StringHelper.GetParameters(arg1));
 
                             arg1Result = __LastValue;
 
-                            if (MExists(beforeParameters(arg3)))
-                                executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
+                            if (engine.MethodExists(StringHelper.BeforeParameters(arg3)))
+                                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg3)), StringHelper.GetParameters(arg3));
 
                             arg3Result = __LastValue;
 
@@ -5622,50 +5616,50 @@
                             {
                                 if (arg2 == "==")
                                 {
-                                    if (stod(arg1Result) == stod(arg3Result))
-                                        setTrueIf();
+                                    if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
-                                    if (stod(arg1Result) != stod(arg3Result))
-                                        setTrueIf();
+                                    if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (arg2 == "<")
                                 {
-                                    if (stod(arg1Result) < stod(arg3Result))
-                                        setTrueIf();
+                                    if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (arg2 == ">")
                                 {
-                                    if (stod(arg1Result) > stod(arg3Result))
-                                        setTrueIf();
+                                    if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (arg2 == "<=")
                                 {
-                                    if (stod(arg1Result) <= stod(arg3Result))
-                                        setTrueIf();
+                                    if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (arg2 == ">=")
                                 {
-                                    if (stod(arg1Result) >= stod(arg3Result))
-                                        setTrueIf();
+                                    if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setFalseIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.FailedIfStatement();
                                 }
                             }
                             else
@@ -5673,55 +5667,55 @@
                                 if (arg2 == "==")
                                 {
                                     if (arg1Result == arg3Result)
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else if (arg2 == "!=")
                                 {
                                     if (arg1Result != arg3Result)
-                                        setTrueIf();
+                                        engine.SuccessfulIfStatement();
                                     else
-                                        setFalseIf();
+                                        engine.FailedIfStatement();
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                    setFalseIf();
+                                    ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                    engine.FailedIfStatement();
                                 }
                             }
                         }
                     }
-                    else if (containsParameters(arg1) && !containsParameters(arg3))
+                    else if (StringHelper.ContainsParameters(arg1) && !StringHelper.ContainsParameters(arg3))
                     {
                         string arg1Result = string.Empty, arg3Result = string.Empty;
 
                         bool pass = true;
 
-                        if (zeroDots(arg1))
+                        if (StringHelper.ZeroDots(arg1))
                         {
-                            if (MExists(beforeParameters(arg1)))
+                            if (engine.MethodExists(StringHelper.BeforeParameters(arg1)))
                             {
-                                executeTemplate(GetM(beforeParameters(arg1)), getParameters(arg1));
+                                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg1)), StringHelper.GetParameters(arg1));
 
                                 arg1Result = __LastValue;
 
-                                if (MExists(arg3))
+                                if (engine.MethodExists(arg3))
                                 {
-                                    parse(arg3);
+                                    ParseString(arg3);
                                     arg3Result = __LastValue;
                                 }
-                                else if (VExists(arg3))
+                                else if (engine.VariableExists(arg3))
                                 {
-                                    if (isString(arg3))
-                                        arg3Result = GetVString(arg3);
-                                    else if (isNumber(arg3))
-                                        arg3Result = dtos(GetVNumber(arg3));
+                                    if (engine.IsStringVariable(arg3))
+                                        arg3Result = engine.GetVariableString(arg3);
+                                    else if (engine.IsNumberVariable(arg3))
+                                        arg3Result = StringHelper.DtoS(engine.GetVariableNumber(arg3));
                                     else
                                     {
                                         pass = false;
-                                        error(ErrorLogger.IS_NULL, arg3, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg3, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
@@ -5733,50 +5727,50 @@
                                     {
                                         if (arg2 == "==")
                                         {
-                                            if (stod(arg1Result) == stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
-                                            if (stod(arg1Result) != stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "<")
                                         {
-                                            if (stod(arg1Result) < stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == ">")
                                         {
-                                            if (stod(arg1Result) > stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "<=")
                                         {
-                                            if (stod(arg1Result) <= stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == ">=")
                                         {
-                                            if (stod(arg1Result) >= stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setFalseIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.FailedIfStatement();
                                         }
                                     }
                                     else
@@ -5784,54 +5778,54 @@
                                         if (arg2 == "==")
                                         {
                                             if (arg1Result == arg3Result)
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
                                             if (arg1Result != arg3Result)
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setFalseIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.FailedIfStatement();
                                         }
                                     }
                                 }
                                 else
-                                    setFalseIf();
+                                    engine.FailedIfStatement();
                             }
-                            else if (stackReady(arg1))
+                            else if (IsStackReady(arg1))
                             {
                                 string stackValue = string.Empty;
 
-                                if (isStringStack(arg1))
-                                    stackValue = getStringStack(arg1);
+                                if (IsStringStack(arg1))
+                                    stackValue = GetStringStack(arg1);
                                 else
-                                    stackValue = dtos(getStack(arg1));
+                                    stackValue = StringHelper.DtoS(GetStack(arg1));
 
                                 string comp = string.Empty;
 
-                                if (VExists(arg3))
+                                if (engine.VariableExists(arg3))
                                 {
-                                    if (isString(arg3))
-                                        comp = GetVString(arg3);
-                                    else if (isNumber(arg3))
-                                        comp = dtos(GetVNumber(arg3));
+                                    if (engine.IsStringVariable(arg3))
+                                        comp = engine.GetVariableString(arg3);
+                                    else if (engine.IsNumberVariable(arg3))
+                                        comp = StringHelper.DtoS(engine.GetVariableNumber(arg3));
                                 }
-                                else if (MExists(arg3))
+                                else if (engine.MethodExists(arg3))
                                 {
-                                    parse(arg3);
+                                    ParseString(arg3);
 
                                     comp = __LastValue;
                                 }
-                                else if (containsParameters(arg3))
+                                else if (StringHelper.ContainsParameters(arg3))
                                 {
-                                    executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
+                                    executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg3)), StringHelper.GetParameters(arg3));
 
                                     comp = __LastValue;
                                 }
@@ -5842,50 +5836,50 @@
                                 {
                                     if (arg2 == "==")
                                     {
-                                        if (stod(stackValue) == stod(comp))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(stackValue) == StringHelper.StoD(comp))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
-                                        if (stod(stackValue) != stod(comp))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(stackValue) != StringHelper.StoD(comp))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "<")
                                     {
-                                        if (stod(stackValue) < stod(comp))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(stackValue) < StringHelper.StoD(comp))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == ">")
                                     {
-                                        if (stod(stackValue) > stod(comp))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(stackValue) > StringHelper.StoD(comp))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "<=")
                                     {
-                                        if (stod(stackValue) <= stod(comp))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(stackValue) <= StringHelper.StoD(comp))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == ">=")
                                     {
-                                        if (stod(stackValue) >= stod(comp))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(stackValue) >= StringHelper.StoD(comp))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
@@ -5893,57 +5887,57 @@
                                     if (arg2 == "==")
                                     {
                                         if (stackValue == comp)
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
                                         if (stackValue != comp)
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.METHOD_UNDEFINED, beforeParameters(arg1), false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, StringHelper.BeforeParameters(arg1), false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
-                            string arg1before = (beforeDot(arg1)), arg1after = (afterDot(arg1));
+                            string arg1before = (StringHelper.BeforeDot(arg1)), arg1after = (StringHelper.AfterDot(arg1));
 
-                            if (OExists(arg1before))
+                            if (engine.ObjectExists(arg1before))
                             {
-                                if (OMExists(arg1before, beforeParameters(arg1after)))
-                                    executeTemplate(GetOM(arg1before, beforeParameters(arg1after)), getParameters(arg1after));
+                                if (engine.ObjectMethodExists(arg1before, StringHelper.BeforeParameters(arg1after)))
+                                    executeTemplate(engine.GetObjectMethod(arg1before, StringHelper.BeforeParameters(arg1after)), StringHelper.GetParameters(arg1after));
 
                                 arg1Result = __LastValue;
 
-                                if (VExists(arg3))
+                                if (engine.VariableExists(arg3))
                                 {
-                                    if (isString(arg3))
-                                        arg3Result = GetVString(arg3);
-                                    else if (isNumber(arg3))
-                                        arg3Result = dtos(GetVNumber(arg3));
+                                    if (engine.IsStringVariable(arg3))
+                                        arg3Result = engine.GetVariableString(arg3);
+                                    else if (engine.IsNumberVariable(arg3))
+                                        arg3Result = StringHelper.DtoS(engine.GetVariableNumber(arg3));
                                     else
                                     {
                                         pass = false;
-                                        error(ErrorLogger.IS_NULL, arg3, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg3, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
-                                else if (MExists(arg3))
+                                else if (engine.MethodExists(arg3))
                                 {
-                                    parse(arg3);
+                                    ParseString(arg3);
 
                                     arg3Result = __LastValue;
                                 }
@@ -5956,50 +5950,50 @@
                                     {
                                         if (arg2 == "==")
                                         {
-                                            if (stod(arg1Result) == stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
-                                            if (stod(arg1Result) != stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "<")
                                         {
-                                            if (stod(arg1Result) < stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == ">")
                                         {
-                                            if (stod(arg1Result) > stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "<=")
                                         {
-                                            if (stod(arg1Result) <= stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == ">=")
                                         {
-                                            if (stod(arg1Result) >= stod(arg3Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setFalseIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.FailedIfStatement();
                                         }
                                     }
                                     else
@@ -6007,62 +6001,62 @@
                                         if (arg2 == "==")
                                         {
                                             if (arg1Result == arg3Result)
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
                                             if (arg1Result != arg3Result)
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setFalseIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.FailedIfStatement();
                                         }
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg1before, false);
+                                engine.FailedIfStatement();
                             }
                         }
                     }
-                    else if (!containsParameters(arg1) && containsParameters(arg3))
+                    else if (!StringHelper.ContainsParameters(arg1) && StringHelper.ContainsParameters(arg3))
                     {
                         string arg1Result = string.Empty, arg3Result = string.Empty;
 
                         bool pass = true;
 
-                        if (zeroDots(arg3))
+                        if (StringHelper.ZeroDots(arg3))
                         {
-                            if (MExists(beforeParameters(arg3)))
+                            if (engine.MethodExists(StringHelper.BeforeParameters(arg3)))
                             {
-                                executeTemplate(GetM(beforeParameters(arg3)), getParameters(arg3));
+                                executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(arg3)), StringHelper.GetParameters(arg3));
 
                                 arg3Result = __LastValue;
 
-                                if (MExists(arg1))
+                                if (engine.MethodExists(arg1))
                                 {
-                                    parse(arg1);
+                                    ParseString(arg1);
                                     arg1Result = __LastValue;
                                 }
-                                else if (VExists(arg1))
+                                else if (engine.VariableExists(arg1))
                                 {
-                                    if (isString(arg1))
-                                        arg1Result = GetVString(arg1);
-                                    else if (isNumber(arg1))
-                                        arg1Result = dtos(GetVNumber(arg1));
+                                    if (engine.IsStringVariable(arg1))
+                                        arg1Result = engine.GetVariableString(arg1);
+                                    else if (engine.IsNumberVariable(arg1))
+                                        arg1Result = StringHelper.DtoS(engine.GetVariableNumber(arg1));
                                     else
                                     {
                                         pass = false;
-                                        error(ErrorLogger.IS_NULL, arg1, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
@@ -6074,50 +6068,50 @@
                                     {
                                         if (arg2 == "==")
                                         {
-                                            if (stod(arg3Result) == stod(arg1Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg3Result) == StringHelper.StoD(arg1Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
-                                            if (stod(arg3Result) != stod(arg1Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg3Result) != StringHelper.StoD(arg1Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "<")
                                         {
-                                            if (stod(arg3Result) < stod(arg1Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg3Result) < StringHelper.StoD(arg1Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == ">")
                                         {
-                                            if (stod(arg3Result) > stod(arg1Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg3Result) > StringHelper.StoD(arg1Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "<=")
                                         {
-                                            if (stod(arg3Result) <= stod(arg1Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg3Result) <= StringHelper.StoD(arg1Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == ">=")
                                         {
-                                            if (stod(arg3Result) >= stod(arg1Result))
-                                                setTrueIf();
+                                            if (StringHelper.StoD(arg3Result) >= StringHelper.StoD(arg1Result))
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setFalseIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.FailedIfStatement();
                                         }
                                     }
                                     else
@@ -6125,57 +6119,57 @@
                                         if (arg2 == "==")
                                         {
                                             if (arg3Result == arg1Result)
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else if (arg2 == "!=")
                                         {
                                             if (arg3Result != arg1Result)
-                                                setTrueIf();
+                                                engine.SuccessfulIfStatement();
                                             else
-                                                setFalseIf();
+                                                engine.FailedIfStatement();
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                            setFalseIf();
+                                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                            engine.FailedIfStatement();
                                         }
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.METHOD_UNDEFINED, beforeParameters(arg3), false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, StringHelper.BeforeParameters(arg3), false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
-                            string arg3before = (beforeDot(arg3)), arg3after = (afterDot(arg3));
+                            string arg3before = (StringHelper.BeforeDot(arg3)), arg3after = (StringHelper.AfterDot(arg3));
 
-                            if (OExists(arg3before))
+                            if (engine.ObjectExists(arg3before))
                             {
-                                if (OMExists(arg3before, beforeParameters(arg3after)))
-                                    executeTemplate(GetOM(arg3before, beforeParameters(arg3after)), getParameters(arg3after));
+                                if (engine.ObjectMethodExists(arg3before, StringHelper.BeforeParameters(arg3after)))
+                                    executeTemplate(engine.GetObjectMethod(arg3before, StringHelper.BeforeParameters(arg3after)), StringHelper.GetParameters(arg3after));
 
                                 arg3Result = __LastValue;
 
-                                if (VExists(arg1))
+                                if (engine.VariableExists(arg1))
                                 {
-                                    if (isString(arg1))
-                                        arg1Result = GetVString(arg1);
-                                    else if (isNumber(arg3))
-                                        arg1Result = dtos(GetVNumber(arg1));
+                                    if (engine.IsStringVariable(arg1))
+                                        arg1Result = engine.GetVariableString(arg1);
+                                    else if (engine.IsNumberVariable(arg3))
+                                        arg1Result = StringHelper.DtoS(engine.GetVariableNumber(arg1));
                                     else
                                     {
-                                        error(ErrorLogger.IS_NULL, arg1, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
-                                else if (MExists(arg1))
+                                else if (engine.MethodExists(arg1))
                                 {
-                                    parse(arg1);
+                                    ParseString(arg1);
 
                                     arg1Result = __LastValue;
                                 }
@@ -6186,50 +6180,50 @@
                                 {
                                     if (arg2 == "==")
                                     {
-                                        if (stod(arg3Result) == stod(arg1Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg3Result) == StringHelper.StoD(arg1Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
-                                        if (stod(arg3Result) != stod(arg1Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg3Result) != StringHelper.StoD(arg1Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "<")
                                     {
-                                        if (stod(arg3Result) < stod(arg1Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg3Result) < StringHelper.StoD(arg1Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == ">")
                                     {
-                                        if (stod(arg3Result) > stod(arg1Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg3Result) > StringHelper.StoD(arg1Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "<=")
                                     {
-                                        if (stod(arg3Result) <= stod(arg1Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg3Result) <= StringHelper.StoD(arg1Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == ">=")
                                     {
-                                        if (stod(arg3Result) >= stod(arg1Result))
-                                            setTrueIf();
+                                        if (StringHelper.StoD(arg3Result) >= StringHelper.StoD(arg1Result))
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                                 else
@@ -6237,71 +6231,71 @@
                                     if (arg2 == "==")
                                     {
                                         if (arg3Result == arg1Result)
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else if (arg2 == "!=")
                                     {
                                         if (arg3Result != arg1Result)
-                                            setTrueIf();
+                                            engine.SuccessfulIfStatement();
                                         else
-                                            setFalseIf();
+                                            engine.FailedIfStatement();
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                        setFalseIf();
+                                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                        engine.FailedIfStatement();
                                     }
                                 }
                             }
                             else
                             {
-                                error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.OBJ_METHOD_UNDEFINED, arg3before, false);
+                                engine.FailedIfStatement();
                             }
                         }
                     }
                 }
-                else if ((MExists(arg1) && arg3 != "method?") || MExists(arg3))
+                else if ((engine.MethodExists(arg1) && arg3 != "method?") || engine.MethodExists(arg3))
                 {
                     string arg1Result = string.Empty, arg3Result = string.Empty;
 
-                    if (MExists(arg1))
+                    if (engine.MethodExists(arg1))
                     {
-                        parse(arg1);
+                        ParseString(arg1);
                         arg1Result = __LastValue;
                     }
-                    else if (VExists(arg1))
+                    else if (engine.VariableExists(arg1))
                     {
-                        if (isString(arg1))
-                            arg1Result = GetVString(arg1);
-                        else if (isNumber(arg1))
-                            arg1Result = dtos(GetVNumber(arg1));
+                        if (engine.IsStringVariable(arg1))
+                            arg1Result = engine.GetVariableString(arg1);
+                        else if (engine.IsNumberVariable(arg1))
+                            arg1Result = StringHelper.DtoS(engine.GetVariableNumber(arg1));
                         else
                         {
-                            error(ErrorLogger.IS_NULL, arg1, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else
                         arg1Result = arg1;
 
-                    if (MExists(arg3))
+                    if (engine.MethodExists(arg3))
                     {
-                        parse(arg3);
+                        ParseString(arg3);
                         arg3Result = __LastValue;
                     }
-                    else if (VExists(arg3))
+                    else if (engine.VariableExists(arg3))
                     {
-                        if (isString(arg3))
-                            arg3Result = GetVString(arg3);
-                        else if (isNumber(arg3))
-                            arg3Result = dtos(GetVNumber(arg3));
+                        if (engine.IsStringVariable(arg3))
+                            arg3Result = engine.GetVariableString(arg3);
+                        else if (engine.IsNumberVariable(arg3))
+                            arg3Result = StringHelper.DtoS(engine.GetVariableNumber(arg3));
                         else
                         {
-                            error(ErrorLogger.IS_NULL, arg3, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.IS_NULL, arg3, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else
@@ -6311,50 +6305,50 @@
                     {
                         if (arg2 == "==")
                         {
-                            if (stod(arg1Result) == stod(arg3Result))
-                                setTrueIf();
+                            if (StringHelper.StoD(arg1Result) == StringHelper.StoD(arg3Result))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
-                            if (stod(arg1Result) != stod(arg3Result))
-                                setTrueIf();
+                            if (StringHelper.StoD(arg1Result) != StringHelper.StoD(arg3Result))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "<")
                         {
-                            if (stod(arg1Result) < stod(arg3Result))
-                                setTrueIf();
+                            if (StringHelper.StoD(arg1Result) < StringHelper.StoD(arg3Result))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == ">")
                         {
-                            if (stod(arg1Result) > stod(arg3Result))
-                                setTrueIf();
+                            if (StringHelper.StoD(arg1Result) > StringHelper.StoD(arg3Result))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "<=")
                         {
-                            if (stod(arg1Result) <= stod(arg3Result))
-                                setTrueIf();
+                            if (StringHelper.StoD(arg1Result) <= StringHelper.StoD(arg3Result))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == ">=")
                         {
-                            if (stod(arg1Result) >= stod(arg3Result))
-                                setTrueIf();
+                            if (StringHelper.StoD(arg1Result) >= StringHelper.StoD(arg3Result))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else
@@ -6362,21 +6356,21 @@
                         if (arg2 == "==")
                         {
                             if (arg1Result == arg3Result)
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else if (arg2 == "!=")
                         {
                             if (arg1Result != arg3Result)
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.FailedIfStatement();
                         }
                     }
                 }
@@ -6384,215 +6378,215 @@
                 {
                     if (arg3 == "object?")
                     {
-                        if (OExists(arg1))
+                        if (engine.ObjectExists(arg1))
                         {
                             if (arg2 == "==")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else if (arg2 == "!=")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else if (arg2 == "!=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                     }
                     else if (arg3 == "variable?")
                     {
-                        if (VExists(arg1))
+                        if (engine.VariableExists(arg1))
                         {
                             if (arg2 == "==")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else if (arg2 == "!=")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else if (arg2 == "!=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                     }
                     else if (arg3 == "method?")
                     {
-                        if (MExists(arg1))
+                        if (engine.MethodExists(arg1))
                         {
                             if (arg2 == "==")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else if (arg2 == "!=")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else if (arg2 == "!=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                     }
                     else if (arg3 == "list?")
                     {
-                        if (LExists(arg1))
+                        if (engine.ListExists(arg1))
                         {
                             if (arg2 == "==")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else if (arg2 == "!=")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                         else
                         {
                             if (arg2 == "==")
-                                setFalseIf();
+                                engine.FailedIfStatement();
                             else if (arg2 == "!=")
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
                             {
-                                error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                                setFalseIf();
+                                ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                                engine.FailedIfStatement();
                             }
                         }
                     }
                     else if (arg2 == "==")
                     {
                         if (arg1 == arg3)
-                            setTrueIf();
+                            engine.SuccessfulIfStatement();
                         else
-                            setFalseIf();
+                            engine.FailedIfStatement();
                     }
                     else if (arg2 == "!=")
                     {
                         if (arg1 != arg3)
-                            setTrueIf();
+                            engine.SuccessfulIfStatement();
                         else
-                            setFalseIf();
+                            engine.FailedIfStatement();
                     }
                     else if (arg2 == ">")
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) > stod(arg3))
-                                setTrueIf();
+                            if (StringHelper.StoD(arg1) > StringHelper.StoD(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
                         {
                             if (arg1.Length > arg3.Length)
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                     }
                     else if (arg2 == "<")
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) < stod(arg3))
-                                setTrueIf();
+                            if (StringHelper.StoD(arg1) < StringHelper.StoD(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
                         {
                             if (arg1.Length < arg3.Length)
-                                setTrueIf();
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                     }
                     else if (arg2 == ">=")
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) >= stod(arg3))
-                                setTrueIf();
+                            if (StringHelper.StoD(arg1) >= StringHelper.StoD(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else if (arg2 == "<=")
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) <= stod(arg3))
-                                setTrueIf();
+                            if (StringHelper.StoD(arg1) <= StringHelper.StoD(arg3))
+                                engine.SuccessfulIfStatement();
                             else
-                                setFalseIf();
+                                engine.FailedIfStatement();
                         }
                         else
                         {
-                            error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                            setFalseIf();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                            engine.FailedIfStatement();
                         }
                     }
                     else if (arg2 == "begins_with")
                     {
-                        if (startsWith(arg1, arg3))
-                            setTrueIf();
+                        if (StringHelper.StringStartsWith(arg1, arg3))
+                            engine.SuccessfulIfStatement();
                         else
-                            setFalseIf();
+                            engine.FailedIfStatement();
                     }
                     else if (arg2 == "ends_with")
                     {
-                        if (endsWith(arg1, arg3))
-                            setTrueIf();
+                        if (StringHelper.StringEndsWith(arg1, arg3))
+                            engine.SuccessfulIfStatement();
                         else
-                            setFalseIf();
+                            engine.FailedIfStatement();
                     }
                     else if (arg2 == "contains")
                     {
-                        if (contains(arg1, arg3))
-                            setTrueIf();
+                        if (StringHelper.ContainsString(arg1, arg3))
+                            engine.SuccessfulIfStatement();
                         else
-                            setFalseIf();
+                            engine.FailedIfStatement();
                     }
                     else
                     {
-                        error(ErrorLogger.INVALID_OPERATOR, arg2, false);
-                        setFalseIf();
+                        ErrorLogger.Error(ErrorLogger.INVALID_OPERATOR, arg2, false);
+                        engine.FailedIfStatement();
                     }
                 }
             }
@@ -6600,253 +6594,253 @@
             {
                 if (arg2 == "<")
                 {
-                    if (VExists(arg1) && VExists(arg3))
+                    if (engine.VariableExists(arg1) && engine.VariableExists(arg3))
                     {
-                        if (isNumber(arg1) && isNumber(arg3))
+                        if (engine.IsNumberVariable(arg1) && engine.IsNumberVariable(arg3))
                         {
-                            if (GetVNumber(arg1) < GetVNumber(arg3))
-                                successfulFor(GetVNumber(arg1), GetVNumber(arg3), "<");
+                            if (engine.GetVariableNumber(arg1) < engine.GetVariableNumber(arg3))
+                                engine.SuccessfulForLoop(engine.GetVariableNumber(arg1), engine.GetVariableNumber(arg3), "<");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
-                    else if (VExists(arg1) && !VExists(arg3))
+                    else if (engine.VariableExists(arg1) && !engine.VariableExists(arg3))
                     {
-                        if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
+                        if (engine.IsNumberVariable(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (GetVNumber(arg1) < stod(arg3))
-                                successfulFor(GetVNumber(arg1), stod(arg3), "<");
+                            if (engine.GetVariableNumber(arg1) < StringHelper.StoD(arg3))
+                                engine.SuccessfulForLoop(engine.GetVariableNumber(arg1), StringHelper.StoD(arg3), "<");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
-                    else if (!VExists(arg1) && VExists(arg3))
+                    else if (!engine.VariableExists(arg1) && engine.VariableExists(arg3))
                     {
-                        if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
+                        if (StringHelper.IsNumeric(arg1) && engine.IsNumberVariable(arg3))
                         {
-                            if (stod(arg1) < GetVNumber(arg3))
-                                successfulFor(stod(arg1), GetVNumber(arg3), "<");
+                            if (StringHelper.StoD(arg1) < engine.GetVariableNumber(arg3))
+                                engine.SuccessfulForLoop(StringHelper.StoD(arg1), engine.GetVariableNumber(arg3), "<");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
                     else
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) < stod(arg3))
-                                successfulFor(stod(arg1), stod(arg3), "<");
+                            if (StringHelper.StoD(arg1) < StringHelper.StoD(arg3))
+                                engine.SuccessfulForLoop(StringHelper.StoD(arg1), StringHelper.StoD(arg3), "<");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
                 }
                 else if (arg2 == ">")
                 {
-                    if (VExists(arg1) && VExists(arg3))
+                    if (engine.VariableExists(arg1) && engine.VariableExists(arg3))
                     {
-                        if (isNumber(arg1) && isNumber(arg3))
+                        if (engine.IsNumberVariable(arg1) && engine.IsNumberVariable(arg3))
                         {
-                            if (GetVNumber(arg1) > GetVNumber(arg3))
-                                successfulFor(GetVNumber(arg1), GetVNumber(arg3), ">");
+                            if (engine.GetVariableNumber(arg1) > engine.GetVariableNumber(arg3))
+                                engine.SuccessfulForLoop(engine.GetVariableNumber(arg1), engine.GetVariableNumber(arg3), ">");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
-                    else if (VExists(arg1) && !VExists(arg3))
+                    else if (engine.VariableExists(arg1) && !engine.VariableExists(arg3))
                     {
-                        if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
+                        if (engine.IsNumberVariable(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (GetVNumber(arg1) > stod(arg3))
-                                successfulFor(GetVNumber(arg1), stod(arg3), ">");
+                            if (engine.GetVariableNumber(arg1) > StringHelper.StoD(arg3))
+                                engine.SuccessfulForLoop(engine.GetVariableNumber(arg1), StringHelper.StoD(arg3), ">");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
-                    else if (!VExists(arg1) && VExists(arg3))
+                    else if (!engine.VariableExists(arg1) && engine.VariableExists(arg3))
                     {
-                        if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
+                        if (StringHelper.IsNumeric(arg1) && engine.IsNumberVariable(arg3))
                         {
-                            if (stod(arg1) > GetVNumber(arg3))
-                                successfulFor(stod(arg1), GetVNumber(arg3), ">");
+                            if (StringHelper.StoD(arg1) > engine.GetVariableNumber(arg3))
+                                engine.SuccessfulForLoop(StringHelper.StoD(arg1), engine.GetVariableNumber(arg3), ">");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
                     else
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) > stod(arg3))
-                                successfulFor(stod(arg1), stod(arg3), ">");
+                            if (StringHelper.StoD(arg1) > StringHelper.StoD(arg3))
+                                engine.SuccessfulForLoop(StringHelper.StoD(arg1), StringHelper.StoD(arg3), ">");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
                 }
                 else if (arg2 == "<=")
                 {
-                    if (VExists(arg1) && VExists(arg3))
+                    if (engine.VariableExists(arg1) && engine.VariableExists(arg3))
                     {
-                        if (isNumber(arg1) && isNumber(arg3))
+                        if (engine.IsNumberVariable(arg1) && engine.IsNumberVariable(arg3))
                         {
-                            if (GetVNumber(arg1) <= GetVNumber(arg3))
-                                successfulFor(GetVNumber(arg1), GetVNumber(arg3), "<=");
+                            if (engine.GetVariableNumber(arg1) <= engine.GetVariableNumber(arg3))
+                                engine.SuccessfulForLoop(engine.GetVariableNumber(arg1), engine.GetVariableNumber(arg3), "<=");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
-                    else if (VExists(arg1) && !VExists(arg3))
+                    else if (engine.VariableExists(arg1) && !engine.VariableExists(arg3))
                     {
-                        if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
+                        if (engine.IsNumberVariable(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (GetVNumber(arg1) <= stod(arg3))
-                                successfulFor(GetVNumber(arg1), stod(arg3), "<=");
+                            if (engine.GetVariableNumber(arg1) <= StringHelper.StoD(arg3))
+                                engine.SuccessfulForLoop(engine.GetVariableNumber(arg1), StringHelper.StoD(arg3), "<=");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
-                    else if (!VExists(arg1) && VExists(arg3))
+                    else if (!engine.VariableExists(arg1) && engine.VariableExists(arg3))
                     {
-                        if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
+                        if (StringHelper.IsNumeric(arg1) && engine.IsNumberVariable(arg3))
                         {
-                            if (stod(arg1) <= GetVNumber(arg3))
-                                successfulFor(stod(arg1), GetVNumber(arg3), "<=");
+                            if (StringHelper.StoD(arg1) <= engine.GetVariableNumber(arg3))
+                                engine.SuccessfulForLoop(StringHelper.StoD(arg1), engine.GetVariableNumber(arg3), "<=");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
                     else
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) <= stod(arg3))
-                                successfulFor(stod(arg1), stod(arg3), "<=");
+                            if (StringHelper.StoD(arg1) <= StringHelper.StoD(arg3))
+                                engine.SuccessfulForLoop(StringHelper.StoD(arg1), StringHelper.StoD(arg3), "<=");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
                 }
                 else if (arg2 == ">=")
                 {
-                    if (VExists(arg1) && VExists(arg3))
+                    if (engine.VariableExists(arg1) && engine.VariableExists(arg3))
                     {
-                        if (isNumber(arg1) && isNumber(arg3))
+                        if (engine.IsNumberVariable(arg1) && engine.IsNumberVariable(arg3))
                         {
-                            if (GetVNumber(arg1) >= GetVNumber(arg3))
-                                successfulFor(GetVNumber(arg1), GetVNumber(arg3), ">=");
+                            if (engine.GetVariableNumber(arg1) >= engine.GetVariableNumber(arg3))
+                                engine.SuccessfulForLoop(engine.GetVariableNumber(arg1), engine.GetVariableNumber(arg3), ">=");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
-                    else if (VExists(arg1) && !VExists(arg3))
+                    else if (engine.VariableExists(arg1) && !engine.VariableExists(arg3))
                     {
-                        if (isNumber(arg1) && StringHelper.IsNumeric(arg3))
+                        if (engine.IsNumberVariable(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (GetVNumber(arg1) >= stod(arg3))
-                                successfulFor(GetVNumber(arg1), stod(arg3), ">=");
+                            if (engine.GetVariableNumber(arg1) >= StringHelper.StoD(arg3))
+                                engine.SuccessfulForLoop(engine.GetVariableNumber(arg1), StringHelper.StoD(arg3), ">=");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
-                    else if (!VExists(arg1) && VExists(arg3))
+                    else if (!engine.VariableExists(arg1) && engine.VariableExists(arg3))
                     {
-                        if (StringHelper.IsNumeric(arg1) && isNumber(arg3))
+                        if (StringHelper.IsNumeric(arg1) && engine.IsNumberVariable(arg3))
                         {
-                            if (stod(arg1) >= GetVNumber(arg3))
-                                successfulFor(stod(arg1), GetVNumber(arg3), ">=");
+                            if (StringHelper.StoD(arg1) >= engine.GetVariableNumber(arg3))
+                                engine.SuccessfulForLoop(StringHelper.StoD(arg1), engine.GetVariableNumber(arg3), ">=");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
                     else
                     {
                         if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                         {
-                            if (stod(arg1) >= stod(arg3))
-                                successfulFor(stod(arg1), stod(arg3), ">=");
+                            if (StringHelper.StoD(arg1) >= StringHelper.StoD(arg3))
+                                engine.SuccessfulForLoop(StringHelper.StoD(arg1), StringHelper.StoD(arg3), ">=");
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                         else
                         {
-                            error(ErrorLogger.CONV_ERR, s, false);
-                            failedFor();
+                            ErrorLogger.Error(ErrorLogger.CONV_ERR, s, false);
+                            engine.FailedForLoop();
                         }
                     }
                 }
@@ -6854,178 +6848,178 @@
                 {
                     if (arg1 == "var")
                     {
-                        string before = (beforeDot(arg3)), after = (afterDot(arg3));
+                        string before = (StringHelper.BeforeDot(arg3)), after = (StringHelper.AfterDot(arg3));
 
                         if (before == "args" && after == "size")
                         {
                             List newList = new();
 
                             for (int i = 0; i < args.Count; i++)
-                                newList.add(args[i]);
+                                newList.Add(args[i]);
 
-                            successfulFor(newList);
+                            engine.SuccessfulForLoop(newList);
                         }
-                        else if (OExists(before) && after == "get_methods")
+                        else if (engine.ObjectExists(before) && after == "get_methods")
                         {
                             List newList = new();
 
-                            System.Collections.Generic.List<Method> objMethods = GetOMList(before);
+                            System.Collections.Generic.List<Method> objMethods = engine.GetObjectMethodList(before);
 
                             for (int i = 0; i < objMethods.Count; i++)
-                                newList.add(objMethods[i].GetName());
+                                newList.Add(objMethods[i].GetName());
 
-                            successfulFor(newList);
+                            engine.SuccessfulForLoop(newList);
                         }
-                        else if (OExists(before) && after == "get_variables")
+                        else if (engine.ObjectExists(before) && after == "get_variables")
                         {
                             List newList = new();
 
-                            System.Collections.Generic.List<Variable> objVars = GetOVList(before);
+                            System.Collections.Generic.List<Variable> objVars = engine.GetObjectVariableList(before);
 
                             for (int i = 0; i < objVars.Count; i++)
-                                newList.add(objVars[i].name());
+                                newList.Add(objVars[i].Name);
 
-                            successfulFor(newList);
+                            engine.SuccessfulForLoop(newList);
                         }
-                        else if (VExists(before) && after == "length")
+                        else if (engine.VariableExists(before) && after == "length")
                         {
-                            if (isString(before))
+                            if (engine.IsStringVariable(before))
                             {
                                 List newList = new();
-                                string tempVarStr = GetVString(before);
+                                string tempVarStr = engine.GetVariableString(before);
                                 int len = tempVarStr.Length;
 
                                 for (int i = 0; i < len; i++)
                                 {
                                     string tempStr = string.Empty;
                                     tempStr += (tempVarStr[i]);
-                                    newList.add(tempStr);
+                                    newList.Add(tempStr);
                                 }
 
-                                successfulFor(newList);
+                                engine.SuccessfulForLoop(newList);
                             }
                         }
                         else
                         {
                             if (before.Length != 0 && after.Length != 0)
                             {
-                                if (VExists(before))
+                                if (engine.VariableExists(before))
                                 {
                                     if (after == "get_dirs")
                                     {
-                                        if (System.IO.Directory.Exists(GetVString(before)))
-                                            successfulFor(getDirectoryList(before, false));
+                                        if (System.IO.Directory.Exists(engine.GetVariableString(before)))
+                                            engine.SuccessfulForLoop(IOHelper.GetDirectoryList(before, false));
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
-                                            failedFor();
+                                            ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(before), false);
+                                            engine.FailedForLoop();
                                         }
                                     }
                                     else if (after == "get_files")
                                     {
-                                        if (System.IO.Directory.Exists(GetVString(before)))
-                                            successfulFor(getDirectoryList(before, true));
+                                        if (System.IO.Directory.Exists(engine.GetVariableString(before)))
+                                            engine.SuccessfulForLoop(IOHelper.GetDirectoryList(before, true));
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
-                                            failedFor();
+                                            ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(before), false);
+                                            engine.FailedForLoop();
                                         }
                                     }
                                     else if (after == "read")
                                     {
-                                        if (System.IO.File.Exists(GetVString(before)))
+                                        if (System.IO.File.Exists(engine.GetVariableString(before)))
                                         {
                                             List newList = new();
-                                            foreach (var line in System.IO.File.ReadAllLines(GetVString(before)))
+                                            foreach (var line in System.IO.File.ReadAllLines(engine.GetVariableString(before)))
                                             {
-                                                newList.add(line);
+                                                newList.Add(line);
                                             }
-                                            successfulFor(newList);
+                                            engine.SuccessfulForLoop(newList);
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, GetVString(before), false);
-                                            failedFor();
+                                            ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(before), false);
+                                            engine.FailedForLoop();
                                         }
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.METHOD_UNDEFINED, after, false);
-                                        failedFor();
+                                        ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, after, false);
+                                        engine.FailedForLoop();
                                     }
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.VAR_UNDEFINED, before, false);
-                                    failedFor();
+                                    ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, before, false);
+                                    engine.FailedForLoop();
                                 }
                             }
                             else
                             {
-                                if (LExists(arg3))
-                                    successfulFor(GetL(arg3));
+                                if (engine.ListExists(arg3))
+                                    engine.SuccessfulForLoop(engine.GetList(arg3));
                                 else
                                 {
-                                    error(ErrorLogger.LIST_UNDEFINED, arg3, false);
-                                    failedFor();
+                                    ErrorLogger.Error(ErrorLogger.LIST_UNDEFINED, arg3, false);
+                                    engine.FailedForLoop();
                                 }
                             }
                         }
                     }
-                    else if (containsParameters(arg3))
+                    else if (StringHelper.ContainsParameters(arg3))
                     {
                         System.Collections.Generic.List<string> rangeSpecifiers = new();
 
-                        rangeSpecifiers = getRange(arg3);
+                        rangeSpecifiers = StringHelper.GetRange(arg3);
 
                         if (rangeSpecifiers.Count == 2)
                         {
                             string firstRangeSpecifier = (rangeSpecifiers[0]), lastRangeSpecifier = (rangeSpecifiers[1]);
 
-                            if (VExists(firstRangeSpecifier))
+                            if (engine.VariableExists(firstRangeSpecifier))
                             {
-                                if (isNumber(firstRangeSpecifier))
-                                    firstRangeSpecifier = dtos(GetVNumber(firstRangeSpecifier));
+                                if (engine.IsNumberVariable(firstRangeSpecifier))
+                                    firstRangeSpecifier = StringHelper.DtoS(engine.GetVariableNumber(firstRangeSpecifier));
                                 else
-                                    failedFor();
+                                    engine.FailedForLoop();
                             }
 
-                            if (VExists(lastRangeSpecifier))
+                            if (engine.VariableExists(lastRangeSpecifier))
                             {
-                                if (isNumber(lastRangeSpecifier))
-                                    lastRangeSpecifier = dtos(GetVNumber(lastRangeSpecifier));
+                                if (engine.IsNumberVariable(lastRangeSpecifier))
+                                    lastRangeSpecifier = StringHelper.DtoS(engine.GetVariableNumber(lastRangeSpecifier));
                                 else
-                                    failedFor();
+                                    engine.FailedForLoop();
                             }
 
                             if (StringHelper.IsNumeric(firstRangeSpecifier) && StringHelper.IsNumeric(lastRangeSpecifier))
                             {
                                 __DefaultLoopSymbol = arg1;
 
-                                int ifrs = stoi(firstRangeSpecifier), ilrs = (stoi(lastRangeSpecifier));
+                                int ifrs = StringHelper.StoI(firstRangeSpecifier), ilrs = (StringHelper.StoI(lastRangeSpecifier));
 
                                 if (ifrs < ilrs)
-                                    successfulFor(stod(firstRangeSpecifier), stod(lastRangeSpecifier), "<=");
+                                    engine.SuccessfulForLoop(StringHelper.StoD(firstRangeSpecifier), StringHelper.StoD(lastRangeSpecifier), "<=");
                                 else if (ifrs > ilrs)
-                                    successfulFor(stod(firstRangeSpecifier), stod(lastRangeSpecifier), ">=");
+                                    engine.SuccessfulForLoop(StringHelper.StoD(firstRangeSpecifier), StringHelper.StoD(lastRangeSpecifier), ">=");
                                 else
-                                    failedFor();
+                                    engine.FailedForLoop();
                             }
                             else
-                                failedFor();
+                                engine.FailedForLoop();
                         }
                     }
-                    else if (containsBrackets(arg3))
+                    else if (StringHelper.ContainsBrackets(arg3))
                     {
-                        string before = (beforeBrackets(arg3));
+                        string before = (StringHelper.BeforeBrackets(arg3));
 
-                        if (VExists(before))
+                        if (engine.VariableExists(before))
                         {
-                            if (isString(before))
+                            if (engine.IsStringVariable(before))
                             {
-                                string tempVarString = (GetVString(before));
+                                string tempVarString = (engine.GetVariableString(before));
 
-                                System.Collections.Generic.List<string> range = getBracketRange(arg3);
+                                System.Collections.Generic.List<string> range = StringHelper.GetBracketRange(arg3);
 
                                 if (range.Count == 2)
                                 {
@@ -7035,77 +7029,77 @@
                                     {
                                         if (StringHelper.IsNumeric(rangeBegin) && StringHelper.IsNumeric(rangeEnd))
                                         {
-                                            if (stoi(rangeBegin) < stoi(rangeEnd))
+                                            if (StringHelper.StoI(rangeBegin) < StringHelper.StoI(rangeEnd))
                                             {
-                                                if ((int)tempVarString.Length >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                                if (tempVarString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                                 {
                                                     List newList = new("&l&i&s&t&");
 
-                                                    for (int i = stoi(rangeBegin); i <= stoi(rangeEnd); i++)
+                                                    for (int i = StringHelper.StoI(rangeBegin); i <= StringHelper.StoI(rangeEnd); i++)
                                                     {
                                                         string tempString = string.Empty;
                                                         tempString += (tempVarString[i]);
-                                                        newList.add(tempString);
+                                                        newList.Add(tempString);
                                                     }
 
                                                     __DefaultLoopSymbol = arg1;
 
-                                                    successfulFor(newList);
+                                                    engine.SuccessfulForLoop(newList);
 
-                                                    DeleteL("&l&i&s&t&");
+                                                    engine.DeleteList("&l&i&s&t&");
                                                 }
                                                 else
-                                                    error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                             }
-                                            else if (stoi(rangeBegin) > stoi(rangeEnd))
+                                            else if (StringHelper.StoI(rangeBegin) > StringHelper.StoI(rangeEnd))
                                             {
-                                                if ((int)tempVarString.Length >= stoi(rangeEnd) && stoi(rangeBegin) >= 0)
+                                                if (tempVarString.Length >= StringHelper.StoI(rangeEnd) && StringHelper.StoI(rangeBegin) >= 0)
                                                 {
                                                     List newList = new("&l&i&s&t&");
 
-                                                    for (int i = stoi(rangeBegin); i >= stoi(rangeEnd); i--)
+                                                    for (int i = StringHelper.StoI(rangeBegin); i >= StringHelper.StoI(rangeEnd); i--)
                                                     {
                                                         string tempString = string.Empty;
                                                         tempString += (tempVarString[i]);
-                                                        newList.add(tempString);
+                                                        newList.Add(tempString);
                                                     }
 
                                                     __DefaultLoopSymbol = arg1;
 
-                                                    successfulFor(newList);
+                                                    engine.SuccessfulForLoop(newList);
 
-                                                    DeleteL("&l&i&s&t&");
+                                                    engine.DeleteList("&l&i&s&t&");
                                                 }
                                                 else
-                                                    error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                             }
                                             else
-                                                error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                                ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                         }
                                         else
-                                            error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                            ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                     }
                                     else
-                                        error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
+                                        ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, rangeBegin + ".." + rangeEnd, false);
                                 }
                                 else
-                                    error(ErrorLogger.OUT_OF_BOUNDS, arg3, false);
+                                    ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, arg3, false);
                             }
                             else
                             {
-                                error(ErrorLogger.NULL_STRING, before, false);
-                                failedFor();
+                                ErrorLogger.Error(ErrorLogger.NULL_STRING, before, false);
+                                engine.FailedForLoop();
                             }
                         }
                     }
-                    else if (LExists(arg3))
+                    else if (engine.ListExists(arg3))
                     {
                         __DefaultLoopSymbol = arg1;
-                        successfulFor(GetL(arg3));
+                        engine.SuccessfulForLoop(engine.GetList(arg3));
                     }
-                    else if (!zeroDots(arg3))
+                    else if (!StringHelper.ZeroDots(arg3))
                     {
-                        string _b = (beforeDot(arg3)), _a = (afterDot(arg3));
+                        string _b = (StringHelper.BeforeDot(arg3)), _a = (StringHelper.AfterDot(arg3));
 
                         if (_b == "args" && _a == "size")
                         {
@@ -7113,220 +7107,220 @@
 
                             __DefaultLoopSymbol = arg1;
 
-                            for (int i = 0; i < (int)args.Count; i++)
-                                newList.add(args[i]);
+                            for (int i = 0; i < args.Count; i++)
+                                newList.Add(args[i]);
 
-                            successfulFor(newList);
+                            engine.SuccessfulForLoop(newList);
                         }
                         else if (_b == "env" && _a == "get_variables")
                         {
                             List newList = new();
 
-                            newList.add("cwd");
-                            newList.add("noctis");
-                            newList.add("os?");
-                            newList.add("user");
-                            newList.add("machine");
-                            newList.add("init_dir");
-                            newList.add("initial_directory");
-                            newList.add("am_or_pm");
-                            newList.add("now");
-                            newList.add("day_of_this_week");
-                            newList.add("day_of_this_month");
-                            newList.add("day_of_this_year");
-                            newList.add("month_of_this_year");
-                            newList.add("this_second");
-                            newList.add("this_minute");
-                            newList.add("this_hour");
-                            newList.add("this_month");
-                            newList.add("this_year");
-                            newList.add("empty_string");
-                            newList.add("empty_number");
-                            newList.add("last_error");
-                            newList.add("last_value");
-                            newList.add("get_members");
-                            newList.add("members");
+                            newList.Add("cwd");
+                            newList.Add("noctis");
+                            newList.Add("os?");
+                            newList.Add("user");
+                            newList.Add("machine");
+                            newList.Add("init_dir");
+                            newList.Add("initial_directory");
+                            newList.Add("am_or_pm");
+                            newList.Add("now");
+                            newList.Add("day_of_this_week");
+                            newList.Add("day_of_this_month");
+                            newList.Add("day_of_this_year");
+                            newList.Add("month_of_this_year");
+                            newList.Add("this_second");
+                            newList.Add("this_minute");
+                            newList.Add("this_hour");
+                            newList.Add("this_month");
+                            newList.Add("this_year");
+                            newList.Add("empty_string");
+                            newList.Add("empty_number");
+                            newList.Add("last_error");
+                            newList.Add("last_value");
+                            newList.Add("get_members");
+                            newList.Add("members");
 
                             __DefaultLoopSymbol = arg1;
-                            successfulFor(newList);
+                            engine.SuccessfulForLoop(newList);
                         }
-                        else if (OExists(_b) && _a == "get_methods")
+                        else if (engine.ObjectExists(_b) && _a == "get_methods")
                         {
                             List newList = new();
 
-                            System.Collections.Generic.List<Method> objMethods = GetOMList(_b);
+                            System.Collections.Generic.List<Method> objMethods = engine.GetObjectMethodList(_b);
 
-                            for (int i = 0; i < (int)objMethods.Count; i++)
-                                newList.add(objMethods[i].GetName());
+                            for (int i = 0; i < objMethods.Count; i++)
+                                newList.Add(objMethods[i].GetName());
 
                             __DefaultLoopSymbol = arg1;
-                            successfulFor(newList);
+                            engine.SuccessfulForLoop(newList);
                         }
-                        else if (OExists(_b) && _a == "get_variables")
+                        else if (engine.ObjectExists(_b) && _a == "get_variables")
                         {
                             List newList = new();
 
-                            System.Collections.Generic.List<Variable> objVars = GetOVList(_b);
+                            System.Collections.Generic.List<Variable> objVars = engine.GetObjectVariableList(_b);
 
-                            for (int i = 0; i < (int)objVars.Count; i++)
-                                newList.add(objVars[i].name());
+                            for (int i = 0; i < objVars.Count; i++)
+                                newList.Add(objVars[i].Name);
 
                             __DefaultLoopSymbol = arg1;
-                            successfulFor(newList);
+                            engine.SuccessfulForLoop(newList);
                         }
-                        else if (VExists(_b) && _a == "length")
+                        else if (engine.VariableExists(_b) && _a == "length")
                         {
-                            if (isString(_b))
+                            if (engine.IsStringVariable(_b))
                             {
                                 __DefaultLoopSymbol = arg1;
                                 List newList = new();
-                                string _t = GetVString(_b);
+                                string _t = engine.GetVariableString(_b);
                                 int _l = _t.Length;
 
                                 for (int i = 0; i < _l; i++)
                                 {
                                     string tmpStr = string.Empty;
                                     tmpStr += (_t[i]);
-                                    newList.add(tmpStr);
+                                    newList.Add(tmpStr);
                                 }
 
-                                successfulFor(newList);
+                                engine.SuccessfulForLoop(newList);
                             }
                         }
                         else
                         {
                             if (_b.Length != 0 && _a.Length != 0)
                             {
-                                if (VExists(_b))
+                                if (engine.VariableExists(_b))
                                 {
                                     if (_a == "get_dirs")
                                     {
-                                        if (System.IO.Directory.Exists(GetVString(_b)))
+                                        if (System.IO.Directory.Exists(engine.GetVariableString(_b)))
                                         {
                                             __DefaultLoopSymbol = arg1;
-                                            successfulFor(getDirectoryList(_b, false));
+                                            engine.SuccessfulForLoop(IOHelper.GetDirectoryList(_b, false));
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, GetVString(_b), false);
-                                            failedFor();
+                                            ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(_b), false);
+                                            engine.FailedForLoop();
                                         }
                                     }
                                     else if (_a == "get_files")
                                     {
-                                        if (System.IO.Directory.Exists(GetVString(_b)))
+                                        if (System.IO.Directory.Exists(engine.GetVariableString(_b)))
                                         {
                                             __DefaultLoopSymbol = arg1;
-                                            successfulFor(getDirectoryList(_b, true));
+                                            engine.SuccessfulForLoop(IOHelper.GetDirectoryList(_b, true));
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, GetVString(_b), false);
-                                            failedFor();
+                                            ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(_b), false);
+                                            engine.FailedForLoop();
                                         }
                                     }
                                     else if (_a == "read")
                                     {
-                                        if (System.IO.File.Exists(GetVString(_b)))
+                                        if (System.IO.File.Exists(engine.GetVariableString(_b)))
                                         {
                                             List newList = new();
 
-                                            foreach (var line in System.IO.File.ReadAllLines(GetVString(_b)))
+                                            foreach (var line in System.IO.File.ReadAllLines(engine.GetVariableString(_b)))
                                             {
-                                                newList.add(line);
+                                                newList.Add(line);
                                             }
 
                                             __DefaultLoopSymbol = arg1;
-                                            successfulFor(newList);
+                                            engine.SuccessfulForLoop(newList);
                                         }
                                         else
                                         {
-                                            error(ErrorLogger.READ_FAIL, GetVString(_b), false);
-                                            failedFor();
+                                            ErrorLogger.Error(ErrorLogger.READ_FAIL, engine.GetVariableString(_b), false);
+                                            engine.FailedForLoop();
                                         }
                                     }
                                     else
                                     {
-                                        error(ErrorLogger.METHOD_UNDEFINED, _a, false);
-                                        failedFor();
+                                        ErrorLogger.Error(ErrorLogger.METHOD_UNDEFINED, _a, false);
+                                        engine.FailedForLoop();
                                     }
                                 }
                                 else
                                 {
-                                    error(ErrorLogger.VAR_UNDEFINED, _b, false);
-                                    failedFor();
+                                    ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, _b, false);
+                                    engine.FailedForLoop();
                                 }
                             }
                         }
                     }
                     else
                     {
-                        error(ErrorLogger.INVALID_OP, s, false);
-                        failedFor();
+                        ErrorLogger.Error(ErrorLogger.INVALID_OP, s, false);
+                        engine.FailedForLoop();
                     }
                 }
                 else
                 {
-                    error(ErrorLogger.INVALID_OP, s, false);
-                    failedFor();
+                    ErrorLogger.Error(ErrorLogger.INVALID_OP, s, false);
+                    engine.FailedForLoop();
                 }
             }
             else if (arg0 == "while")
             {
-                if (VExists(arg1) && VExists(arg3))
+                if (engine.VariableExists(arg1) && engine.VariableExists(arg3))
                 {
-                    if (isNumber(arg1) && isNumber(arg3))
+                    if (engine.IsNumberVariable(arg1) && engine.IsNumberVariable(arg3))
                     {
                         if (arg2 == "<" || arg2 == "<=" || arg2 == ">=" || arg2 == ">" || arg2 == "==" || arg2 == "!=")
-                            successfullWhile(arg1, arg2, arg3);
+                            engine.SuccessfulWhileLoop(arg1, arg2, arg3);
                         else
                         {
-                            error(ErrorLogger.INVALID_OP, s, false);
-                            failedWhile();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OP, s, false);
+                            engine.FailedWhileLoop();
                         }
                     }
                     else
                     {
-                        error(ErrorLogger.CONV_ERR, arg1 + arg2 + arg3, false);
-                        failedWhile();
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg1 + arg2 + arg3, false);
+                        engine.FailedWhileLoop();
                     }
                 }
-                else if (StringHelper.IsNumeric(arg3) && VExists(arg1))
+                else if (StringHelper.IsNumeric(arg3) && engine.VariableExists(arg1))
                 {
-                    if (isNumber(arg1))
+                    if (engine.IsNumberVariable(arg1))
                     {
                         if (arg2 == "<" || arg2 == "<=" || arg2 == ">=" || arg2 == ">" || arg2 == "==" || arg2 == "!=")
-                            successfullWhile(arg1, arg2, arg3);
+                            engine.SuccessfulWhileLoop(arg1, arg2, arg3);
                         else
                         {
-                            error(ErrorLogger.INVALID_OP, s, false);
-                            failedWhile();
+                            ErrorLogger.Error(ErrorLogger.INVALID_OP, s, false);
+                            engine.FailedWhileLoop();
                         }
                     }
                     else
                     {
-                        error(ErrorLogger.CONV_ERR, arg1 + arg2 + arg3, false);
-                        failedWhile();
+                        ErrorLogger.Error(ErrorLogger.CONV_ERR, arg1 + arg2 + arg3, false);
+                        engine.FailedWhileLoop();
                     }
                 }
                 else if (StringHelper.IsNumeric(arg1) && StringHelper.IsNumeric(arg3))
                 {
                     if (arg2 == "<" || arg2 == "<=" || arg2 == ">=" || arg2 == ">" || arg2 == "==" || arg2 == "!=")
-                        successfullWhile(arg1, arg2, arg3);
+                        engine.SuccessfulWhileLoop(arg1, arg2, arg3);
                     else
                     {
-                        error(ErrorLogger.INVALID_OP, s, false);
-                        failedWhile();
+                        ErrorLogger.Error(ErrorLogger.INVALID_OP, s, false);
+                        engine.FailedWhileLoop();
                     }
                 }
                 else
                 {
-                    error(ErrorLogger.INVALID_OP, s, false);
-                    failedWhile();
+                    ErrorLogger.Error(ErrorLogger.INVALID_OP, s, false);
+                    engine.FailedWhileLoop();
                 }
             }
             else
-                sysExec(s, command);
+                RunExternalProcess(s, command);
         }
         #endregion
     }

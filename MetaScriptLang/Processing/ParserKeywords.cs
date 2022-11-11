@@ -1,5 +1,7 @@
 ﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Helpers;
+
     public partial class Parser
     {
 
@@ -10,7 +12,7 @@
                 + "clear_objects!;clear_variables!;else;end;exit;failif;leave!;"
                 + "no_methods?;no_objects?;no_variables?;parser;pass;private;public;try";
 
-            return !contains(standardZeroSpaceWords, arg);
+            return !StringHelper.ContainsString(standardZeroSpaceWords, arg);
         }
 
         bool notStandardOneSpace(string arg)
@@ -28,12 +30,12 @@
                 + "save;say;see;see_string;see_number;stdout;switch;"
                 + "template;unlock;";
 
-            return !contains(standardOneSpaceWords, arg);
+            return !StringHelper.ContainsString(standardOneSpaceWords, arg);
         }
 
         bool notStandardTwoSpace(string arg)
         {
-            return !contains("=;+=;-=;*=;%=;/=;**=;+;-;*;**;/;%;++=;--=;?;!", arg);
+            return !StringHelper.ContainsString("=;+=;-=;*=;%=;/=;**=;+;-;*;**;/;%;++=;--=;?;!", arg);
         }
     }
 }

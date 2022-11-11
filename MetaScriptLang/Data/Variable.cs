@@ -2,190 +2,119 @@
 {
     public class Variable
     {
-        private double numericValue = -Double.MaxValue;
-        private string stringValue = string.Empty, variableName = string.Empty;
-
-        private bool collectable = false,
-            isPrivate_ = false,
-            isPublic_ = false,
-            isIndestructible = false,
-            waitToAssign = false;
-
-        private void setAll(double numValue, string strValue)
+        private Variable(string name, string stringValue = "[null]", double numericValue = -Double.MaxValue, bool autoCollect = false)
         {
-            setVariable(numValue);
-            setVariable(strValue);
-            collectable = false;
-        }
+            this.Name = name;
+            this.AutoCollect = autoCollect;
+            this.Locked = false;
+            this.WaitingForAssignment = false;
 
-        public Variable()
-        {
-            setAll(-Double.MaxValue, "[null]");
-        }
-
-        public Variable(string name)
-        {
-            initialize(name);
-            setAll(-Double.MaxValue, "[null]");
-        }
-
-        public Variable(string name, string value)
-        {
-            initialize(name);
-
-            if (value == "null")
+            if (stringValue == "null")
             {
-                setAll(-Double.MaxValue, "[null]");
-                waitToAssign = true;
-            }
-            else
-                setAll(-Double.MaxValue, value);
-        }
-
-        public Variable(string name, double value)
-        {
-            initialize(name);
-            setAll(value, "[null]");
-        }
-
-        ~Variable() { }
-
-        public void collect()
-        {
-            collectable = true;
-        }
-
-        public void dontCollect()
-        {
-            collectable = false;
-        }
-
-        public bool garbage()
-        {
-            return collectable;
-        }
-
-        public void clear()
-        {
-            setAll(0, string.Empty);
-        }
-
-        public void setNull()
-        {
-            setAll(-Double.MaxValue, "[null]");
-            waitToAssign = true;
-        }
-
-        public void setName(string name)
-        {
-            variableName = name;
-        }
-
-        public bool waiting()
-        {
-            return (waitToAssign);
-        }
-
-        public void stopWait()
-        {
-            waitToAssign = false;
-        }
-
-        public void setVariable(double value)
-        {
-            if (waiting())
-            {
-                numericValue = value;
-                stringValue = "[null]";
-                waitToAssign = false;
+                SetAll(-Double.MaxValue, "[null]");
+                this.WaitingForAssignment = true;
             }
             else
             {
-                numericValue = 0.0;
-                numericValue = value;
+                SetAll(numericValue, stringValue);
             }
         }
 
-        public void setVariable(string value)
+        public static Variable Create(string name)
         {
-            if (waiting())
+            return new Variable(name);
+        }
+
+        public static Variable Create(string name, string value, bool autoCollect = false)
+        {
+            return new Variable(name, value, -Double.MaxValue, autoCollect);
+        }
+
+        public static Variable Create(string name, double value, bool autoCollect = false)
+        {
+            return new Variable(name, "[null]", value, autoCollect);
+        }
+
+        //public Variable(string name, string value, bool autoCollect = false)
+        //    : this(name, value, -Double.MaxValue, autoCollect)
+        //{
+        //}
+
+        //public Variable(string name, double value, bool autoCollect = false)
+        //    : this(name, "[null]", value, autoCollect)
+        //{
+        //}
+
+        public bool AutoCollect { get; set; }
+
+        public bool Locked { get; set; }
+
+        public bool Null => this.StringValue == "[null]" && this.NumberValue == -Double.MaxValue;
+
+        public string StringValue { get; set; }
+
+        public double NumberValue { get; set; }
+
+        public string Name { get; set; }
+
+        public bool WaitingForAssignment { get; set; }
+
+        public bool IsPublic { get; set; } = true;
+
+        public bool IsPrivate { get; set; }
+
+        public void SetValue(double value)
+        {
+            if (this.WaitingForAssignment)
             {
-                stringValue = value;
-                numericValue = -Double.MaxValue;
-                waitToAssign = false;
+                this.NumberValue = value;
+                this.StringValue = "[null]";
+                this.WaitingForAssignment = false;
             }
             else
-                stringValue = value;
+            {
+                this.NumberValue = 0.0;
+                this.NumberValue = value;
+            }
         }
 
-        public void setPrivate()
+        public void SetValue(string value)
         {
-            isPrivate_ = true;
-            isPublic_ = false;
+            if (this.WaitingForAssignment)
+            {
+                this.StringValue = value;
+                this.NumberValue = -Double.MaxValue;
+                this.WaitingForAssignment = false;
+            }
+            else
+            {
+                this.StringValue = value;
+            }
         }
 
-        public void setPublic()
+        private void SetAll(double numValue, string strValue, bool autoCollect = false)
         {
-            isPublic_ = true;
-            isPrivate_ = false;
+            this.AutoCollect = autoCollect;
+            SetValue(numValue);
+            SetValue(strValue);
         }
 
-        public bool isPublic()
+        public void Nullify()
         {
-            return (isPublic_);
+            SetAll(-Double.MaxValue, "[null]");
+            this.WaitingForAssignment = true;
         }
 
-        public bool isPrivate()
+        public void MakePrivate()
         {
-            return (isPrivate_);
+            this.IsPrivate = true;
+            this.IsPublic = false;
         }
 
-        public double getNumber()
+        public void MakePublic()
         {
-            return (numericValue);
-        }
-
-        public string getString()
-        {
-            return (stringValue);
-        }
-
-        public void initialize(string name)
-        {
-            variableName = name;
-            collectable = false;
-            isIndestructible = false;
-            waitToAssign = false;
-        }
-
-        public void setIndestructible()
-        {
-            isIndestructible = true;
-        }
-
-        public void setDestructible()
-        {
-            isIndestructible = false;
-        }
-
-        public bool indestructible()
-        {
-            return isIndestructible;
-        }
-
-        public bool isNullString()
-        {
-            return getString() == "[null]" && getNumber() == -Double.MaxValue;
-        }
-
-        public bool isNull()
-        {
-            return getString() == "[null]" && getNumber() == -Double.MaxValue;
-        }
-
-        public string name()
-        {
-            return variableName;
+            this.IsPrivate = false;
+            this.IsPublic = true;
         }
     }
 }

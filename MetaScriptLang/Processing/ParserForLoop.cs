@@ -1,9 +1,9 @@
-﻿using MetaScriptLang.Data;
-using MetaScriptLang.Logging;
-using System.Linq;
-
-namespace MetaScriptLang.Processing
+﻿namespace MetaScriptLang.Processing
 {
+    using MetaScriptLang.Data;
+    using MetaScriptLang.Helpers;
+    using MetaScriptLang.Logging;
+
     public partial class Parser
     {
         void forLoop(Method m)
@@ -12,7 +12,7 @@ namespace MetaScriptLang.Processing
 
             if (m.IsListLoop())
             {
-                int i = 0, stop = m.GetList().size();
+                int i = 0, stop = m.GetList().GetSize();
 
                 while (i < stop)
                 {
@@ -38,11 +38,11 @@ namespace MetaScriptLang.Processing
                                     buildSymbol = false;
                                     ended = true;
 
-                                    builder = subtractString(builder, "{");
+                                    builder = StringHelper.SubtractString(builder, "{");
 
                                     if (builder == m.GetSymbol())
                                     {
-                                        cleaned += (m.GetList().at(i));
+                                        cleaned += (m.GetList().GetItemAt(i));
                                     }
 
                                     builder = string.Empty;
@@ -71,7 +71,7 @@ namespace MetaScriptLang.Processing
                             }
                         }
 
-                        parse(cleaned);
+                        ParseString(cleaned);
                     }
 
                     i++;
@@ -92,7 +92,7 @@ namespace MetaScriptLang.Processing
                         for (; ; )
                         {
                             for (int z = 0; z < m.GetMethodSize(); z++)
-                                parse(m.GetLine(z));
+                                ParseString(m.GetLine(z));
 
                             if (__Breaking == true)
                             {
@@ -102,7 +102,7 @@ namespace MetaScriptLang.Processing
                         }
                     }
                     else
-                        error(ErrorLogger.INFINITE_LOOP, "", true);
+                        ErrorLogger.Error(ErrorLogger.INFINITE_LOOP, "", true);
                 }
                 else if (m.Start() < m.Stop())
                 {
@@ -132,10 +132,10 @@ namespace MetaScriptLang.Processing
                                         buildSymbol = false;
                                         ended = true;
 
-                                        builder = subtractString(builder, "{");
+                                        builder = StringHelper.SubtractString(builder, "{");
 
                                         if (builder == m.GetSymbol())
-                                            cleanString += (itos(start));
+                                            cleanString += (StringHelper.ItoS(start));
 
                                         builder = string.Empty;
                                     }
@@ -155,7 +155,7 @@ namespace MetaScriptLang.Processing
                                 }
                             }
 
-                            parse(cleanString);
+                            ParseString(cleanString);
                         }
 
                         start++;
@@ -195,10 +195,10 @@ namespace MetaScriptLang.Processing
                                         buildSymbol = false;
                                         ended = true;
 
-                                        builder = subtractString(builder, "{");
+                                        builder = StringHelper.SubtractString(builder, "{");
 
                                         if (builder == m.GetSymbol())
-                                            cleaned += (itos(start));
+                                            cleaned += (StringHelper.ItoS(start));
 
                                         builder = string.Empty;
                                     }
@@ -218,7 +218,7 @@ namespace MetaScriptLang.Processing
                                 }
                             }
 
-                            parse(cleaned);
+                            ParseString(cleaned);
                         }
 
                         start--;

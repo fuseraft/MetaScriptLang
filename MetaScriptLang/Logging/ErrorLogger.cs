@@ -1,5 +1,10 @@
 ﻿namespace MetaScriptLang.Logging
 {
+    using MetaScriptLang.Engine;
+    using MetaScriptLang.Engine.Memory;
+    using MetaScriptLang.Helpers;
+    using System.Runtime.CompilerServices;
+
     public class ErrorLogger
     {
         public const int IS_NULL = 0;
@@ -35,7 +40,56 @@
         public const int UNDEFINED = 30;
         public const int UNDEFINED_OS = 31;
 
-        public static string getErrorString(int errorType)
+        private static StateEngine _stateEngine = null;
+        private static GarbageCollector _gc = null;
+
+        public static void ConfigureStateEngine(StateEngine stateEngine)
+        {
+            _stateEngine = stateEngine;
+        }
+
+        public static void ConfigureGC(GarbageCollector gc)
+        {
+            _gc = gc;
+        }
+
+        public static void Error(int errorType, string errorInfo, bool quit)
+        {
+            System.Text.StringBuilder completeError = new();
+            completeError.Append("##\n# error:\t");
+            completeError.Append(ErrorLogger.GetErrorString(errorType));
+            completeError.Append(":\t");
+            completeError.Append(errorInfo);
+            completeError.Append("\n# line ");
+            completeError.Append(StringHelper.ItoS(_stateEngine.__CurrentLineNumber));
+            completeError.Append(":\t");
+            completeError.Append(_stateEngine.__CurrentLine);
+            completeError.Append("\n##\n");
+
+            if (_stateEngine.__ExecutedTryBlock)
+            {
+                _stateEngine.__RaiseCatchBlock = true;
+                _stateEngine.__LastError = completeError.ToString();
+            }
+            else
+            {
+                if (_stateEngine.__CaptureParse)
+                    _stateEngine.__ParsedOutput += completeError;
+                else
+                    _stateEngine.cerr = completeError.ToString();
+            }
+
+            if (!_stateEngine.__Negligence)
+            {
+                if (quit)
+                {
+                    _gc.ClearAll();
+                    System.Environment.Exit(0);
+                }
+            }
+        }
+
+        public static string GetErrorString(int errorType)
         {
             System.Text.StringBuilder errorString = new();
 

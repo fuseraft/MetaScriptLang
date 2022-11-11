@@ -1,9 +1,8 @@
-﻿using MetaScriptLang.Logging;
-using System.Numerics;
-using System.Runtime.Intrinsics;
-
-namespace MetaScriptLang.Data
+﻿namespace MetaScriptLang.Data
 {
+    using MetaScriptLang.Helpers;
+    using MetaScriptLang.Logging;
+
     public class Object
     {
         private System.Collections.Generic.List<Method> methods = new();
@@ -55,19 +54,19 @@ namespace MetaScriptLang.Data
 
         public void setPublic()
         {
-            if (methodExists(currentMethod))
+            if (MethodExists(currentMethod))
                 methods[methodAt(currentMethod)].SetPublic();
         }
 
         public void setPrivate()
         {
-            if (methodExists(currentMethod))
+            if (MethodExists(currentMethod))
                 methods[methodAt(currentMethod)].SetPrivate();
         }
 
         public void addToCurrentMethod(string line)
         {
-            if (methodExists(currentMethod))
+            if (MethodExists(currentMethod))
                 methods[methodAt(currentMethod)].AddLine(line);
             else
                 Logger.LogInfo("#!=add_to_currentMethod:undefined");
@@ -98,7 +97,7 @@ namespace MetaScriptLang.Data
         {
             for (int i = 0; i < variableSize(); i++)
             {
-                if (variables[i].name() == variableName)
+                if (variables[i].Name == variableName)
                     return i;
             }
 
@@ -116,7 +115,7 @@ namespace MetaScriptLang.Data
         public string getVariableName(int index)
         {
             if (index < variables.Count)
-                return variables[index].name();
+                return variables[index].Name;
 
             return "[undefined]";
         }
@@ -129,7 +128,7 @@ namespace MetaScriptLang.Data
 
         public void addVariable(Variable variable)
         {
-            if (!variable.isNull())
+            if (!variable.Null)
                 variables.Add(variable);
         }
 
@@ -164,7 +163,7 @@ namespace MetaScriptLang.Data
             clearVariables();
 
             for (int i = 0; i < oldVariables.Count; i++)
-                if (oldVariables[i].name() != variableName)
+                if (oldVariables[i].Name != variableName)
                     variables.Add(oldVariables[i]);
         }
 
@@ -187,10 +186,10 @@ namespace MetaScriptLang.Data
 
         public Variable getVariable(string variableName)
         {
-            Variable badVariable = new ($"[bad_var#{badVariables}]", "[null]");
+            Variable badVariable = Variable.Create($"[bad_var#{badVariables}]", "[null]");
 
             for (int i = 0; i < variables.Count; i++)
-                if (variables[i].name() == variableName)
+                if (variables[i].Name == variableName)
                     return variables[i];
 
             badVariables++;
@@ -211,7 +210,7 @@ namespace MetaScriptLang.Data
             objectName = name;
         }
 
-        public bool methodExists(string methodName)
+        public bool MethodExists(string methodName)
         {
             for (int i = 0; i < methods.Count; i++)
                 if (methods[i].GetName() == methodName)
@@ -225,10 +224,10 @@ namespace MetaScriptLang.Data
             return objectName;
         }
 
-        public bool variableExists(string variableName)
+        public bool VariableExists(string variableName)
         {
             for (int i = 0; i < variables.Count; i++)
-                if (variables[i].name() == variableName)
+                if (variables[i].Name == variableName)
                     return true;
 
             return false;
