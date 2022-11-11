@@ -126,6 +126,11 @@
                 }
             }
 
+            if (sb.Length > 0)
+            {
+                AddToken(sb, split);
+            }
+
             return split;
         }
 

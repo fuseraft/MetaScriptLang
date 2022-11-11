@@ -4,11 +4,20 @@ namespace Metal.Core.Parsing
     using Metal.Core.Engine;
     using Metal.Core.Parsing.Keywords;
     using Metal.Core.Typing.Enums;
+    using System.Text;
 
     public class Parser
     {
+        #region REPL
+        public static bool ReplEnabled = false;
+        private static int ReplWait = 0;
+        private static StringBuilder ReplText = new ();
+        #endregion
+
         public static ParserResult ParseScript(string script)
         {
+            var result = ParserResult.SuccessResult;
+
             try
             {
                 var metal = System.IO.File.ReadAllText(script);
@@ -17,20 +26,63 @@ namespace Metal.Core.Parsing
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex.Message);
+                result.Success = false;
             }
 
-            return new ParserResult
+            return result;
+        }
+
+        public static ParserResult ReplParse(string input)
+        {
+            var result = ParserResult.SuccessResult;
+
+            try
             {
-                Success = true
-            };
+                if (string.IsNullOrEmpty(input))
+                {
+                    return result;
+                }
+
+                TokenContainer container = Tokenizer.Tokenize(input);
+
+                if (container.Tokens.Any(t => KeywordLookup.IsTerminatorKeyword(t)))
+                {
+                    --ReplWait;
+                }
+                else if (container.Tokens.Any(t => KeywordLookup.IsBlockKeyword(t))) 
+                {
+                    ++ReplWait;
+                }
+
+                ReplText.AppendLine(input);
+
+                if (ReplWait == 0)
+                {
+                    ReplText.Append("exec_repl!");
+                    Parse(ReplText.ToString());
+                    ReplText.Clear();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.Message);
+                result.Success = false;
+            }
+
+            return result;
         }
 
         public static ParserResult Parse(string input)
         {
-            ParserResult result = new ();
-            
+            var result = ParserResult.SuccessResult;
+
             try
             {
+                if (string.IsNullOrEmpty(input))
+                {
+                    return result;
+                }
+
                 TokenContainer container = Tokenizer.Tokenize(input);
                 result = ParseTokenContainer(container);
             }
@@ -47,27 +99,34 @@ namespace Metal.Core.Parsing
 
         private static ParserResult ParseTokenContainer(TokenContainer container)
         {
+            var result = ParserResult.SuccessResult;
+
             while (!container.EndOfContainer)
             {
-                TypeDefinition currentType = State.CurrentTypeDefinition;
                 var current = container.Current();
                 var prev = container.PeekPrevious();
                 var next = container.PeekNext();
 
+                if (KeywordLookup.IsBangWord(current))
+                {
+                    result = ParseBangWord(current);
+                }
+
                 if (KeywordLookup.IsTerminatorKeyword(current))
                 {
-                    ParseTerminatorToken(current);
+                    result = ParseTerminatorToken(current);
                 }
-                else if (KeywordLookup.IsKeyword(current))
+
+                if (KeywordLookup.IsKeyword(current))
                 {
                     if (KeywordLookup.IsBlockKeyword(current))
                     {
-                        ParseBlockToken(container, current, next);
+                        result = ParseBlockToken(container, current, next);
                         continue;
                     }
                     else if (KeywordLookup.IsGrouper(current))
                     {
-                        ParseGrouperToken(container, current, prev, next);
+                        result = ParseGrouperToken(container, current, prev, next);
                     }
                 }
                 else
@@ -81,10 +140,13 @@ namespace Metal.Core.Parsing
                 container.Next();
             }
 
-            return new ParserResult
-            {
-                Success = true
-            };
+            return result;
+        }
+
+        private static ParserResult ParseBangWord(string bangWord)
+        {
+            // TODO.
+            return ParserResult.SuccessResult;
         }
 
         private static ParserResult ParseTerminatorToken(string terminatorToken)
@@ -94,10 +156,7 @@ namespace Metal.Core.Parsing
                 State.EndBlock();
             }
 
-            return new ParserResult
-            {
-                Success = true,
-            };
+            return ParserResult.SuccessResult;
         }
 
         private static ParserResult ParseGrouperToken(TokenContainer container, string current, string prev, string next)
@@ -130,10 +189,7 @@ namespace Metal.Core.Parsing
                 container.Skip(innerContainer.AmountMoved - 2);
             }
 
-            return new ParserResult
-            {
-                Success = true,
-            };
+            return ParserResult.SuccessResult;
         }
 
         private static ParserResult ParseMethodParameterGroup(TokenContainer container, string current, string prev)
@@ -164,10 +220,7 @@ namespace Metal.Core.Parsing
                 }
             }
 
-            return new ParserResult 
-            {
-                Success = true
-            };
+            return ParserResult.SuccessResult;
         }
 
         private static ParserResult ParseBlockToken(TokenContainer container, string blockToken, string nextToken)
@@ -198,10 +251,7 @@ namespace Metal.Core.Parsing
                 State.InheritFrom(container.Next());
             }
 
-            return new ParserResult
-            {
-                Success = true,
-            };
+            return ParserResult.SuccessResult;
         }
     }
 }

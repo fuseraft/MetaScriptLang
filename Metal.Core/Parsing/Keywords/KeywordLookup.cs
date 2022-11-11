@@ -15,6 +15,8 @@
             || IsMathBuiltin(word)
             || IsGrouper(word);
 
+        public static bool IsBangWord(string word) => word.EndsWith("!");
+
         public static bool IsModifierKeyword(string word) => ModifierKeywords.Contains(word);
 
         public static bool IsFlowKeyword(string word) => FlowKeywords.Contains(word);
