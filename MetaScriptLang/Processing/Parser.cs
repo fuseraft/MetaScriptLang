@@ -96,7 +96,7 @@
                             }
                         }
                         else if (engine.IsStringVariable(beforeBracket))
-                            setSubString(arg0, arg2, beforeBracket);
+                            SetSubstring(arg0, arg2, beforeBracket);
                         else
                             ErrorLogger.Error(ErrorLogger.LIST_UNDEFINED, beforeBracket, false);
                     }
@@ -277,7 +277,7 @@
                                     }
                                 }
                                 else
-                                    sysExec(s, command);
+                                    RunExternalProcess(s, command);
                             }
                             else
                                 ErrorLogger.Error(ErrorLogger.VAR_UNDEFINED, arg2, false);
@@ -1997,7 +1997,7 @@
                             ErrorLogger.Error(ErrorLogger.OUT_OF_BOUNDS, arg2, false);
                     }
                     else if (engine.VariableExists(beforeBracket))
-                        setSubString(arg0, arg2, beforeBracket);
+                        SetSubstring(arg0, arg2, beforeBracket);
                     else
                         ErrorLogger.Error(ErrorLogger.LIST_UNDEFINED, beforeBracket, false);
                 }
@@ -2089,7 +2089,7 @@
                                 engine.CreateStringVariable(arg0, __LastValue);
                         }
                         else
-                            sysExec(s, command);
+                            RunExternalProcess(s, command);
                     }
                     else if (engine.ObjectVariableExists(before, after))
                     {

@@ -106,7 +106,7 @@
         #endregion
 
         #region Script Runner
-        void runScript()
+        void RunScript()
         {
             for (int i = 0; i < engine.GetScriptSize(__CurrentScript); i++)
             {
@@ -141,7 +141,7 @@
             __CurrentScript = __PreviousScript;
         }
 
-        void loadScript(string script)
+        void LoadScript(string script)
         {
             string s = string.Empty;
             __CurrentScript = script;
@@ -173,12 +173,12 @@
 
             scripts.Add(script, newScript);
 
-            runScript();
+            RunScript();
         }
         #endregion
 
         #region External Process
-        int sysExec(string s, System.Collections.Generic.List<string> command)
+        int RunExternalProcess(string s, System.Collections.Generic.List<string> command)
         {
             /*string _cleaned;
 	        _cleaned = cleanstring(s);

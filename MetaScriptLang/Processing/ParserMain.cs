@@ -766,7 +766,7 @@
                                                     if (engine.ObjectMethodExists(before, StringHelper.BeforeParameters(after)))
                                                         executeTemplate(engine.GetObjectMethod(before, StringHelper.BeforeParameters(after)), StringHelper.GetParameters(after));
                                                     else
-                                                        sysExec(s, command);
+                                                        RunExternalProcess(s, command);
                                                 }
                                                 else if (engine.ObjectMethodExists(before, after))
                                                     executeMethod(engine.GetObjectMethod(before, after));
@@ -813,7 +813,7 @@
                                                         executeMethod(engine.GetObjectMethod(__CurrentMethodObject, after));
                                                 }
                                                 else
-                                                    sysExec(s, command);
+                                                    RunExternalProcess(s, command);
                                             }
                                         }
                                         else if (StringHelper.StringEndsWith(s, "::"))
@@ -837,7 +837,7 @@
                                             if (engine.MethodExists(StringHelper.BeforeParameters(s)))
                                                 executeTemplate(engine.GetMethod(StringHelper.BeforeParameters(s)), StringHelper.GetParameters(s));
                                             else
-                                                sysExec(s, command);
+                                                RunExternalProcess(s, command);
                                         }
                                     }
                                     else
@@ -846,7 +846,7 @@
                                 else if (size == 2)
                                 {
                                     if (notStandardOneSpace(command[0]))
-                                        sysExec(s, command);
+                                        RunExternalProcess(s, command);
                                     else
                                     {
                                         ParseOneSpaceString(command[0], command[1], s, command);
@@ -876,10 +876,10 @@
                                                 __DefaultLoopSymbol = "$";
                                             }
                                             else
-                                                sysExec(s, command);
+                                                RunExternalProcess(s, command);
                                         }
                                         else
-                                            sysExec(s, command);
+                                            RunExternalProcess(s, command);
                                     }
                                     else
                                         ParseTwoSpaceString(command[0], command[1], command[2], s, command);
@@ -900,13 +900,13 @@
                                             __DefaultLoopSymbol = "$";
                                         }
                                         else
-                                            sysExec(s, command);
+                                            RunExternalProcess(s, command);
                                     }
                                     else
-                                        sysExec(s, command);
+                                        RunExternalProcess(s, command);
                                 }
                                 else
-                                    sysExec(s, command);
+                                    RunExternalProcess(s, command);
                             }
                         }
                     }
@@ -1075,7 +1075,7 @@
                     engine.FailedIfStatement();
             }
             else
-                sysExec(s, command);
+                RunExternalProcess(s, command);
         }
         #endregion
 
@@ -1335,7 +1335,7 @@
                     if (StringHelper.IsScript(arg1))
                     {
                         __PreviousScript = __CurrentScript;
-                        loadScript(arg1);
+                        LoadScript(arg1);
                     }
                     else
                         ErrorLogger.Error(ErrorLogger.BAD_LOAD, arg1, true);
@@ -1411,12 +1411,12 @@
                 if (engine.VariableExists(arg1))
                 {
                     if (engine.IsStringVariable(arg1))
-                        sysExec(engine.GetVariableString(arg1), command);
+                        RunExternalProcess(engine.GetVariableString(arg1), command);
                     else
                         ErrorLogger.Error(ErrorLogger.IS_NULL, arg1, false);
                 }
                 else
-                    sysExec(arg1, command);
+                    RunExternalProcess(arg1, command);
             }
             else if (arg0 == "init_dir" || arg0 == "initial_directory")
             {
@@ -1872,7 +1872,7 @@
                 }
             }
             else
-                sysExec(s, command);
+                RunExternalProcess(s, command);
         }
         #endregion
 
@@ -7320,7 +7320,7 @@
                 }
             }
             else
-                sysExec(s, command);
+                RunExternalProcess(s, command);
         }
         #endregion
     }

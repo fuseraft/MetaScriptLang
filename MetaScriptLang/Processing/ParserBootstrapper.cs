@@ -28,7 +28,7 @@
                     __CurrentScript = opt;
                     args.Add(opt);
                     __ArgumentCount = args.Count;
-                    loadScript(opt);
+                    LoadScript(opt);
                 }
                 else if (StringHelper.IsArgument(opt, "h") || StringHelper.IsArgument(opt, "help"))
                     DisplayHelpInfo(noctis);
@@ -73,7 +73,7 @@
                         args.Add(opt);
                         args.Add(script);
                         __ArgumentCount = args.Count;
-                        loadScript(script);
+                        LoadScript(script);
                     }
                     else
                     {
@@ -92,7 +92,7 @@
                     if (StringHelper.IsScript(script))
                     {
                         __CurrentScript = script;
-                        loadScript(script);
+                        LoadScript(script);
                     }
                     else
                     {
@@ -122,7 +122,7 @@
                         args.Add(opt);
                         args.Add(script);
                         __ArgumentCount = args.Count;
-                        loadScript(opt);
+                        LoadScript(opt);
                     }
                     else
                     {
@@ -148,7 +148,7 @@
 
                     __ArgumentCount = args.Count;
 
-                    loadScript(opt);
+                    LoadScript(opt);
                 }
                 else
                 {
