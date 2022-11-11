@@ -4,15 +4,49 @@ namespace Metal.Core.Parsing
     using Metal.Core.Engine;
     using Metal.Core.Parsing.Keywords;
     using Metal.Core.Typing.Enums;
-    using System.Runtime.CompilerServices;
 
     public class Parser
     {
+        public static ParserResult ParseScript(string script)
+        {
+            try
+            {
+                var metal = System.IO.File.ReadAllText(script);
+                return Parse(metal);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.Message);
+            }
+
+            return new ParserResult
+            {
+                Success = true
+            };
+        }
+
         public static ParserResult Parse(string input)
         {
             ParserResult result = new ();
-            TokenContainer container = Tokenizer.Tokenize(input);
             
+            try
+            {
+                TokenContainer container = Tokenizer.Tokenize(input);
+                result = ParseTokenContainer(container);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.Message);
+                result.Success = false;
+            }
+
+            State.PrintState();
+
+            return result;
+        }
+
+        private static ParserResult ParseTokenContainer(TokenContainer container)
+        {
             while (!container.EndOfContainer)
             {
                 TypeDefinition currentType = State.CurrentTypeDefinition;
@@ -47,9 +81,10 @@ namespace Metal.Core.Parsing
                 container.Next();
             }
 
-            State.PrintState();
-
-            return result;
+            return new ParserResult
+            {
+                Success = true
+            };
         }
 
         private static ParserResult ParseTerminatorToken(string terminatorToken)
