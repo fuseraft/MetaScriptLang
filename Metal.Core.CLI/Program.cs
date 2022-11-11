@@ -9,7 +9,7 @@
         public static void Main(string[] args)
         {
             Module mod_MetalcoreLib = new ("MetalcoreLib");
-            Object o_StringContainer = new ("StringContainer", mod_MetalcoreLib);
+            Class o_StringContainer = new ("StringContainer", mod_MetalcoreLib);
             Method m_GetSize = new ("GetSize", o_StringContainer, Typing.Enums.ValueType.Number);
 
             StringBuilder script = new ();
@@ -18,6 +18,12 @@
             script.AppendLine("class Person                            ");
             script.AppendLine("  method greet(name = \"Scott\")        ");
             script.AppendLine("    println \"Hello! My name is {name}\"");
+            script.AppendLine("  end                                   ");
+            script.AppendLine("end                                     ");
+            script.AppendLine("                                        ");
+            script.AppendLine("class Developer < Person                ");
+            script.AppendLine("  method writeCode()                    ");
+            script.AppendLine("    println \"I am writing code.\"      ");
             script.AppendLine("  end                                   ");
             script.AppendLine("end                                     ");
             script.AppendLine("                                        ");

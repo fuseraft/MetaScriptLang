@@ -1,10 +1,10 @@
 ﻿namespace Metal.Core.Objects.Base
 {
-    public interface IModule
+    public interface IClass
     {
         string Name { get; set; }
 
-        IDictionary<string, Class> Classes { get; set; }
+        IDictionary<string, Property> Properties { get; set; }
 
         IDictionary<string, Method> Methods { get; set; }
 

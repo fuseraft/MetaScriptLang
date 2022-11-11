@@ -4,7 +4,7 @@
     {
         Script,
         Module,
-        Object,
+        Class,
         Method,
         Property,
         Variable,

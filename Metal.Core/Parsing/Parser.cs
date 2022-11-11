@@ -4,56 +4,127 @@ namespace Metal.Core.Parsing
     using Metal.Core.Engine;
     using Metal.Core.Parsing.Keywords;
     using Metal.Core.Typing.Enums;
+    using System.Runtime.CompilerServices;
 
     public class Parser
     {
+        public class ParseContainer
+        {
+            private int currentIndex = 0;
+            private int amountMoved = 0;
+
+            public ParseContainer(IList<string> strings)
+            {
+                Lines.AddRange(strings);
+            }
+
+            public int Length => Lines.Count;
+
+            public int CurrentIndex => currentIndex;
+
+            public bool EndOfContainer => CurrentIndex + 1 >= Length;
+
+            public int AmountMoved => amountMoved;
+
+            public string Current()
+            {
+                return Lines[currentIndex];
+            }
+
+            public string Next()
+            {
+                if (EndOfContainer)
+                {
+                    return string.Empty;
+                }
+
+                currentIndex++;
+                amountMoved++;
+                return Lines[currentIndex];
+            }
+
+            public string PeekPrevious()
+            {
+                if (currentIndex == 0)
+                {
+                    return string.Empty;
+                }
+
+                return Lines[currentIndex - 1];
+            }
+
+            public string PeekNext()
+            {
+                if (EndOfContainer)
+                {
+                    return string.Empty;
+                }
+
+                return Lines[currentIndex + 1];
+            }
+
+            public int Skip(int count)
+            {
+                var newIndex = CurrentIndex + count;
+
+                if (newIndex >= Length)
+                {
+                    return -1;
+                }
+
+                currentIndex = newIndex;
+                return count;
+            }
+
+            public List<string> Lines { get; } = new List<string>();
+        }
+
         public static ParserResult Parse(string input)
         {
             IList<string> strings = Tokenizer.Tokenize(input);
             ParserResult result = new ();
 
-            for (int si = 0; si < strings.Count; si++)
+            ParseContainer container = new (strings);
+            while (!container.EndOfContainer)
             {
-                string s = strings[si];
-                string n = si < strings.Count - 1 ? strings[si + 1] : string.Empty;
-                string l = si > 0 ? strings[si - 1] : string.Empty;
                 TypeDefinition currentType = State.CurrentTypeDefinition;
+                var current = container.Current();
+                var prev = container.PeekPrevious();
+                var next = container.PeekNext();
 
-                if (KeywordLookup.IsTerminatorKeyword(s))
+                if (KeywordLookup.IsTerminatorKeyword(current))
                 {
-                    result = HandleTerminatorToken(s);
+                    ParseTerminatorToken(current);
                 }
-                else if (KeywordLookup.IsKeyword(s))
+                else if (KeywordLookup.IsKeyword(current))
                 {
-                    if (KeywordLookup.IsBlockKeyword(s))
+                    if (KeywordLookup.IsBlockKeyword(current))
                     {
-                        result = HandleBlockToken(s, n);
-                        si++;
+                        ParseBlockToken(container, current, next);
+                        continue;
                     }
-                    else if (KeywordLookup.IsGrouper(s))
+                    else if (KeywordLookup.IsGrouper(current))
                     {
-                        var closeIndex = GetClosingGrouperToken(strings, si, s);
-                        result = HandleGrouperToken(strings, si, closeIndex, s, l);
+                        ParseGrouperToken(container, current, prev, next);
+                    }
+                }
+                else
+                {
+                    if (State.CurrentTypeDefinition == TypeDefinition.Method)
+                    {
+                        State.AddInstruction(current);
+                    }
+                }
 
-                        if (closeIndex != -1)
-                        {
-                            si += (closeIndex - si);
-                        }
-                    }
-                }
-                else 
-                {
-                    if (currentType == TypeDefinition.Method)
-                    {
-                        State.AddInstruction(s);
-                    }
-                }
+                container.Next();
             }
+
+            State.PrintState();
 
             return result;
         }
 
-        private static ParserResult HandleTerminatorToken(string terminatorToken)
+        private static ParserResult ParseTerminatorToken(string terminatorToken)
         {
             if (terminatorToken == "end")
             {
@@ -66,66 +137,34 @@ namespace Metal.Core.Parsing
             };
         }
 
-        private static int GetClosingGrouperToken(IList<string> strings, int si, string grouperToken)
+        private static ParserResult ParseGrouperToken(ParseContainer container, string current, string prev, string next)
         {
-            string search = grouperToken == "(" ? ")" : "]";
+            // Determine the closing grouper token.
+            string search = current == "(" ? ")" : "]";
 
-            for (int i = si; i < strings.Count; i++)
-            {
-                if (strings[i] == search)
-                {
-                    return i;
-                }
-            }
-
-            return -1;
-        }
-
-        private static ParserResult HandleGrouperToken(IList<string> strings, int si, int closeIndex, string grouperToken, string lastToken)
-        {
+            // Find all inner strings.
             IList<string> innerStrings = new List<string>();
-
-            switch (grouperToken)
+            while ((next = container.Next()) != search)
             {
-                case "(":
-                case "[":
-                    for (int i = si; i <= closeIndex; i++)
-                    {
-                        innerStrings.Add(strings[i]);
-                    }
+                if (container.EndOfContainer && string.IsNullOrEmpty(next))
+                {
                     break;
+                }
 
-                case ")":
-                case "]":
-                    break;
+                innerStrings.Add(next);
             }
 
+            // If inner strings were found, parse them.
             if (innerStrings.Count > 0)
             {
+                ParseContainer innerContainer = new(innerStrings);
+
                 if (State.CurrentTypeDefinition == TypeDefinition.Method)
                 {
-                    if (State.CurrentOwnerName == lastToken)
-                    {
-                        for (int i = 0; i < innerStrings.Count; i++)
-                        {
-                            string innerString = innerStrings[i];
-                            string nextInnerString = i < innerStrings.Count - 1 ? innerStrings[i + 1] : string.Empty;
-
-                            if (nextInnerString == "=")
-                            {
-                                string defaultValue = i + 1 < innerStrings.Count - 1 ? innerStrings[i + 2] : string.Empty;
-                                State.AddParameter(innerString, defaultValue);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        foreach (var innerString in innerStrings)
-                        {
-                            State.AddInstruction(innerString);
-                        }
-                    }
+                    ParseMethodParameterGroup(innerContainer, current, prev);
                 }
+
+                container.Skip(innerContainer.AmountMoved - 2);
             }
 
             return new ParserResult
@@ -134,7 +173,41 @@ namespace Metal.Core.Parsing
             };
         }
 
-        private static ParserResult HandleBlockToken(string blockToken, string nextToken)
+        private static ParserResult ParseMethodParameterGroup(ParseContainer container, string current, string prev)
+        {
+            // If the previous token is the method we are defining, then this is the method parameter list.
+            if (State.CurrentOwnerName == prev && current == "(")
+            {
+                while (!container.EndOfContainer)
+                {
+                    var innerCurrent = container.Current();
+                    var innerNext = container.Next();
+
+                    // Handle optional parameter.
+                    if (innerNext == "=")
+                    {
+                        var defaultValue = container.Next();
+                        State.AddParameter(innerCurrent, defaultValue);
+                    }
+                    // Handle next parameter.
+                    else if (innerNext == ",")
+                    {
+                        innerNext = container.Next();
+                    }
+                    else
+                    {
+                        State.AddParameter(innerCurrent);
+                    }
+                }
+            }
+
+            return new ParserResult 
+            {
+                Success = true
+            };
+        }
+
+        private static ParserResult ParseBlockToken(ParseContainer container, string blockToken, string nextToken)
         {
             switch (blockToken)
             {
@@ -142,11 +215,24 @@ namespace Metal.Core.Parsing
                     State.CreateModule(nextToken);
                     break;
                 case "class":
-                    State.CreateObject(nextToken);
+                    State.CreateClass(nextToken);
                     break;
                 case "method":
                     State.CreateMethod(nextToken);
                     break;
+            }
+
+            container.Skip(2);
+
+            // Handle inheritance.
+            if (container.Current() == "<")
+            {
+                if (State.CurrentTypeDefinition != TypeDefinition.Class)
+                {
+                    throw new Exception($"Syntax error. Inheritance operator found while defining type: {State.CurrentTypeDefinition}");
+                }
+
+                State.InheritFrom(container.Next());
             }
 
             return new ParserResult

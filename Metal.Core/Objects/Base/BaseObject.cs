@@ -18,7 +18,7 @@ namespace Metal.Core.Objects.Base
         }
 
         public virtual IObject Owner { get; set; }
-        public TypeDefinition Type { get; set; } = TypeDefinition.Object;
+        public TypeDefinition Type { get; set; } = TypeDefinition.Class;
         public string Name { get; set; } = string.Empty;
     }
 }

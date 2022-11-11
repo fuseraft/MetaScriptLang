@@ -3,7 +3,7 @@
     using Metal.Core.Objects.Base;
     using Metal.Core.Typing.Enums;
 
-    public class Module : BaseObject, IObject
+    public class Module : BaseObject, IObject, IModule, IClassContainer, IMethodContainer
     {
         public Module(string name) : base(name, null, TypeDefinition.Module)
         {
@@ -13,7 +13,7 @@
         {
         }
 
-        public IDictionary<string, Object> Objects { get; set; } = new Dictionary<string, Object>();
+        public IDictionary<string, Class> Classes { get; set; } = new Dictionary<string, Class>();
 
         public IDictionary<string, Method> Methods { get; set; } = new Dictionary<string, Method>();
 

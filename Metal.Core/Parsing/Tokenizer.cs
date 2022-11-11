@@ -23,12 +23,10 @@
                 // Not every ^ is handled...
                 if (c == '^' && n == '~')
                 {
-                    if (AddToken(sb, split))
-                    {
-                        newLine = true;
-                        si++;
-                        continue;
-                    }
+                    AddToken(sb, split);
+                    newLine = true;
+                    si++;
+                    continue;
                 }
                 else if (l == '\\' && c == '"')
                 {

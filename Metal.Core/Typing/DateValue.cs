@@ -5,5 +5,10 @@
     public class DateValue : IValue
     {
         public DateTime Value { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Value}";
+        }
     }
 }

@@ -20,6 +20,77 @@
         private static Stack<string> OwnerStack { get; set; } = new Stack<string>();
         private static Dictionary<string, IObject> Owners { get; set; } = new Dictionary<string, IObject>();
 
+        #region Printing State
+        public static void PrintState()
+        {
+            Console.WriteLine($"Global Modules: {Modules.Count}");
+            foreach (var key in Modules.Keys)
+            {
+                PrintState(Modules[key]);
+            }
+
+            Console.WriteLine("Script Internals:");
+            PrintState(Script);
+        }
+
+        public static void PrintState(IModule module)
+        {
+            Console.WriteLine($"  Module[{module.Name}],Variables={module.Variables.Count}");
+            foreach (var key in module.Variables.Keys)
+            {
+                PrintState(module.Variables[key]);
+            }
+
+            Console.WriteLine($"  Module[{module.Name}],Methods={module.Methods.Count}");
+            foreach (var key in module.Methods.Keys)
+            {
+                PrintState(module.Methods[key]);
+            }
+
+            Console.WriteLine($"  Module[{module.Name}],Classes={module.Classes.Count}");
+            foreach (var key in module.Classes.Keys)
+            {
+                PrintState(module.Classes[key]);
+            }
+        }
+
+        public static void PrintState(IClass obj)
+        {
+            Console.WriteLine($"    Class[{obj.Name}],Variables={obj.Variables.Count}");
+            foreach (var key in obj.Variables.Keys)
+            {
+                PrintState(obj.Variables[key]);
+            }
+
+            Console.WriteLine($"    Class[{obj.Name}],Methods={obj.Methods.Count}");
+            foreach (var key in obj.Methods.Keys)
+            {
+                PrintState(obj.Methods[key]);
+            }
+        }
+
+        public static void PrintState(IMethod method)
+        {
+            Console.WriteLine($"      Method[{method.Name}],Parameters={method.Parameters.Count}");
+            foreach (var parameter in method.Parameters)
+            {
+                PrintState(parameter);
+            }
+
+            Console.WriteLine($"      Method[{method.Name}],Instructions={method.Instructions.Count}");
+            for (var i = 0; i < method.Instructions.Count; i++)
+            {
+                Console.WriteLine($"         {i}:\t{method.Instructions[i]}");
+            }
+        }
+
+        public static void PrintState(IVariable v)
+        {
+            Console.WriteLine($"         Variable[{v.Name}],valueType={v.ValueType},value={v.Value}");
+        }
+        #endregion
+
+        #region Object Creation
         public static void CreateModule(string name)
         {
             IObject owner = GetCurrentOwner();
@@ -32,20 +103,19 @@
             }
         }
 
-        public static void CreateObject(string name)
+        public static void CreateClass(string name)
         {
             IObject owner = GetCurrentOwner();
-            Object obj = new(name, owner);
+            Class obj = new(name, owner);
 
-            if (owner is Script)
+            if (owner is IClassContainer)
             {
-                ((Script)owner).Objects.Add(name, obj);
+                ((IClassContainer)owner).Classes.Add(name, obj);
                 StartBlock(obj);
             }
-            else if (owner is Module)
+            else
             {
-                ((Module)owner).Objects.Add(name, obj);
-                StartBlock(obj);
+                throw new Exception($"Cannot create class in current owner [{owner.Name}] of type: {owner.Type}");
             }
         }
 
@@ -54,23 +124,38 @@
             IObject owner = GetCurrentOwner();
             Method method = new(name, owner);
             
-            if (owner is Script)
+            if (owner is IMethodContainer)
             {
-                ((Script)owner).Methods.Add(name, method);
+                ((IMethodContainer)owner).Methods.Add(name, method);
                 StartBlock(method);
             }
-            else if (owner is Module)
+            else
             {
-                ((Module)owner).Methods.Add(name, method);
-                StartBlock(method);
-            }
-            else if (owner is Object)
-            {
-                ((Object)owner).Methods.Add(name, method);
-                StartBlock(method);
+                throw new Exception($"Cannot create method in current owner [{owner.Name}] of type: {owner.Type}");
             }
         }
 
+        public static void InheritFrom(string name)
+        {
+            IDictionary<string, Class> classDefinitions = GetLoadedClassDefinitions();
+            
+            if (!classDefinitions.ContainsKey(name))
+            {
+                throw new Exception($"Inheritance error. Class not found: {name}");
+            }
+
+            IObject current = GetCurrentOwner();
+            Class parent = classDefinitions[name];
+
+            if (current is Class)
+            {
+                var cls = (Class)current;
+                cls.InheritFrom(parent);
+            }
+        }
+        #endregion
+
+        #region Ownership
         public static void EndBlock()
         {
             if (OwnerStack.Count > 1)
@@ -80,6 +165,26 @@
             }
         }
 
+        private static void StartBlock(IObject owner)
+        {
+            OwnerStack.Push(owner.Name);
+            Owners.Add(owner.Name, owner);
+        }
+
+        private static IObject GetCurrentOwner()
+        {
+            string ownerName = OwnerStack.Peek();
+
+            if (Owners.ContainsKey(ownerName))
+            {
+                return Owners[ownerName];
+            }
+
+            return null;
+        }
+        #endregion
+
+        #region Method Definition
         public static void AddParameter(string name, string defaultValue = "")
         {
             IObject owner = GetCurrentOwner();
@@ -128,23 +233,55 @@
                 ((Method)owner).Instructions.Add(instruction);
             }
         }
+        #endregion
 
-        private static void StartBlock(IObject owner)
+        #region Class Definitions
+        private static IDictionary<string, Class> GetLoadedClassDefinitions()
         {
-            OwnerStack.Push(owner.Name);
-            Owners.Add(owner.Name, owner);
-        }
+            IDictionary<string, Class> loadedClasses = new Dictionary<string, Class>();
 
-        private static IObject GetCurrentOwner()
-        {
-            string ownerName = OwnerStack.Peek();
+            // Check loaded modules.
+            LoadClassDefinitionsFromModuleDictionary(Modules, loadedClasses);
 
-            if (Owners.ContainsKey(ownerName))
+            // Check script modules.
+            LoadClassDefinitionsFromModuleDictionary(Script.Modules, loadedClasses);
+
+            // Check script classes.
+            foreach (var clsKey in Script.Classes.Keys)
             {
-                return Owners[ownerName];
+                loadedClasses.Add(clsKey, Script.Classes[clsKey]);
             }
 
-            return null;
+            return loadedClasses;
         }
+
+        private static void LoadClassDefinitionsFromModuleDictionary(IDictionary<string, Module> modules, IDictionary<string, Class> loadedClasses)
+        {
+            foreach (var key in modules.Keys)
+            {
+                var modClasses = GetClassDefinitionsFromModule(modules[key]);
+
+                foreach (var modClass in modClasses.Keys)
+                {
+                    loadedClasses.Add(modClass, modClasses[modClass]);
+                }
+            }
+        }
+
+        private static IDictionary<string, Class> GetClassDefinitionsFromModule(Module m)
+        {
+            IDictionary<string, Class> loadedClasses = new Dictionary<string, Class>();
+
+            foreach (var clsKey in m.Classes.Keys)
+            {
+                if (!loadedClasses.ContainsKey(clsKey))
+                {
+                    loadedClasses.Add(clsKey, m.Classes[clsKey]);
+                }
+            }
+
+            return loadedClasses;
+        }
+        #endregion
     }
 }
