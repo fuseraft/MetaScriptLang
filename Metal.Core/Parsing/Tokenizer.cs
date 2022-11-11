@@ -4,7 +4,12 @@
 
     public class Tokenizer
     {
-        public static IList<string> Tokenize(string input)
+        public static TokenContainer Tokenize(string input)
+        {
+            return new TokenContainer(TokenizeInternal(input));
+        }
+
+        private static IList<string> TokenizeInternal(string input)
         {
             StringBuilder sb = new StringBuilder();
             IList<string> split = new List<string>();

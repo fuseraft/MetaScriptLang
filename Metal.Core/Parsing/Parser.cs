@@ -8,83 +8,11 @@ namespace Metal.Core.Parsing
 
     public class Parser
     {
-        public class ParseContainer
-        {
-            private int currentIndex = 0;
-            private int amountMoved = 0;
-
-            public ParseContainer(IList<string> strings)
-            {
-                Lines.AddRange(strings);
-            }
-
-            public int Length => Lines.Count;
-
-            public int CurrentIndex => currentIndex;
-
-            public bool EndOfContainer => CurrentIndex + 1 >= Length;
-
-            public int AmountMoved => amountMoved;
-
-            public string Current()
-            {
-                return Lines[currentIndex];
-            }
-
-            public string Next()
-            {
-                if (EndOfContainer)
-                {
-                    return string.Empty;
-                }
-
-                currentIndex++;
-                amountMoved++;
-                return Lines[currentIndex];
-            }
-
-            public string PeekPrevious()
-            {
-                if (currentIndex == 0)
-                {
-                    return string.Empty;
-                }
-
-                return Lines[currentIndex - 1];
-            }
-
-            public string PeekNext()
-            {
-                if (EndOfContainer)
-                {
-                    return string.Empty;
-                }
-
-                return Lines[currentIndex + 1];
-            }
-
-            public int Skip(int count)
-            {
-                var newIndex = CurrentIndex + count;
-
-                if (newIndex >= Length)
-                {
-                    return -1;
-                }
-
-                currentIndex = newIndex;
-                return count;
-            }
-
-            public List<string> Lines { get; } = new List<string>();
-        }
-
         public static ParserResult Parse(string input)
         {
-            IList<string> strings = Tokenizer.Tokenize(input);
             ParserResult result = new ();
-
-            ParseContainer container = new (strings);
+            TokenContainer container = Tokenizer.Tokenize(input);
+            
             while (!container.EndOfContainer)
             {
                 TypeDefinition currentType = State.CurrentTypeDefinition;
@@ -137,7 +65,7 @@ namespace Metal.Core.Parsing
             };
         }
 
-        private static ParserResult ParseGrouperToken(ParseContainer container, string current, string prev, string next)
+        private static ParserResult ParseGrouperToken(TokenContainer container, string current, string prev, string next)
         {
             // Determine the closing grouper token.
             string search = current == "(" ? ")" : "]";
@@ -157,7 +85,7 @@ namespace Metal.Core.Parsing
             // If inner strings were found, parse them.
             if (innerStrings.Count > 0)
             {
-                ParseContainer innerContainer = new(innerStrings);
+                TokenContainer innerContainer = new(innerStrings);
 
                 if (State.CurrentTypeDefinition == TypeDefinition.Method)
                 {
@@ -173,7 +101,7 @@ namespace Metal.Core.Parsing
             };
         }
 
-        private static ParserResult ParseMethodParameterGroup(ParseContainer container, string current, string prev)
+        private static ParserResult ParseMethodParameterGroup(TokenContainer container, string current, string prev)
         {
             // If the previous token is the method we are defining, then this is the method parameter list.
             if (State.CurrentOwnerName == prev && current == "(")
@@ -207,7 +135,7 @@ namespace Metal.Core.Parsing
             };
         }
 
-        private static ParserResult ParseBlockToken(ParseContainer container, string blockToken, string nextToken)
+        private static ParserResult ParseBlockToken(TokenContainer container, string blockToken, string nextToken)
         {
             switch (blockToken)
             {
