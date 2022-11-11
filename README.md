@@ -1,2 +1,2 @@
-# MetaScriptLang
+# MetaL
 A metaprogramming language for .NET.
