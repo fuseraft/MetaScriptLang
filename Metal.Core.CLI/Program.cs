@@ -6,6 +6,11 @@
     {
         public static int Main(string[] args)
         {
+            args = new string[]
+            {
+                ".\\helloworld.metal",
+            };
+
             return args.Length > 0 ? ConsoleMode(args) : ReplMode();
         }
 

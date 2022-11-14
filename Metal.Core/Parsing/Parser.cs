@@ -92,7 +92,7 @@ namespace Metal.Core.Parsing
                 result.Success = false;
             }
 
-            State.PrintState();
+            StatePrinter.PrintState();
 
             return result;
         }
@@ -133,7 +133,7 @@ namespace Metal.Core.Parsing
                 {
                     if (State.CurrentTypeDefinition == TypeDefinition.Method)
                     {
-                        State.AddInstruction(current);
+                        StateManager.AddInstruction(current);
                     }
                 }
 
@@ -206,7 +206,7 @@ namespace Metal.Core.Parsing
                     if (innerNext == "=")
                     {
                         var defaultValue = container.Next();
-                        State.AddParameter(innerCurrent, defaultValue);
+                        StateManager.AddParameter(innerCurrent, defaultValue);
                     }
                     // Handle next parameter.
                     else if (innerNext == ",")
@@ -215,7 +215,7 @@ namespace Metal.Core.Parsing
                     }
                     else
                     {
-                        State.AddParameter(innerCurrent);
+                        StateManager.AddParameter(innerCurrent);
                     }
                 }
             }
@@ -228,13 +228,13 @@ namespace Metal.Core.Parsing
             switch (blockToken)
             {
                 case "module":
-                    State.CreateModule(nextToken);
+                    StateManager.CreateModule(nextToken);
                     break;
                 case "class":
-                    State.CreateClass(nextToken);
+                    StateManager.CreateClass(nextToken);
                     break;
                 case "method":
-                    State.CreateMethod(nextToken);
+                    StateManager.CreateMethod(nextToken);
                     break;
             }
 
@@ -248,7 +248,7 @@ namespace Metal.Core.Parsing
                     throw new Exception($"Syntax error. Inheritance operator found while defining type: {State.CurrentTypeDefinition}");
                 }
 
-                State.InheritFrom(container.Next());
+                StateManager.InheritFrom(container.Next());
             }
 
             return ParserResult.SuccessResult;
