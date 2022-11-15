@@ -1,4 +1,4 @@
-﻿namespace Metal.Core.Parsing
+﻿namespace Metal.Core.Parsing.Tokenization
 {
     using System.Text;
 

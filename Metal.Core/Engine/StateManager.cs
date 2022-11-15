@@ -161,6 +161,18 @@
         #endregion
 
         #region Object Retrieval
+        public static IClass GetClass(string name)
+        {
+            IObject search = State.FindObjectByName(name);
+
+            if (search is null || search is not Class)
+            {
+                throw new Exception($"Class undefined: {name}");
+            }
+
+            return (Class)search;
+        }
+
         public static IMethod GetMethod(string name)
         {
             IObject search = State.FindObjectByName(name);
@@ -173,16 +185,16 @@
             return (Method)search;
         }
 
-        public static IClass GetClass(string name)
+        public static IVariable GetVariable(string name)
         {
             IObject search = State.FindObjectByName(name);
 
-            if (search is null || search is not Class)
+            if (search is null || search is not Variable)
             {
-                throw new Exception($"Class undefined: {name}");
+                throw new Exception($"Variable undefined: {name}");
             }
 
-            return (Class)search;
+            return (Variable)search;
         }
         #endregion
     }
