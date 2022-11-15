@@ -1,14 +1,14 @@
 ﻿namespace Metal.Core.Engine
 {
-    using Metal.Core.Objects;
-    using Metal.Core.Objects.Base;
-    using Metal.Core.Typing.Enums;
+    using Metal.Core.TypeSystem.Objects;
+    using Metal.Core.TypeSystem.Objects.Base;
+    using Metal.Core.TypeSystem.Typing.Enums;
 
     public class State
     {
         static State()
         {
-            BeginBlock(Script);
+            PushOwner(Script);
         }
 
         public static Script Script { get; set; } = new Script("__INIT__");
@@ -19,20 +19,33 @@
         private static Stack<string> OwnerStack { get; set; } = new Stack<string>();
         private static Dictionary<string, IObject> Owners { get; set; } = new Dictionary<string, IObject>();
 
+        public static Dictionary<string, IObject> ObjectLookup { get; set; } = new Dictionary<string, IObject>();
+
         #region Ownership
-        public static void BeginBlock(IObject owner)
+        public static void PushOwner(IObject owner)
         {
             OwnerStack.Push(owner.Name);
             Owners.Add(owner.Name, owner);
+            PushLookup(owner);
         }
 
-        public static void EndBlock()
+        public static void PushLookup(IObject newObject)
+        {
+            ObjectLookup.Add(newObject.Name, newObject);
+        }
+
+        public static void PopOwner()
         {
             if (OwnerStack.Count > 1)
             {
                 var lastOwner = OwnerStack.Pop();
                 Owners.Remove(lastOwner);
             }
+        }
+
+        public static IObject FindObjectByName(string name)
+        {
+            return Owners.ContainsKey(name) ? Owners[name] : null;
         }
 
         public static IObject GetCurrentOwner()

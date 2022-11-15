@@ -1,6 +1,6 @@
 ﻿namespace Metal.Core.Engine
 {
-    using Metal.Core.Objects.Base;
+    using Metal.Core.TypeSystem.Objects.Base;
 
     public class StatePrinter
     {

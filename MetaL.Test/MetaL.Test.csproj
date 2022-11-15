@@ -27,6 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Metal.Core.Parsing\Metal.Core.Parsing.csproj" />
     <ProjectReference Include="..\Metal.Core\Metal.Core.csproj" />
   </ItemGroup>
 
