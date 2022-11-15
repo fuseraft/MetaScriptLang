@@ -3,6 +3,7 @@ namespace Metal.Core.Parsing
 {
     using Metal.Core.Engine;
     using Metal.Core.Parsing.Keywords;
+    using Metal.Core.Parsing.Tokenization;
     using Metal.Core.TypeSystem.Typing.Enums;
     using System.Text;
 
