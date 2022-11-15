@@ -1,55 +1,85 @@
-﻿using Metal.Core.Objects.Base;
-using Metal.Core.Objects;
-using Metal.Core.Typing;
-using Metal.Core.Typing.Enums;
-
-namespace Metal.Core.Engine
+﻿namespace Metal.Core.Engine
 {
+    using Metal.Core.TypeSystem.Objects.Base;
+    using Metal.Core.TypeSystem.Objects;
+    using Metal.Core.TypeSystem.Typing;
+
     public class StateManager
     {
         #region Object Creation
-        public static void CreateModule(string name)
+        public static IModule CreateModule(string name)
         {
             IObject owner = State.GetCurrentOwner();
-            Module module = new Module(name, owner);
 
-            if (owner is Script)
+            if (owner is not Script)
             {
-                ((Script)owner).Modules.Add(name, module);
-                State.BeginBlock(module);
+                throw new Exception($"Cannot create module in current owner[{owner.Name}] of type: {owner.Type}");
             }
+
+            Module module = new Module(name, owner);
+            ((Script)owner).Modules.Add(name, module);
+            State.PushOwner(module);
+
+            return module;
         }
 
-        public static void CreateClass(string name)
+        public static IClass CreateClass(string name)
         {
             IObject owner = State.GetCurrentOwner();
-            Class obj = new(name, owner);
-
-            if (owner is IClassContainer)
-            {
-                ((IClassContainer)owner).Classes.Add(name, obj);
-                State.BeginBlock(obj);
-            }
-            else
+            
+            if (owner is not IClassContainer)
             {
                 throw new Exception($"Cannot create class in current owner [{owner.Name}] of type: {owner.Type}");
             }
+
+            Class obj = new(name, owner);
+            ((IClassContainer)owner).Classes.Add(name, obj);
+            State.PushOwner(obj);
+
+            return obj;
         }
 
-        public static void CreateMethod(string name)
+        public static IMethod CreateMethod(string name)
         {
             IObject owner = State.GetCurrentOwner();
-            Method method = new(name, owner);
 
-            if (owner is IMethodContainer)
-            {
-                ((IMethodContainer)owner).Methods.Add(name, method);
-                State.BeginBlock(method);
-            }
-            else
+            if (owner is not IMethodContainer)
             {
                 throw new Exception($"Cannot create method in current owner [{owner.Name}] of type: {owner.Type}");
             }
+
+            Method method = new(name, owner);
+            ((IMethodContainer)owner).Methods.Add(name, method);
+            State.PushOwner(method);
+            return method;
+        }
+
+        public static IVariable CreateVariable(string name, TypeSystem.Typing.Enums.ValueType valueType, TypeSystem.Typing.Base.IValue value)
+        {
+            IObject owner = State.GetCurrentOwner();
+
+            if (owner is not IVariableContainer)
+            {
+                throw new Exception($"Cannot create variable in current owner [{owner.Name}] of type: {owner.Type}");
+            }
+
+            Variable variable = new (name, owner, valueType, value);
+            State.PushLookup(variable);
+            return variable;
+        }
+
+        public static IProperty CreateProperty(string name, TypeSystem.Typing.Enums.ValueType valueType)
+        {
+            IObject owner = State.GetCurrentOwner();
+
+            if (owner is not IPropertyContainer)
+            {
+                throw new Exception($"Cannot create property in current owner [{owner.Name}] of type: {owner.Type}");
+            }
+
+            Property property = new(name, valueType);
+            State.PushLookup(property);
+            return property;
         }
 
         public static void InheritFrom(string name)
@@ -80,12 +110,12 @@ namespace Metal.Core.Engine
             if (owner is Method)
             {
                 Method method = (Method)owner;
-                Metal.Core.Typing.Base.IValue value = null;
-                Metal.Core.Typing.Enums.ValueType valueType = method.ReturnType;
+                Metal.Core.TypeSystem.Typing.Base.IValue value = null;
+                Metal.Core.TypeSystem.Typing.Enums.ValueType valueType = method.ReturnType;
 
                 if (DateTime.TryParse(defaultValue, out DateTime dateValue))
                 {
-                    valueType = Metal.Core.Typing.Enums.ValueType.Date;
+                    valueType = Metal.Core.TypeSystem.Typing.Enums.ValueType.Date;
                     value = new DateValue()
                     {
                         Value = dateValue,
@@ -93,7 +123,7 @@ namespace Metal.Core.Engine
                 }
                 else if (Double.TryParse(defaultValue, out double numberValue))
                 {
-                    valueType = Metal.Core.Typing.Enums.ValueType.Number;
+                    valueType = Metal.Core.TypeSystem.Typing.Enums.ValueType.Number;
                     value = new NumberValue()
                     {
                         Value = numberValue,
@@ -101,7 +131,7 @@ namespace Metal.Core.Engine
                 }
                 else
                 {
-                    valueType = Metal.Core.Typing.Enums.ValueType.String;
+                    valueType = Metal.Core.TypeSystem.Typing.Enums.ValueType.String;
                     value = new StringValue()
                     {
                         Value = defaultValue,
@@ -120,6 +150,39 @@ namespace Metal.Core.Engine
             {
                 ((Method)owner).Instructions.Add(instruction);
             }
+        }
+        #endregion
+
+        #region Object Existence
+        public static IObject GetObjectByName(string name)
+        {
+            return State.FindObjectByName(name);
+        }
+        #endregion
+
+        #region Object Retrieval
+        public static IMethod GetMethod(string name)
+        {
+            IObject search = State.FindObjectByName(name);
+
+            if (search is null || search is not Method)
+            {
+                throw new Exception($"Method undefined: {name}");
+            }
+
+            return (Method)search;
+        }
+
+        public static IClass GetClass(string name)
+        {
+            IObject search = State.FindObjectByName(name);
+
+            if (search is null || search is not Class)
+            {
+                throw new Exception($"Class undefined: {name}");
+            }
+
+            return (Class)search;
         }
         #endregion
     }

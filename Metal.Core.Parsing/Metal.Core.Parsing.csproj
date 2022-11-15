@@ -1,14 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!--<Nullable>enable</Nullable>-->
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Metal.Core.Parsing\Metal.Core.Parsing.csproj" />
+    <ProjectReference Include="..\Metal.Core.TypeSystem\Metal.Core.TypeSystem.csproj" />
     <ProjectReference Include="..\Metal.Core\Metal.Core.csproj" />
   </ItemGroup>
 
