@@ -13,3 +13,12 @@ The CLI contains a built-in [REPL interpreter](https://en.wikipedia.org/wiki/Rea
 
 ## metalscripts? lol
 Those are files containing metal source code whose names end with a *.metal* extension). Clever right?
+
+## syntax
+The syntax is inspired by Ruby (my favorite language).
+
+## use cases
+TBD. I wanted something that would augment the runtime "experience" of .NET applications without writing CLR supported code. This could be in the form of AOP "pointcuts" (maybe through attributes?) or even a DSL. 
+
+## contributions
+Always welcome! Please feel free to submit a PR!
